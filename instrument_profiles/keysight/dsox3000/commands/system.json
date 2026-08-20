@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "family": "DSO-X 3000 X-Series",
+    "target_model": "DSO-X 3034A",
+    "category": "system",
+    "status": "manual_verified",
+    "manual_id": "dsox3000_programmers_guide"
+  },
+  "commands": [
+    {
+      "id": "system.error",
+      "name": "System Error",
+      "category": "system",
+      "command": ":SYSTem:ERRor?",
+      "query_command": ":SYSTem:ERRor?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Read the oldest entry from the instrument error queue.",
+      "response_notes": "Typical response contains numeric error code and textual error message.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 884,
+      "manual_section": "SYSTem Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["DSO-X 3034A"]
+    }
+  ]
+}
