@@ -1,0 +1,34 @@
+{
+  "manufacturer": "Rohde & Schwarz",
+  "family": "FSW Signal and Spectrum Analyzer",
+  "manuals": [
+    {
+      "id": "fsw_user_manual",
+      "type": "user_and_remote_control_manual",
+      "title": "R&S FSW Signal and Spectrum Analyzer User Manual",
+      "document_number": "",
+      "filename": "",
+      "sha256": "",
+      "revision": "",
+      "publication_date": "",
+      "official_source": "Rohde & Schwarz",
+      "priority": "critical",
+      "status": "downloaded_not_indexed",
+      "notes": "Primary reference for operation and SCPI remote control commands."
+    },
+    {
+      "id": "fsw_specifications",
+      "type": "specifications",
+      "title": "R&S FSW Signal and Spectrum Analyzer Specifications",
+      "document_number": "",
+      "filename": "",
+      "sha256": "",
+      "revision": "",
+      "publication_date": "",
+      "official_source": "Rohde & Schwarz",
+      "priority": "normal",
+      "status": "downloaded_not_indexed",
+      "notes": "Reference for hardware capabilities, frequency range and options."
+    }
+  ]
+}

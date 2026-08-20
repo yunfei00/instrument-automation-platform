@@ -1,0 +1,48 @@
+{
+  "manufacturer": "Keysight Technologies",
+  "family": "DSO-X 3000 X-Series",
+  "manuals": [
+    {
+      "id": "dsox3000_programmers_guide",
+      "type": "programming_guide",
+      "title": "InfiniiVision 3000 X-Series Oscilloscopes Programmer's Guide",
+      "document_number": "9018-06894",
+      "filename": "",
+      "sha256": "",
+      "revision": "",
+      "publication_date": "",
+      "official_source": "Keysight Technologies",
+      "priority": "critical",
+      "status": "downloaded_not_indexed",
+      "notes": "Primary reference for SCPI and remote programming."
+    },
+    {
+      "id": "dsox3000_users_guide",
+      "type": "user_guide",
+      "title": "InfiniiVision 3000 X-Series Oscilloscopes User's Guide",
+      "document_number": "9018-03427",
+      "filename": "",
+      "sha256": "",
+      "revision": "",
+      "publication_date": "",
+      "official_source": "Keysight Technologies",
+      "priority": "high",
+      "status": "downloaded_not_indexed",
+      "notes": "Reference for front-panel behavior and feature semantics."
+    },
+    {
+      "id": "dsox3000_datasheet",
+      "type": "datasheet",
+      "title": "InfiniiVision 3000 X-Series Oscilloscopes Data Sheet",
+      "document_number": "5990-6619",
+      "filename": "",
+      "sha256": "",
+      "revision": "",
+      "publication_date": "",
+      "official_source": "Keysight Technologies",
+      "priority": "normal",
+      "status": "downloaded_not_indexed",
+      "notes": "Reference for model capabilities and specifications."
+    }
+  ]
+}

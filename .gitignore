@@ -41,3 +41,6 @@ recordings/
 # OS
 .DS_Store
 Thumbs.db
+
+# Vendor manuals - local archive only
+/vendor_manuals/
