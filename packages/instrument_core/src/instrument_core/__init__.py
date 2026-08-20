@@ -1,3 +1,4 @@
+from .capabilities import Capability, CapabilitySet
 from .errors import (
     CalibrationError,
     DataIntegrityError,
@@ -12,6 +13,8 @@ from .errors import (
     TriggerTimeoutError,
     UnsupportedCapabilityError,
 )
+from .instrument import InstrumentDriver
+from .models import InstrumentIdentity, InstrumentState
 from .transport import (
     MockTransport,
     Transport,
@@ -20,6 +23,11 @@ from .transport import (
 )
 
 __all__ = [
+    "Capability",
+    "CapabilitySet",
+    "InstrumentDriver",
+    "InstrumentIdentity",
+    "InstrumentState",
     "InstrumentError",
     "TransportError",
     "InstrumentConnectionError",

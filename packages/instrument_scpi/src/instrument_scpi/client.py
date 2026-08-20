@@ -1,18 +1,8 @@
 """High-level SCPI client built on the platform Transport interface."""
 
-from dataclasses import dataclass
-
 from instrument_core.errors import SCPIError
+from instrument_core.models import InstrumentIdentity
 from instrument_core.transport import Transport
-
-
-@dataclass(frozen=True, slots=True)
-class InstrumentIdentity:
-    manufacturer: str
-    model: str
-    serial_number: str
-    firmware: str
-    raw: str
 
 
 class SCPIClient:
@@ -52,8 +42,7 @@ class SCPIClient:
         self.write("*CLS")
 
     def wait_operation_complete(self) -> bool:
-        response = self.query("*OPC?")
-        return response == "1"
+        return self.query("*OPC?") == "1"
 
     def query_error(self) -> tuple[int, str]:
         response = self.query("SYST:ERR?")
