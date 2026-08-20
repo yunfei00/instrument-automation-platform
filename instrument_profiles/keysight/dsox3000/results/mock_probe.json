@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "model": "DSO-X 3034A",
+    "source": "MockTransport",
+    "purpose": "Instrument Lab framework validation only"
+  },
+  "summary": {
+    "total": 3,
+    "pass": 3,
+    "fail": 0,
+    "skipped": 0
+  },
+  "results": [
+    {
+      "command_id": "common.idn",
+      "name": "Instrument Identification",
+      "command": "*IDN?",
+      "status": "PASS",
+      "raw_response": "KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW",
+      "parsed_value": "KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW",
+      "parsed_type": "str",
+      "unit": null,
+      "elapsed_ms": 0.022,
+      "error": null,
+      "timestamp": "2026-08-20T08:50:15.497451+00:00",
+      "metadata": {}
+    },
+    {
+      "command_id": "common.opc",
+      "name": "Operation Complete Query",
+      "command": "*OPC?",
+      "status": "PASS",
+      "raw_response": "1",
+      "parsed_value": 1,
+      "parsed_type": "int",
+      "unit": null,
+      "elapsed_ms": 0.007,
+      "error": null,
+      "timestamp": "2026-08-20T08:50:15.497484+00:00",
+      "metadata": {}
+    },
+    {
+      "command_id": "system.error",
+      "name": "System Error Query",
+      "command": "SYST:ERR?",
+      "status": "PASS",
+      "raw_response": "+0,\"No error\"",
+      "parsed_value": "+0,\"No error\"",
+      "parsed_type": "str",
+      "unit": null,
+      "elapsed_ms": 0.003,
+      "error": null,
+      "timestamp": "2026-08-20T08:50:15.497496+00:00",
+      "metadata": {}
+    }
+  ]
+}

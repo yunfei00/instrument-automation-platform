@@ -1,0 +1,63 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "family": "DSO-X 3000 Series",
+    "status": "bootstrap",
+    "note": "Only common safe commands are included at this stage. Model-specific commands must be verified against official manuals and real hardware before addition."
+  },
+  "commands": [
+    {
+      "id": "common.idn",
+      "name": "Instrument Identification",
+      "category": "common",
+      "command": "*IDN?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Query manufacturer, model, serial number and firmware identification.",
+      "source": "IEEE 488.2 / SCPI common command",
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "tags": [
+        "identity",
+        "connection"
+      ]
+    },
+    {
+      "id": "common.opc",
+      "name": "Operation Complete Query",
+      "category": "common",
+      "command": "*OPC?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Wait for pending operations to complete and return completion state.",
+      "source": "IEEE 488.2 common command",
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "tags": [
+        "synchronization"
+      ]
+    },
+    {
+      "id": "system.error",
+      "name": "System Error Query",
+      "category": "system",
+      "command": "SYST:ERR?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Read one entry from the instrument error queue.",
+      "source": "SCPI common system error pattern",
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "tags": [
+        "error",
+        "diagnostics"
+      ]
+    }
+  ]
+}
