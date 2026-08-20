@@ -8,6 +8,7 @@ from .models import (
     CommandKind,
     ResponseType,
     SafetyLevel,
+    VerificationStatus,
 )
 
 
@@ -24,7 +25,10 @@ class CommandCatalog:
         return [
             command
             for command in self.commands
-            if command.safety == SafetyLevel.SAFE
+            if (
+                command.safety == SafetyLevel.SAFE
+                and command.probe_enabled
+            )
         ]
 
     def by_category(
@@ -63,7 +67,6 @@ class CommandCatalog:
             payload = json.load(handle)
 
         commands: list[CommandDefinition] = []
-
         seen_ids: set[str] = set()
 
         for item in payload.get(
@@ -106,9 +109,19 @@ class CommandCatalog:
                             "string",
                         )
                     ),
+                    set_command=item.get(
+                        "set_command"
+                    ),
+                    query_command=item.get(
+                        "query_command"
+                    ),
                     unit=item.get("unit"),
                     description=item.get(
                         "description",
+                        "",
+                    ),
+                    response_notes=item.get(
+                        "response_notes",
                         "",
                     ),
                     notes=item.get(
@@ -118,6 +131,29 @@ class CommandCatalog:
                     source=item.get(
                         "source",
                         "",
+                    ),
+                    manual_id=item.get(
+                        "manual_id",
+                        "",
+                    ),
+                    manual_page=item.get(
+                        "manual_page"
+                    ),
+                    manual_section=item.get(
+                        "manual_section",
+                        "",
+                    ),
+                    verification_status=(
+                        VerificationStatus(
+                            item.get(
+                                "verification_status",
+                                "candidate",
+                            )
+                        )
+                    ),
+                    probe_enabled=item.get(
+                        "probe_enabled",
+                        True,
                     ),
                     supported_models=tuple(
                         item.get(

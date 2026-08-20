@@ -44,3 +44,11 @@ Thumbs.db
 
 # Vendor manuals - local archive only
 /vendor_manuals/
+
+# Generated manual analysis - local only
+instrument_profiles/**/command_candidates.json
+instrument_profiles/**/manual_audit/
+
+# Generated manual analysis - local only
+instrument_profiles/**/command_candidates.json
+instrument_profiles/**/manual_audit/

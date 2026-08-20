@@ -86,15 +86,13 @@ def generate_markdown(
             "- SKIPPED: "
             + str(
                 sum(
-                    result.status
-                    == "SKIPPED"
+                    result.status == "SKIPPED"
                     for result in results
                 )
             )
         )
 
     lines.append("")
-
     lines.append(
         "## Commands"
     )
@@ -105,29 +103,70 @@ def generate_markdown(
             f"### {command.name}"
         )
         lines.append("")
+
         lines.append(
             f"- ID: {command.id}"
         )
+
         lines.append(
             f"- Category: {command.category}"
         )
+
         lines.append(
-            f"- Command: {command.command}"
+            f"- Primary command: {command.command}"
         )
+
+        if command.set_command:
+            lines.append(
+                f"- Set syntax: {command.set_command}"
+            )
+
+        if command.query_command:
+            lines.append(
+                f"- Query syntax: {command.query_command}"
+            )
+
         lines.append(
             f"- Kind: {command.kind.value}"
         )
+
         lines.append(
             f"- Safety: {command.safety.value}"
         )
+
         lines.append(
             "- Response type: "
             f"{command.response_type.value}"
         )
 
+        lines.append(
+            "- Verification: "
+            f"{command.verification_status.value}"
+        )
+
+        lines.append(
+            "- Automatic probe: "
+            f"{command.probe_enabled}"
+        )
+
         if command.unit:
             lines.append(
                 f"- Unit: {command.unit}"
+            )
+
+        if command.manual_id:
+            lines.append(
+                f"- Manual: {command.manual_id}"
+            )
+
+        if command.manual_page is not None:
+            lines.append(
+                f"- Manual page: {command.manual_page}"
+            )
+
+        if command.manual_section:
+            lines.append(
+                f"- Manual section: {command.manual_section}"
             )
 
         if command.source:
@@ -141,6 +180,13 @@ def generate_markdown(
                 command.description
             )
 
+        if command.response_notes:
+            lines.append("")
+            lines.append(
+                "Response: "
+                + command.response_notes
+            )
+
         result = result_map.get(
             command.id
         )
@@ -151,6 +197,7 @@ def generate_markdown(
                 "#### Hardware Probe"
             )
             lines.append("")
+
             lines.append(
                 f"- Status: {result.status}"
             )

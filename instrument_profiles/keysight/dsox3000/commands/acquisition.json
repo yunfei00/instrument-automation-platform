@@ -1,0 +1,157 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "family": "DSO-X 3000 X-Series",
+    "target_model": "DSO-X 3034A",
+    "category": "acquisition",
+    "status": "manual_verified",
+    "manual_id": "dsox3000_programmers_guide"
+  },
+  "commands": [
+    {
+      "id": "acquire.complete",
+      "name": "Acquisition Complete",
+      "category": "acquisition",
+      "command": ":ACQuire:COMPlete?",
+      "set_command": ":ACQuire:COMPlete <complete>",
+      "query_command": ":ACQuire:COMPlete?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Query acquisition completion state.",
+      "response_notes": "Integer response. Real DSO-X 3034A behavior will be recorded during hardware qualification.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 243,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "acquire.count",
+      "name": "Acquisition Count",
+      "category": "acquisition",
+      "command": ":ACQuire:COUNt?",
+      "set_command": ":ACQuire:COUNt <count>",
+      "query_command": ":ACQuire:COUNt?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Configure or query acquisition count.",
+      "response_notes": "Manual specifies integer values from 2 to 65536.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 244,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "acquire.mode",
+      "name": "Acquisition Mode",
+      "category": "acquisition",
+      "command": ":ACQuire:MODE?",
+      "set_command": ":ACQuire:MODE <mode>",
+      "query_command": ":ACQuire:MODE?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query acquisition mode.",
+      "response_notes": "Manual lists RTIMe and SEGMented.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 245,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "acquire.points",
+      "name": "Acquisition Points",
+      "category": "acquisition",
+      "command": ":ACQuire:POINts?",
+      "query_command": ":ACQuire:POINts?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Query the number of acquisition points.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 246,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "acquire.sample_rate",
+      "name": "Acquisition Sample Rate",
+      "category": "acquisition",
+      "command": ":ACQuire:SRATe?",
+      "query_command": ":ACQuire:SRATe?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "samples/s",
+      "description": "Query the acquisition sample rate.",
+      "response_notes": "Manual specifies NR3 format in samples per second.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 252,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "acquire.type",
+      "name": "Acquisition Type",
+      "category": "acquisition",
+      "command": ":ACQuire:TYPE?",
+      "set_command": ":ACQuire:TYPE <type>",
+      "query_command": ":ACQuire:TYPE?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query acquisition type.",
+      "response_notes": "Manual lists NORMal, AVERage, HRESolution and PEAK.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 253,
+      "manual_section": "ACQuire Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "root.digitize",
+      "name": "Digitize",
+      "category": "acquisition",
+      "command": ":DIGitize",
+      "set_command": ":DIGitize [<source>[,...<source>]]",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Start an acquisition. The command can optionally specify one or more sources.",
+      "response_notes": "No normal query response. Hardware behavior must be validated by scenario test.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 213,
+      "manual_section": "Root Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "The manual states that DIGitize is a specialized RUN command and blocks subsequent commands until acquisition completes. Do not execute in the generic safe command probe."
+    }
+  ]
+}

@@ -6,6 +6,7 @@ from .models import (
     ProbeResult,
     ResponseType,
     SafetyLevel,
+    VerificationStatus,
 )
 from .parser import parse_response
 from .probe import ProbeRunner
@@ -19,6 +20,7 @@ __all__ = [
     "ProbeRunner",
     "ResponseType",
     "SafetyLevel",
+    "VerificationStatus",
     "generate_markdown",
     "parse_response",
     "save_probe_results",

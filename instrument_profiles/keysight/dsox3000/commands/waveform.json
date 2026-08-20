@@ -1,0 +1,219 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "family": "DSO-X 3000 X-Series",
+    "target_model": "DSO-X 3034A",
+    "category": "waveform",
+    "status": "manual_verified",
+    "manual_id": "dsox3000_programmers_guide"
+  },
+  "commands": [
+    {
+      "id": "waveform.byte_order",
+      "name": "Waveform Byte Order",
+      "category": "waveform",
+      "command": ":WAVeform:BYTeorder?",
+      "set_command": ":WAVeform:BYTeorder <value>",
+      "query_command": ":WAVeform:BYTeorder?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query byte order for waveform binary transfer.",
+      "response_notes": "Manual lists LSBFirst and MSBFirst.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1001,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.count",
+      "name": "Waveform Count",
+      "category": "waveform",
+      "command": ":WAVeform:COUNt?",
+      "query_command": ":WAVeform:COUNt?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Query waveform count.",
+      "response_notes": "Manual specifies integer values from 1 to 65536.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1002,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.data",
+      "name": "Waveform Data",
+      "category": "waveform",
+      "command": ":WAVeform:DATA?",
+      "query_command": ":WAVeform:DATA?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "binary",
+      "description": "Read waveform samples from the selected waveform source.",
+      "response_notes": "Returns an IEEE 488.2 definite-length binary block when binary waveform format is used.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1003,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "Binary probe support will be implemented separately before automatic hardware probing."
+    },
+    {
+      "id": "waveform.format",
+      "name": "Waveform Format",
+      "category": "waveform",
+      "command": ":WAVeform:FORMat?",
+      "set_command": ":WAVeform:FORMat <value>",
+      "query_command": ":WAVeform:FORMat?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query waveform transfer format.",
+      "response_notes": "Manual lists WORD, BYTE and ASCII.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1005,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.points",
+      "name": "Waveform Points",
+      "category": "waveform",
+      "command": ":WAVeform:POINts?",
+      "set_command": ":WAVeform:POINts <# points>",
+      "query_command": ":WAVeform:POINts?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Configure or query the number of waveform points.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1006,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.points_mode",
+      "name": "Waveform Points Mode",
+      "category": "waveform",
+      "command": ":WAVeform:POINts:MODE?",
+      "set_command": ":WAVeform:POINts:MODE <points_mode>",
+      "query_command": ":WAVeform:POINts:MODE?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query waveform points mode.",
+      "response_notes": "Manual lists NORMal, MAXimum and RAW.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1009,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "Set syntax is documented on page 1008 and query syntax on page 1009."
+    },
+    {
+      "id": "waveform.preamble",
+      "name": "Waveform Preamble",
+      "category": "waveform",
+      "command": ":WAVeform:PREamble?",
+      "query_command": ":WAVeform:PREamble?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "csv",
+      "description": "Read waveform conversion metadata.",
+      "response_notes": "Returns ten numeric fields describing waveform format, acquisition type, points, count, X increment, X origin, X reference, Y increment, Y origin and Y reference.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1010,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.source",
+      "name": "Waveform Source",
+      "category": "waveform",
+      "command": ":WAVeform:SOURce?",
+      "set_command": ":WAVeform:SOURce <source>",
+      "query_command": ":WAVeform:SOURce?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query the waveform source.",
+      "response_notes": "For DSO models the manual includes analog channels and supported computed or decoded waveform sources.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1015,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.type",
+      "name": "Waveform Type",
+      "category": "waveform",
+      "command": ":WAVeform:TYPE?",
+      "query_command": ":WAVeform:TYPE?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Query the current waveform acquisition type.",
+      "response_notes": "Manual lists NORM, PEAK, AVER and HRES.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1020,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    },
+    {
+      "id": "waveform.unsigned",
+      "name": "Waveform Unsigned Data",
+      "category": "waveform",
+      "command": ":WAVeform:UNSigned?",
+      "set_command": ":WAVeform:UNSigned <value>",
+      "query_command": ":WAVeform:UNSigned?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "boolean",
+      "description": "Configure or query unsigned waveform data representation.",
+      "response_notes": "Query returns 0 or 1.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 1021,
+      "manual_section": "WAVeform Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
+    }
+  ]
+}

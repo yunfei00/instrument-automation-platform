@@ -28,6 +28,13 @@ class ProbeRunner:
         allow_disruptive: bool = False,
         allow_destructive: bool = False,
     ) -> ProbeResult:
+
+        if not definition.probe_enabled:
+            return self._skipped(
+                definition,
+                "Automatic probe disabled for this command",
+            )
+
         if (
             definition.safety
             == SafetyLevel.DESTRUCTIVE
@@ -61,9 +68,11 @@ class ProbeRunner:
             timezone.utc
         ).isoformat()
 
+        command = definition.probe_command
+
         try:
             raw = self.client.query(
-                definition.command
+                command
             )
 
             parsed = parse_response(
@@ -78,7 +87,7 @@ class ProbeRunner:
             return ProbeResult(
                 command_id=definition.id,
                 name=definition.name,
-                command=definition.command,
+                command=command,
                 status="PASS",
                 raw_response=raw,
                 parsed_value=parsed,
@@ -101,7 +110,7 @@ class ProbeRunner:
             return ProbeResult(
                 command_id=definition.id,
                 name=definition.name,
-                command=definition.command,
+                command=command,
                 status="FAIL",
                 elapsed_ms=round(
                     elapsed_ms,
@@ -124,12 +133,8 @@ class ProbeRunner:
         return [
             self.run_command(
                 command,
-                allow_disruptive=(
-                    allow_disruptive
-                ),
-                allow_destructive=(
-                    allow_destructive
-                ),
+                allow_disruptive=allow_disruptive,
+                allow_destructive=allow_destructive,
             )
             for command in commands
         ]
@@ -142,7 +147,7 @@ class ProbeRunner:
         return ProbeResult(
             command_id=definition.id,
             name=definition.name,
-            command=definition.command,
+            command=definition.probe_command,
             status="SKIPPED",
             error=reason,
             timestamp=datetime.now(
