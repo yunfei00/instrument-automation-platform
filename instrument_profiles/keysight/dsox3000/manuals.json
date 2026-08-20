@@ -7,14 +7,16 @@
       "type": "programming_guide",
       "title": "InfiniiVision 3000 X-Series Oscilloscopes Programmer's Guide",
       "document_number": "9018-06894",
-      "filename": "",
-      "sha256": "",
+      "filename": "DSOX3000_Programmers_Guide_9018-06894.pdf",
+      "sha256": "f057f7861c843b6ade18cc65138b42a220f1416df26d535e866befcaa33e02aa",
       "revision": "",
       "publication_date": "",
       "official_source": "Keysight Technologies",
       "priority": "critical",
-      "status": "downloaded_not_indexed",
-      "notes": "Primary reference for SCPI and remote programming."
+      "status": "archived",
+      "notes": "Primary reference for SCPI and remote programming.",
+      "size_mb": 7.44,
+      "local_archive": "vendor_manuals/keysight/dsox3000/DSOX3000_Programmers_Guide_9018-06894.pdf"
     },
     {
       "id": "dsox3000_users_guide",

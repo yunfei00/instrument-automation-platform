@@ -1,0 +1,20 @@
+{
+  "manufacturer": "Rohde & Schwarz",
+  "family": "Common Remote Control",
+  "manuals": [
+    {
+      "id": "rs_remote_control_scpi_getting_started",
+      "type": "remote_control_guide",
+      "title": "Remote Control via SCPI Getting Started",
+      "filename": "Remote_Control_SCPI_GettingStarted_en_04.pdf",
+      "sha256": "b6097e47932cd4f8f493751446535635ba9e28c35ff867735c838e711e92667c",
+      "size_mb": 0.72,
+      "revision": "04",
+      "official_source": "Rohde & Schwarz",
+      "priority": "high",
+      "status": "archived",
+      "local_archive": "vendor_manuals/rohde_schwarz/common/Remote_Control_SCPI_GettingStarted_en_04.pdf",
+      "notes": "Common R&S SCPI and remote-control reference."
+    }
+  ]
+}
