@@ -12,6 +12,35 @@
   },
   "commands": [
     {
+      "id": "lte.mevaluation.evm.fetch_average",
+      "name": "LTE Multi Evaluation EVM Average Fetch",
+      "category": "measurement_results",
+      "command": "FETCh:LTE:MEAS<i>:MEValuation:EVMagnitude:AVERage?",
+      "query_command": "FETCh:LTE:MEAS<i>:MEValuation:EVMagnitude:AVERage?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "csv",
+      "unit": "%",
+      "description": "Fetch existing average LTE EVM magnitude results.",
+      "manual_id": "cmw_lte_ue_rev22",
+      "manual_page": 733,
+      "manual_section": "LTE Multi Evaluation - EVM Results (Traces)",
+      "verification_status": "hardware_verified",
+      "probe_enabled": false,
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "mevaluation",
+        "evm",
+        "result",
+        "fetch"
+      ],
+      "response_notes": "Normal CP returns 15 fields: Reliability + 7 EVMLow + 7 EVMHigh. Extended CP returns 13 fields: Reliability + 6 EVMLow + 6 EVMHigh. INV represents an invalid value.",
+      "notes": "Hardware observed reliability code 6 with all EVM values INV when no trigger was available."
+    },
+    {
       "id": "lte.mevaluation.evm.average",
       "name": "LTE Multi Evaluation EVM Average",
       "category": "measurement_results",
@@ -28,8 +57,15 @@
       "manual_section": "LTE Multi Evaluation - EVMagnitude Results",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "mevaluation", "evm", "result"],
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "mevaluation",
+        "evm",
+        "result"
+      ],
       "notes": "READ is not a passive query: according to the manual it can initiate a single-shot measurement."
     },
     {
@@ -49,8 +85,15 @@
       "manual_section": "LTE Multi Evaluation - EVMagnitude Results",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "mevaluation", "evm", "result"],
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "mevaluation",
+        "evm",
+        "result"
+      ],
       "notes": "Exact result field structure will be hardware-qualified before parser implementation."
     }
   ]

@@ -26,10 +26,17 @@
       "manual_id": "cmw_lte_ue_rev22",
       "manual_page": 670,
       "manual_section": "LTE Multi Evaluation Measurement - Remote Commands",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "measurement", "mevaluation", "lifecycle"],
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "measurement",
+        "mevaluation",
+        "lifecycle"
+      ],
       "notes": "Measurement instance <i> must be expanded before execution."
     },
     {
@@ -48,8 +55,15 @@
       "manual_section": "LTE Multi Evaluation Measurement - Remote Commands",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "measurement", "mevaluation", "lifecycle"],
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "measurement",
+        "mevaluation",
+        "lifecycle"
+      ],
       "notes": "Do not execute as part of a generic safe probe."
     },
     {
@@ -66,10 +80,17 @@
       "manual_id": "cmw_lte_ue_rev22",
       "manual_page": 670,
       "manual_section": "LTE Multi Evaluation Measurement - Remote Commands",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "measurement", "mevaluation", "lifecycle"],
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "measurement",
+        "mevaluation",
+        "lifecycle"
+      ],
       "notes": "Application-level abort; intentionally not mapped to InstrumentDriver.abort()."
     },
     {
@@ -86,11 +107,19 @@
       "manual_id": "cmw_lte_ue_rev22",
       "manual_page": 670,
       "manual_section": "LTE Multi Evaluation Measurement - Remote Commands",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "measurement", "mevaluation", "state"],
-      "notes": "Safe query, but disabled from generic probe because measurement instance <i> must be selected."
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "measurement",
+        "mevaluation",
+        "state"
+      ],
+      "notes": "Safe query, but disabled from generic probe because measurement instance <i> must be selected.",
+      "response_notes": "Hardware observed values include OFF and RDY."
     },
     {
       "id": "lte.mevaluation.state_all",
@@ -106,11 +135,19 @@
       "manual_id": "cmw_lte_ue_rev22",
       "manual_page": 670,
       "manual_section": "LTE Multi Evaluation Measurement - Remote Commands",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW"],
-      "tags": ["lte", "measurement", "mevaluation", "state"],
-      "notes": "Response format must be captured on real LTE 3.5.50 hardware."
+      "supported_models": [
+        "CMW"
+      ],
+      "tags": [
+        "lte",
+        "measurement",
+        "mevaluation",
+        "state"
+      ],
+      "notes": "Response format must be captured on real LTE 3.5.50 hardware.",
+      "response_notes": "Hardware observed responses include OFF,INV,INV and RDY,ADJ,INV."
     }
   ]
 }
