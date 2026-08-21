@@ -20,6 +20,9 @@ from .discovery import (
     parse_subinstrument_info,
     strip_scpi_string,
 )
+from .applications import (
+    CMWApplicationRegistry,
+)
 
 
 @register_driver(
@@ -160,6 +163,27 @@ class RohdeSchwarzCMW500Driver(
     ]:
         return parse_software_versions(
             self.get_software_versions_raw()
+        )
+
+    def get_application_registry(
+        self,
+    ) -> CMWApplicationRegistry:
+        """
+        Discover installed CMW firmware applications.
+
+        This is based on installed software packages and does
+        not expose customer-specific hardware identifiers.
+        """
+
+        packages = (
+            self.get_software_versions()
+        )
+
+        return (
+            CMWApplicationRegistry
+            .from_software_packages(
+                packages
+            )
         )
 
     def get_subinstrument_info(

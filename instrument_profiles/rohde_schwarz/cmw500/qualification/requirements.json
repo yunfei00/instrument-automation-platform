@@ -1,0 +1,95 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "driver_family": "CMW500",
+    "target_model": "CMW",
+    "minimum_status": "qualified",
+    "version": "1"
+  },
+  "checks": [
+    {
+      "id": "connection.open",
+      "name": "Open Instrument Connection",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "identity.idn",
+      "name": "Verify Instrument Identity",
+      "category": "identity",
+      "mandatory": true
+    },
+    {
+      "id": "base.device_id",
+      "name": "Base Device Identification",
+      "category": "base",
+      "mandatory": true
+    },
+    {
+      "id": "base.options",
+      "name": "Installed Options Discovery",
+      "category": "base",
+      "mandatory": true
+    },
+    {
+      "id": "base.software",
+      "name": "Installed Software Discovery",
+      "category": "base",
+      "mandatory": true
+    },
+    {
+      "id": "base.applications",
+      "name": "Firmware Application Discovery",
+      "category": "base",
+      "mandatory": true
+    },
+    {
+      "id": "base.subinstrument",
+      "name": "Sub-Instrument Discovery",
+      "category": "architecture",
+      "mandatory": true
+    },
+    {
+      "id": "remote.hislip",
+      "name": "HiSLIP Remote Resource",
+      "category": "transport",
+      "mandatory": false
+    },
+    {
+      "id": "remote.vxi",
+      "name": "VXI-11 Remote Resource",
+      "category": "transport",
+      "mandatory": false
+    },
+    {
+      "id": "remote.usb",
+      "name": "USB Remote Resource",
+      "category": "transport",
+      "mandatory": false
+    },
+    {
+      "id": "error.queue",
+      "name": "SCPI Error Queue",
+      "category": "diagnostics",
+      "mandatory": true
+    },
+    {
+      "id": "connection.disconnect",
+      "name": "Disconnect Cleanly",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "connection.reconnect",
+      "name": "Reconnect Instrument",
+      "category": "recovery",
+      "mandatory": true
+    },
+    {
+      "id": "record_replay",
+      "name": "Record and Replay Base Session",
+      "category": "regression",
+      "mandatory": true
+    }
+  ]
+}
