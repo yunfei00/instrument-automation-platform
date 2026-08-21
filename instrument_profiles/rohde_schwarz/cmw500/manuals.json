@@ -1,0 +1,33 @@
+{
+  "manufacturer": "Rohde & Schwarz",
+  "family": "CMW500",
+  "manuals": [
+    {
+      "id": "cmw500_user_manual",
+      "type": "user_manual",
+      "title": "R&S CMW500 User Manual",
+      "filename": "CMW500_UserManual.pdf",
+      "sha256": "9010234cdb68e6906cb3f6ab14dd09fffd1cdba36e46a5af789cdb82bb6bacbf",
+      "size_mb": 9.15,
+      "revision": "unknown",
+      "status": "archived",
+      "priority": "critical",
+      "local_archive": "vendor_manuals/rohde_schwarz/cmw500/CMW500_UserManual.pdf",
+      "notes": "Primary CMW500 base instrument manual. Revision will be extracted from document content."
+    }
+  ],
+  "shared_manuals": [
+    {
+      "id": "rs_remote_control_scpi_getting_started",
+      "type": "remote_control_guide",
+      "title": "Remote Control via SCPI Getting Started",
+      "filename": "Remote_Control_SCPI_GettingStarted_en_04.pdf",
+      "sha256": "b6097e47932cd4f8f493751446535635ba9e28c35ff867735c838e711e92667c",
+      "size_mb": 0.72,
+      "revision": "04",
+      "status": "archived",
+      "local_archive": "vendor_manuals/rohde_schwarz/common/Remote_Control_SCPI_GettingStarted_en_04.pdf",
+      "notes": "Shared R&S SCPI reference. Reused rather than duplicated for CMW500."
+    }
+  ]
+}
