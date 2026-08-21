@@ -17,6 +17,9 @@ from .instrument import InstrumentDriver
 from .models import InstrumentIdentity, InstrumentState
 from .transport import (
     MockTransport,
+    RecordingTransport,
+    ReplayMismatchError,
+    ReplayTransport,
     Transport,
     TransportConfig,
     VisaTransport,
@@ -44,4 +47,7 @@ __all__ = [
     "TransportConfig",
     "MockTransport",
     "VisaTransport",
+    "RecordingTransport",
+    "ReplayTransport",
+    "ReplayMismatchError",
 ]

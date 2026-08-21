@@ -59,3 +59,6 @@ instrument_profiles/**/docs/generated/*.md
 
 # Local instrument captures
 /captures/
+
+# Local instrument communication sessions
+/sessions/

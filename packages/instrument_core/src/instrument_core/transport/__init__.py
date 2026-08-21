@@ -1,5 +1,13 @@
-from .base import Transport, TransportConfig
+from .base import (
+    Transport,
+    TransportConfig,
+)
 from .mock import MockTransport
+from .recording import RecordingTransport
+from .replay import (
+    ReplayMismatchError,
+    ReplayTransport,
+)
 from .visa import VisaTransport
 
 __all__ = [
@@ -7,4 +15,7 @@ __all__ = [
     "TransportConfig",
     "MockTransport",
     "VisaTransport",
+    "RecordingTransport",
+    "ReplayTransport",
+    "ReplayMismatchError",
 ]
