@@ -9,11 +9,12 @@
       "filename": "CMW500_UserManual.pdf",
       "sha256": "9010234cdb68e6906cb3f6ab14dd09fffd1cdba36e46a5af789cdb82bb6bacbf",
       "size_mb": 9.15,
-      "revision": "unknown",
+      "revision": "13",
       "status": "archived",
       "priority": "critical",
       "local_archive": "vendor_manuals/rohde_schwarz/cmw500/CMW500_UserManual.pdf",
-      "notes": "Primary CMW500 base instrument manual. Revision will be extracted from document content."
+      "notes": "Primary CMW500 base instrument manual. User Manual 1173.9463.02, Revision 13.",
+      "document_number": "1173.9463.02"
     }
   ],
   "shared_manuals": [
