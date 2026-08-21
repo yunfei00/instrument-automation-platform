@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "application": "LTE",
+    "measurement": "Multi Evaluation",
+    "category": "measurement_results",
+    "manual_id": "cmw_lte_ue_rev22",
+    "document_number": "1173.9628.02",
+    "revision": "22",
+    "status": "manual_verified"
+  },
+  "commands": [
+    {
+      "id": "lte.mevaluation.evm.average",
+      "name": "LTE Multi Evaluation EVM Average",
+      "category": "measurement_results",
+      "command": "READ:LTE:MEAS<i>:MEValuation:EVMagnitude:AVERage?",
+      "query_command": "READ:LTE:MEAS<i>:MEValuation:EVMagnitude:AVERage?",
+      "kind": "query",
+      "safety": "disruptive",
+      "response_type": "csv",
+      "unit": "%",
+      "description": "Initiates a single-shot LTE Multi Evaluation measurement and returns average EVM results.",
+      "source": "CMW LTE UE User Manual Rev.22 extracted text around line 33853.",
+      "manual_id": "cmw_lte_ue_rev22",
+      "manual_page": 733,
+      "manual_section": "LTE Multi Evaluation - EVMagnitude Results",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW"],
+      "tags": ["lte", "mevaluation", "evm", "result"],
+      "notes": "READ is not a passive query: according to the manual it can initiate a single-shot measurement."
+    },
+    {
+      "id": "lte.mevaluation.evm.maximum",
+      "name": "LTE Multi Evaluation EVM Maximum",
+      "category": "measurement_results",
+      "command": "READ:LTE:MEAS<i>:MEValuation:EVMagnitude:MAXimum?",
+      "query_command": "READ:LTE:MEAS<i>:MEValuation:EVMagnitude:MAXimum?",
+      "kind": "query",
+      "safety": "disruptive",
+      "response_type": "csv",
+      "unit": "%",
+      "description": "Initiates a single-shot LTE Multi Evaluation measurement and returns maximum EVM results.",
+      "source": "CMW LTE UE User Manual Rev.22 extracted text around line 33858.",
+      "manual_id": "cmw_lte_ue_rev22",
+      "manual_page": 733,
+      "manual_section": "LTE Multi Evaluation - EVMagnitude Results",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW"],
+      "tags": ["lte", "mevaluation", "evm", "result"],
+      "notes": "Exact result field structure will be hardware-qualified before parser implementation."
+    }
+  ]
+}
