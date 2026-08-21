@@ -1,0 +1,102 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "driver_family": "DSOX3000",
+    "target_model": "DSO-X 3034A",
+    "minimum_status": "qualified",
+    "version": "1"
+  },
+  "checks": [
+    {
+      "id": "connection.open",
+      "name": "Open Instrument Connection",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "identity.idn",
+      "name": "Verify Instrument Identity",
+      "category": "identity",
+      "mandatory": true
+    },
+    {
+      "id": "identity.firmware",
+      "name": "Record Firmware Version",
+      "category": "identity",
+      "mandatory": true
+    },
+    {
+      "id": "channel.basic",
+      "name": "Analog Channel Query",
+      "category": "channel",
+      "mandatory": true
+    },
+    {
+      "id": "timebase.basic",
+      "name": "Timebase Query",
+      "category": "timebase",
+      "mandatory": true
+    },
+    {
+      "id": "trigger.basic",
+      "name": "Trigger Query",
+      "category": "trigger",
+      "mandatory": true
+    },
+    {
+      "id": "measurement.basic",
+      "name": "Basic Measurement Query",
+      "category": "measurement",
+      "mandatory": false,
+      "description": "Requires valid input signal."
+    },
+    {
+      "id": "waveform.preamble",
+      "name": "Waveform Preamble",
+      "category": "waveform",
+      "mandatory": true
+    },
+    {
+      "id": "waveform.binary",
+      "name": "Binary Waveform Acquisition",
+      "category": "waveform",
+      "mandatory": true
+    },
+    {
+      "id": "waveform.point_integrity",
+      "name": "Waveform Point Integrity",
+      "category": "waveform",
+      "mandatory": true
+    },
+    {
+      "id": "error.queue",
+      "name": "SCPI Error Queue",
+      "category": "diagnostics",
+      "mandatory": true
+    },
+    {
+      "id": "control.abort",
+      "name": "Abort Operation",
+      "category": "control",
+      "mandatory": true
+    },
+    {
+      "id": "connection.disconnect",
+      "name": "Disconnect Cleanly",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "connection.reconnect",
+      "name": "Reconnect Instrument",
+      "category": "recovery",
+      "mandatory": true
+    },
+    {
+      "id": "record_replay",
+      "name": "Record and Replay Session",
+      "category": "regression",
+      "mandatory": true
+    }
+  ]
+}

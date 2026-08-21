@@ -1,0 +1,101 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "driver_family": "FSW",
+    "target_model": "FSW",
+    "minimum_status": "qualified",
+    "version": "1"
+  },
+  "checks": [
+    {
+      "id": "connection.open",
+      "name": "Open Instrument Connection",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "identity.idn",
+      "name": "Verify Instrument Identity",
+      "category": "identity",
+      "mandatory": true
+    },
+    {
+      "id": "identity.firmware",
+      "name": "Record Firmware Version",
+      "category": "identity",
+      "mandatory": true
+    },
+    {
+      "id": "frequency.basic",
+      "name": "Frequency Queries",
+      "category": "frequency",
+      "mandatory": true
+    },
+    {
+      "id": "bandwidth.basic",
+      "name": "RBW and VBW Queries",
+      "category": "bandwidth",
+      "mandatory": true
+    },
+    {
+      "id": "trigger.basic",
+      "name": "Trigger Query",
+      "category": "trigger",
+      "mandatory": true
+    },
+    {
+      "id": "sweep.single",
+      "name": "Single Sweep",
+      "category": "sweep",
+      "mandatory": true
+    },
+    {
+      "id": "trace.ascii",
+      "name": "ASCII Trace Acquisition",
+      "category": "trace",
+      "mandatory": true
+    },
+    {
+      "id": "trace.integrity",
+      "name": "Trace Data Integrity",
+      "category": "trace",
+      "mandatory": true
+    },
+    {
+      "id": "marker.peak",
+      "name": "Marker Peak Search",
+      "category": "marker",
+      "mandatory": false
+    },
+    {
+      "id": "error.queue",
+      "name": "SCPI Error Queue",
+      "category": "diagnostics",
+      "mandatory": true
+    },
+    {
+      "id": "control.abort",
+      "name": "Abort Operation",
+      "category": "control",
+      "mandatory": true
+    },
+    {
+      "id": "connection.disconnect",
+      "name": "Disconnect Cleanly",
+      "category": "connection",
+      "mandatory": true
+    },
+    {
+      "id": "connection.reconnect",
+      "name": "Reconnect Instrument",
+      "category": "recovery",
+      "mandatory": true
+    },
+    {
+      "id": "record_replay",
+      "name": "Record and Replay Session",
+      "category": "regression",
+      "mandatory": true
+    }
+  ]
+}
