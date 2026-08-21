@@ -56,3 +56,6 @@ instrument_profiles/**/manual_audit/
 # Generated hardware probe results
 instrument_profiles/**/hardware_results/*.json
 instrument_profiles/**/docs/generated/*.md
+
+# Local instrument captures
+/captures/

@@ -9,6 +9,13 @@ from instrument_core import (
 from instrument_scpi import SCPIClient
 
 from instrument_drivers.registry import register_driver
+from instrument_scpi import parse_definite_length_block
+
+from .waveform import (
+    WaveformPreamble,
+    build_waveform,
+    decode_word_samples,
+)
 
 
 @register_driver(
@@ -298,6 +305,95 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             self.scpi.query(
                 ":MEASure:VPP?"
             )
+        )
+
+
+    def get_waveform_byte_order(self) -> str:
+        return self.scpi.query(
+            ":WAVeform:BYTeorder?"
+        )
+
+    def get_waveform_unsigned(self) -> bool:
+        value = self.scpi.query(
+            ":WAVeform:UNSigned?"
+        )
+
+        return (
+            value.strip().upper()
+            in {"1", "ON", "TRUE"}
+        )
+
+    def read_waveform_preamble(
+        self,
+    ) -> WaveformPreamble:
+        response = self.scpi.query(
+            ":WAVeform:PREamble?"
+        )
+
+        return WaveformPreamble.parse(
+            response
+        )
+
+    def read_waveform_binary_block(
+        self,
+    ) -> bytes:
+        raw = self.transport.query_raw(
+            ":WAVeform:DATA?"
+        )
+
+        block = parse_definite_length_block(
+            raw
+        )
+
+        return block.payload
+
+    def acquire_word_waveform(
+        self,
+        channel: int,
+    ):
+        self._validate_channel(channel)
+
+        self.set_waveform_source(channel)
+        self.set_waveform_format("WORD")
+
+        self.digitize(channel)
+
+        preamble = (
+            self.read_waveform_preamble()
+        )
+
+        byte_order = (
+            self.get_waveform_byte_order()
+        )
+
+        unsigned = (
+            self.get_waveform_unsigned()
+        )
+
+        payload = (
+            self.read_waveform_binary_block()
+        )
+
+        samples = decode_word_samples(
+            payload,
+            byte_order=byte_order,
+            unsigned=unsigned,
+        )
+
+        if (
+            preamble.points > 0
+            and len(samples)
+            != preamble.points
+        ):
+            raise ValueError(
+                "Waveform point mismatch: "
+                f"preamble={preamble.points}, "
+                f"decoded={len(samples)}"
+            )
+
+        return build_waveform(
+            samples,
+            preamble,
         )
 
     @staticmethod
