@@ -1,0 +1,42 @@
+{
+  "manufacturer": "Rohde & Schwarz",
+  "instrument_family": "CMW500",
+  "application": "LTE",
+  "reference_firmware": "3.5.50",
+  "primary_manual": "cmw_lte_ue_rev22",
+  "manuals": {
+    "cmw_lte_ue_rev22": {
+      "filename": "CMW_LTE_UE_UserManual_1173.9628.02_Rev22.pdf",
+      "document_number": "1173.9628.02",
+      "revision": "22",
+      "role": "primary",
+      "sha256": "6dab9ee65f61698c1e2c898703b65c9e99e5f6f9f65bdd2fa8aa200cead7107f",
+      "size_mb": 10.46,
+      "status": "archived",
+      "source_url": "https://www.manualslib.com/manual/2570130/RAnds-Cmw-Km5-Series.html"
+    },
+    "cmw_lte_ue_rev21": {
+      "filename": "CMW_LTE_UE_UserManual_1173.9628.02_Rev21.pdf",
+      "document_number": "1173.9628.02",
+      "revision": "21",
+      "role": "historical_reference",
+      "sha256": "59c6b7433d4c0e96d9b8768765b803e2088eb925c34765c519d973938b58cff7",
+      "size_mb": 10.35,
+      "status": "archived",
+      "source_url": "https://www.manualslib.com/manual/2570054/RAnds-Cmw-Km5-Series.html"
+    }
+  },
+  "application_notes": [
+    {
+      "filename": "1CM94_LTE_UE_RF_Measurements.pdf",
+      "id": "1CM94",
+      "role": "measurement_workflow_reference",
+      "status": "archived"
+    }
+  ],
+  "compatibility_notes": [
+    "Rev.22 describes LTE firmware version 3.5.30 and later.",
+    "Reference hardware reports LTE firmware 3.5.50.",
+    "Commands remain manual_verified until confirmed on hardware."
+  ]
+}
