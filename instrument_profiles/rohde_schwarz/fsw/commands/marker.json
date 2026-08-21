@@ -1,0 +1,78 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "marker",
+    "status": "mixed",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "marker.maximum",
+      "name": "Marker Maximum",
+      "category": "marker",
+      "command": "CALCulate<n>:MARKer<m>:MAXimum[:PEAK]",
+      "set_command": "CALCulate<n>:MARKer<m>:MAXimum[:PEAK]",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Move the selected marker to the trace maximum.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1298,
+      "manual_section": "Marker Peak Search",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "marker.y",
+      "name": "Marker Y Value",
+      "category": "marker",
+      "command": "CALCulate<n>:MARKer<m>:Y?",
+      "query_command": "CALCulate<n>:MARKer<m>:Y?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "description": "Query the marker Y-axis result.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1304,
+      "manual_section": "Marker Results",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "marker.state",
+      "name": "Marker State",
+      "category": "marker",
+      "command": "CALCulate<n>:MARKer<m>[:STATe]?",
+      "set_command": "CALCulate<n>:MARKer<m>[:STATe] <state>",
+      "query_command": "CALCulate<n>:MARKer<m>[:STATe]?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "boolean",
+      "description": "Enable, disable, or query marker state.",
+      "source": "Official R&S FSW family manuals; exact base-manual page pending.",
+      "verification_status": "candidate",
+      "probe_enabled": false,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "marker.x",
+      "name": "Marker X Value",
+      "category": "marker",
+      "command": "CALCulate<n>:MARKer<m>:X?",
+      "set_command": "CALCulate<n>:MARKer<m>:X <position>",
+      "query_command": "CALCulate<n>:MARKer<m>:X?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "Hz",
+      "description": "Configure or query marker X position.",
+      "source": "Official R&S FSW family manuals; exact base-manual page pending.",
+      "verification_status": "candidate",
+      "probe_enabled": false,
+      "supported_models": ["FSW"]
+    }
+  ]
+}

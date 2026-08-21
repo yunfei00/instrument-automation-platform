@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "sweep",
+    "status": "mixed"
+  },
+  "commands": [
+    {
+      "id": "sweep.time",
+      "name": "Sweep Time",
+      "category": "sweep",
+      "command": "[SENSe:]SWEep:TIME?",
+      "set_command": "[SENSe:]SWEep:TIME <time>",
+      "query_command": "[SENSe:]SWEep:TIME?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "s",
+      "description": "Configure or query sweep time.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1221,
+      "manual_section": "Sweep Settings",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "sweep.points",
+      "name": "Sweep Points",
+      "category": "sweep",
+      "command": "[SENSe:]SWEep:POINts?",
+      "set_command": "[SENSe:]SWEep:POINts <points>",
+      "query_command": "[SENSe:]SWEep:POINts?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Configure or query the number of sweep points.",
+      "source": "Official R&S FSW family documentation; exact base Spectrum page pending.",
+      "verification_status": "candidate",
+      "probe_enabled": false,
+      "supported_models": ["FSW"]
+    }
+  ]
+}

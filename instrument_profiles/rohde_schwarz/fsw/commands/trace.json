@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "trace",
+    "status": "manual_verified",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "trace.format",
+      "name": "Trace Data Format",
+      "category": "trace",
+      "command": "FORMat[:DATA]?",
+      "set_command": "FORMat[:DATA] <format>[,<bit_length>]",
+      "query_command": "FORMat[:DATA]?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query the data transfer format used for trace data.",
+      "response_notes": "FSW supports ASCII and REAL floating-point transfer formats.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1274,
+      "manual_section": "Trace Data",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "trace.data",
+      "name": "Trace Data",
+      "category": "trace",
+      "command": "TRACe<n>[:DATA]? <trace>",
+      "query_command": "TRACe<n>[:DATA]? <trace>",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "raw",
+      "description": "Read trace measurement data for the selected window and trace.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1274,
+      "manual_section": "Trace Data",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["FSW"],
+      "notes": "Requires explicit window and trace selection. Scenario probe will normally use TRACE1."
+    }
+  ]
+}

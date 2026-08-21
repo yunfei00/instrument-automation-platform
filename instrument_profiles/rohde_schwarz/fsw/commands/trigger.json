@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "trigger",
+    "status": "manual_verified",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "trigger.source",
+      "name": "Trigger Source",
+      "category": "trigger",
+      "command": "TRIGger[:SEQuence]:SOURce?",
+      "set_command": "TRIGger[:SEQuence]:SOURce <source>",
+      "query_command": "TRIGger[:SEQuence]:SOURce?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Configure or query trigger source.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1238,
+      "manual_section": "Trigger Settings",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    }
+  ]
+}

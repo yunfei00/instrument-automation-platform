@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "initiate",
+    "status": "manual_verified",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "initiate.continuous",
+      "name": "Continuous Measurement",
+      "category": "initiate",
+      "command": "INITiate<n>:CONTinuous?",
+      "set_command": "INITiate<n>:CONTinuous <state>",
+      "query_command": "INITiate<n>:CONTinuous?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "boolean",
+      "description": "Configure or query continuous measurement mode.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 921,
+      "manual_section": "Initiating Measurements",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["FSW"],
+      "notes": "Channel/window suffix must be resolved by the FSW-specific probe."
+    },
+    {
+      "id": "initiate.immediate",
+      "name": "Initiate Immediate",
+      "category": "initiate",
+      "command": "INITiate<n>[:IMMediate]",
+      "set_command": "INITiate<n>[:IMMediate]",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Start a measurement immediately.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 922,
+      "manual_section": "Initiating Measurements",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["FSW"],
+      "notes": "Must be tested as a measurement scenario, not as a generic safe probe."
+    }
+  ]
+}

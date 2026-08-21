@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "bandwidth",
+    "status": "manual_verified",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "bandwidth.rbw",
+      "name": "Resolution Bandwidth",
+      "category": "bandwidth",
+      "command": "[SENSe:]BANDwidth[:RESolution]?",
+      "set_command": "[SENSe:]BANDwidth[:RESolution] <bandwidth>",
+      "query_command": "[SENSe:]BANDwidth[:RESolution]?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "Hz",
+      "description": "Configure or query resolution bandwidth.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1214,
+      "manual_section": "Bandwidth Settings",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    },
+    {
+      "id": "bandwidth.vbw",
+      "name": "Video Bandwidth",
+      "category": "bandwidth",
+      "command": "[SENSe:]BANDwidth:VIDeo?",
+      "set_command": "[SENSe:]BANDwidth:VIDeo <bandwidth>",
+      "query_command": "[SENSe:]BANDwidth:VIDeo?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "Hz",
+      "description": "Configure or query video bandwidth.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1217,
+      "manual_section": "Bandwidth Settings",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    }
+  ]
+}

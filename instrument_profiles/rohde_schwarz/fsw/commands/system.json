@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "system",
+    "status": "manual_verified",
+    "manual_id": "fsw_user_manual"
+  },
+  "commands": [
+    {
+      "id": "system.error",
+      "name": "System Error",
+      "category": "system",
+      "command": "SYSTem:ERRor[:NEXT]?",
+      "query_command": "SYSTem:ERRor[:NEXT]?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "Read the oldest entry from the FSW error queue.",
+      "manual_id": "fsw_user_manual",
+      "manual_page": 1471,
+      "manual_section": "System Errors",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["FSW"]
+    }
+  ]
+}

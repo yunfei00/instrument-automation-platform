@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "FSW",
+    "category": "amplitude",
+    "status": "candidate"
+  },
+  "commands": [
+    {
+      "id": "amplitude.reference_level",
+      "name": "Reference Level",
+      "category": "amplitude",
+      "command": "DISPlay[:WINDow<n>]:TRACe<t>:Y[:SCALe]:RLEVel?",
+      "set_command": "DISPlay[:WINDow<n>]:TRACe<t>:Y[:SCALe]:RLEVel <level>",
+      "query_command": "DISPlay[:WINDow<n>]:TRACe<t>:Y[:SCALe]:RLEVel?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dBm",
+      "description": "Configure or query reference level.",
+      "source": "Official R&S FSW family manuals; exact base-manual location pending verification.",
+      "verification_status": "candidate",
+      "probe_enabled": false,
+      "supported_models": ["FSW"],
+      "notes": "Do not mark hardware_verified until tested on the target FSW."
+    }
+  ]
+}
