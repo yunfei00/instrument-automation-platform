@@ -358,12 +358,19 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             self.scpi.query(command)
         )
 
-    def measure_n_pulses(self) -> float:
-        """Query the current negative pulse count."""
+    def measure_n_pulses(
+        self,
+        source: str | None = None,
+    ) -> float:
+        """Query the negative pulse count."""
+
+        command = ":MEASure:NPUlSes?"
+
+        if source is not None:
+            command += f" {source}"
+
         return float(
-            self.scpi.query(
-                ":MEASure:NPUlSes?"
-            )
+            self.scpi.query(command)
         )
 
     def measure_frequency(self) -> float:

@@ -203,14 +203,16 @@ def test_delay_and_n_pulses_measurements():
     )
 
     pulse_count = (
-        driver.measure_n_pulses()
+        driver.measure_n_pulses(
+            "CHANnel1"
+        )
     )
 
     assert pulse_count == 12.0
 
     assert (
         transport.writes[-1]
-        == ":MEASure:NPUlSes?"
+        == ":MEASure:NPUlSes? CHANnel1"
     )
 
 
