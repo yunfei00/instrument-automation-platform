@@ -175,6 +175,38 @@ Conclusion:
 
 ABORt is suitable as the FSW cancellation primitive.
 
+## Record / Replay
+
+PASS
+
+A real FSW session was captured using RecordingTransport and then
+replayed completely offline using ReplayTransport.
+
+The recorded session included:
+
+- VISA connection
+- instrument identification
+- frequency and bandwidth queries
+- trigger and continuous-mode queries
+- one real ASCII spectrum trace acquisition
+- SCPI error queue query
+- restoration of the original instrument state
+- clean disconnect
+
+Observed:
+
+- real hardware recording: PASS
+- offline replay: PASS
+- replay result matched the real hardware result exactly
+- remaining replay events: 0
+- trigger state restored after the hardware session
+- continuous mode restored after the hardware session
+
+Conclusion:
+
+The FSW driver can use recorded real-hardware sessions for deterministic
+offline regression testing without requiring access to the instrument.
+
 ## Qualification summary
 
 Hardware verified:
@@ -192,10 +224,9 @@ Hardware verified:
 - control.abort: PASS
 - connection.disconnect: PASS
 - connection.reconnect: PASS
+- record_replay: PASS
 
-Not yet hardware-qualified:
-
-- record_replay
+All mandatory qualification checks are hardware-verified.
 
 Optional / not evaluated:
 
@@ -203,9 +234,13 @@ Optional / not evaluated:
 
 ## Overall status
 
-FSW-26 firmware 6.00 core spectrum acquisition is hardware verified.
+FSW-26 firmware 6.00 is qualified for the current core spectrum
+acquisition feature set.
 
-Known issue:
+All mandatory qualification requirements have passed on real hardware
+or, for Record/Replay, using a session recorded from that real hardware.
+
+Known limitation:
 
 Long blocking *OPC? waits can delay communication-loss detection up
 to the configured VISA timeout. This must be addressed before the
