@@ -163,3 +163,94 @@ def test_bounded_wait_rejects_invalid_poll_interval():
             1.0,
             poll_interval_s=0,
         )
+
+
+def test_bounded_wait_aborts_on_cancel():
+    from instrument_core import (
+        OperationCanceledError,
+    )
+
+    driver, transport = make_driver()
+
+    # Clear stale ESR.
+    transport.queue_response(
+        "0\n"
+    )
+
+    # First poll is still waiting.
+    transport.queue_response(
+        "0\n"
+    )
+
+    state = {
+        "checks": 0,
+    }
+
+    def cancel_check():
+        state["checks"] += 1
+
+        return (
+            state["checks"]
+            >= 2
+        )
+
+    with pytest.raises(
+        OperationCanceledError,
+        match="canceled",
+    ):
+        driver.acquire_trace_ascii(
+            timeout_s=1.0,
+            poll_interval_s=0.001,
+            cancel_check=cancel_check,
+        )
+
+    assert state["checks"] >= 2
+
+    assert "*OPC" in transport.writes
+
+    assert "ABORt" in transport.writes
+
+    assert "*OPC?" not in transport.writes
+
+
+def test_cancel_without_timeout_uses_bounded_polling():
+    from instrument_core import (
+        OperationCanceledError,
+    )
+
+    driver, transport = make_driver()
+
+    # Clear stale ESR.
+    transport.queue_response(
+        "0\n"
+    )
+
+    # First poll: measurement still running.
+    transport.queue_response(
+        "0\n"
+    )
+
+    state = {
+        "checks": 0,
+    }
+
+    def cancel_check():
+        state["checks"] += 1
+
+        return (
+            state["checks"]
+            >= 2
+        )
+
+    with pytest.raises(
+        OperationCanceledError,
+        match="canceled",
+    ):
+        driver.acquire_trace_ascii(
+            poll_interval_s=0.001,
+            cancel_check=cancel_check,
+        )
+
+    assert "*OPC" in transport.writes
+    assert "*OPC?" not in transport.writes
+    assert "ABORt" in transport.writes

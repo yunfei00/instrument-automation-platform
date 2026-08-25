@@ -1,5 +1,6 @@
 """Rohde & Schwarz FSW Signal and Spectrum Analyzer driver."""
 
+from collections.abc import Callable
 from time import monotonic, sleep
 
 from instrument_core import (
@@ -7,6 +8,7 @@ from instrument_core import (
     CapabilitySet,
     InstrumentDriver,
     InstrumentIdentity,
+    OperationCanceledError,
     TriggerTimeoutError,
 )
 from instrument_scpi import SCPIClient
@@ -288,9 +290,10 @@ class RohdeSchwarzFSWDriver(
 
     def wait_operation_complete_bounded(
         self,
-        timeout_s: float,
+        timeout_s: float | None,
         *,
         poll_interval_s: float = 0.05,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> None:
         """
         Wait for an overlapped operation without blocking on *OPC?.
@@ -302,7 +305,10 @@ class RohdeSchwarzFSWDriver(
         TriggerTimeoutError is raised.
         """
 
-        if timeout_s <= 0:
+        if (
+            timeout_s is not None
+            and timeout_s <= 0
+        ):
             raise ValueError(
                 "timeout_s must be greater than 0"
             )
@@ -320,12 +326,26 @@ class RohdeSchwarzFSWDriver(
         )
 
         deadline = (
-            monotonic()
-            + timeout_s
+            None
+            if timeout_s is None
+            else monotonic() + timeout_s
         )
 
         while True:
-            if monotonic() >= deadline:
+            if (
+                cancel_check is not None
+                and cancel_check()
+            ):
+                self.abort()
+
+                raise OperationCanceledError(
+                    "FSW measurement canceled"
+                )
+
+            if (
+                deadline is not None
+                and monotonic() >= deadline
+            ):
                 self.abort()
 
                 raise TriggerTimeoutError(
@@ -340,6 +360,12 @@ class RohdeSchwarzFSWDriver(
             # IEEE 488.2 ESR bit 0 = Operation Complete.
             if event_status & 0x01:
                 return
+
+            if deadline is None:
+                sleep(
+                    poll_interval_s
+                )
+                continue
 
             remaining_s = (
                 deadline
@@ -393,6 +419,7 @@ class RohdeSchwarzFSWDriver(
         trace: int = 1,
         timeout_s: float | None = None,
         poll_interval_s: float = 0.05,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> SpectrumTrace:
         """
         Perform one measurement and read TRACE data.
@@ -413,7 +440,10 @@ class RohdeSchwarzFSWDriver(
             channel=channel,
         )
 
-        if timeout_s is None:
+        if (
+            timeout_s is None
+            and cancel_check is None
+        ):
             if not self.wait_operation_complete():
                 raise RuntimeError(
                     "FSW measurement did not complete"
@@ -422,6 +452,7 @@ class RohdeSchwarzFSWDriver(
             self.wait_operation_complete_bounded(
                 timeout_s,
                 poll_interval_s=poll_interval_s,
+                cancel_check=cancel_check,
             )
 
         start_hz = (

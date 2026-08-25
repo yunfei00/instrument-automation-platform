@@ -45,6 +45,10 @@ class InstrumentBusyError(InstrumentError):
     """Instrument is temporarily busy."""
 
 
+class OperationCanceledError(InstrumentError):
+    """Instrument operation was canceled by the caller."""
+
+
 class TriggerTimeoutError(InstrumentTimeoutError):
     """Instrument did not complete trigger/acquisition in time."""
 
