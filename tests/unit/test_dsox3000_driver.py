@@ -1,4 +1,5 @@
 import sys
+import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -175,6 +176,141 @@ def main():
     print(
         "DSOX3000 driver self-test PASS"
     )
+
+
+def test_delay_and_n_pulses_measurements():
+    transport = MockTransport()
+
+    driver = KeysightDSOX3000Driver(
+        transport
+    )
+
+    transport.queue_response(
+        "1.250000E-06\n"
+    )
+
+    delay = driver.measure_delay()
+
+    assert delay == 1.25e-6
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:DELay?"
+    )
+
+    transport.queue_response(
+        "12\n"
+    )
+
+    pulse_count = (
+        driver.measure_n_pulses()
+    )
+
+    assert pulse_count == 12.0
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:NPUlSes?"
+    )
+
+
+def test_define_delay_command():
+    transport = MockTransport()
+
+    driver = KeysightDSOX3000Driver(
+        transport
+    )
+
+    driver.define_delay(
+        "+1",
+        "-1",
+    )
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:DEFine DELay,+1,-1"
+    )
+
+    driver.define_delay(
+        "+2",
+        "+3",
+        "CHANnel1",
+    )
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:DEFine DELay,+2,+3,CHANnel1"
+    )
+
+
+def test_measure_delay_with_sources():
+    transport = MockTransport()
+
+    driver = KeysightDSOX3000Driver(
+        transport
+    )
+
+    transport.queue_response(
+        "2.500000E-06\n"
+    )
+
+    value = driver.measure_delay(
+        "CHANnel1",
+        "CHANnel2",
+    )
+
+    assert value == 2.5e-6
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:DELay? CHANnel1,CHANnel2"
+    )
+
+
+def test_delay_validation():
+    transport = MockTransport()
+
+    driver = KeysightDSOX3000Driver(
+        transport
+    )
+
+    driver.define_delay(
+        "1",
+        "2",
+    )
+
+    assert (
+        transport.writes[-1]
+        == ":MEASure:DEFine DELay,1,2"
+    )
+
+    invalid_edges = (
+        "",
+        "+0",
+        "-0",
+        "+abc",
+    )
+
+    for edge in invalid_edges:
+        with pytest.raises(ValueError):
+            driver.define_delay(
+                edge,
+                "+1",
+            )
+
+    with pytest.raises(ValueError):
+        driver.define_delay(
+            "+1",
+            "BAD",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="source1 is required",
+    ):
+        driver.measure_delay(
+            source2="CHANnel2",
+        )
 
 
 if __name__ == "__main__":

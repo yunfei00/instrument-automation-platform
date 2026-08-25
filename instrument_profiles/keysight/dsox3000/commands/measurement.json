@@ -9,6 +9,27 @@
   },
   "commands": [
     {
+      "id": "measure.define_delay",
+      "name": "Define Delay Measurement",
+      "category": "measurement",
+      "command": ":MEASure:DEFine",
+      "set_command": ":MEASure:DEFine DELay,<edge1>,<edge2>[,<source>]",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Configure the edge polarity and occurrence used by DELAY measurements.",
+      "response_notes": "The edge specification accepts an optional slope sign followed by a positive occurrence number, for example 1, +1, -1 or +2.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 438,
+      "manual_section": "MEASure Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "State-changing configuration command. Do not execute in the generic safe probe."
+    },
+    {
       "id": "measure.delay",
       "name": "Delay Measurement",
       "category": "measurement",
@@ -25,8 +46,32 @@
       "manual_section": "MEASure Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": ["DSO-X 3034A"],
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
       "notes": "Real no-signal and invalid-measurement responses must be recorded during hardware qualification."
+    },
+    {
+      "id": "measure.n_pulses",
+      "name": "Negative Pulse Count",
+      "category": "measurement",
+      "command": ":MEASure:NPUlSes?",
+      "query_command": ":MEASure:NPUlSes?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "count",
+      "description": "Query the on-screen falling pulse count.",
+      "response_notes": "Manual defines the returned falling pulse count in NR3 format.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 454,
+      "manual_section": "MEASure Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "Real signal-dependent behavior must be recorded during hardware qualification."
     },
     {
       "id": "measure.frequency",
@@ -44,7 +89,9 @@
       "manual_section": "MEASure Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": ["DSO-X 3034A"]
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
     },
     {
       "id": "measure.period",
@@ -62,7 +109,9 @@
       "manual_section": "MEASure Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": ["DSO-X 3034A"]
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
     },
     {
       "id": "measure.vpp",
@@ -80,7 +129,9 @@
       "manual_section": "MEASure Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": ["DSO-X 3034A"]
+      "supported_models": [
+        "DSO-X 3034A"
+      ]
     }
   ]
 }

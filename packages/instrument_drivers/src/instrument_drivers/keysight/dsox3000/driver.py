@@ -286,6 +286,86 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             f":DIGitize CHANnel{channel}"
         )
 
+    def define_delay(
+        self,
+        edge1: str,
+        edge2: str,
+        source: str | None = None,
+    ) -> None:
+        """Configure DELAY edge polarity and occurrence."""
+
+        def validate_edge(edge: str) -> None:
+            if not edge:
+                raise ValueError(
+                    "DELAY edge specification must not be empty"
+                )
+
+            occurrence_text = edge
+
+            if edge[0] in {"+", "-"}:
+                occurrence_text = edge[1:]
+
+            if not occurrence_text:
+                raise ValueError(
+                    f"Invalid DELAY edge specification: {edge}"
+                )
+
+            try:
+                occurrence = int(occurrence_text)
+            except ValueError as exc:
+                raise ValueError(
+                    f"Invalid DELAY edge occurrence: {edge}"
+                ) from exc
+
+            if occurrence <= 0:
+                raise ValueError(
+                    "DELAY edge occurrence must be greater than 0"
+                )
+
+        validate_edge(edge1)
+        validate_edge(edge2)
+
+        command = (
+            f":MEASure:DEFine DELay,{edge1},{edge2}"
+        )
+
+        if source is not None:
+            command += f",{source}"
+
+        self.scpi.write(command)
+
+    def measure_delay(
+        self,
+        source1: str | None = None,
+        source2: str | None = None,
+    ) -> float:
+        """Query DELAY measurement in seconds."""
+
+        if source2 is not None and source1 is None:
+            raise ValueError(
+                "source1 is required when source2 is provided"
+            )
+
+        command = ":MEASure:DELay?"
+
+        if source1 is not None:
+            command += f" {source1}"
+
+        if source2 is not None:
+            command += f",{source2}"
+
+        return float(
+            self.scpi.query(command)
+        )
+
+    def measure_n_pulses(self) -> float:
+        """Query the current negative pulse count."""
+        return float(
+            self.scpi.query(
+                ":MEASure:NPUlSes?"
+            )
+        )
+
     def measure_frequency(self) -> float:
         return float(
             self.scpi.query(
