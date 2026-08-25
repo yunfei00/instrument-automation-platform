@@ -1,10 +1,13 @@
 """Rohde & Schwarz FSW Signal and Spectrum Analyzer driver."""
 
+from time import monotonic, sleep
+
 from instrument_core import (
     Capability,
     CapabilitySet,
     InstrumentDriver,
     InstrumentIdentity,
+    TriggerTimeoutError,
 )
 from instrument_scpi import SCPIClient
 
@@ -272,6 +275,87 @@ class RohdeSchwarzFSWDriver(
             self.scpi.wait_operation_complete()
         )
 
+    def get_event_status_register(
+        self,
+    ) -> int:
+        """Read and clear the IEEE 488.2 Event Status Register."""
+
+        return int(
+            self.scpi.query(
+                "*ESR?"
+            )
+        )
+
+    def wait_operation_complete_bounded(
+        self,
+        timeout_s: float,
+        *,
+        poll_interval_s: float = 0.05,
+    ) -> None:
+        """
+        Wait for an overlapped operation without blocking on *OPC?.
+
+        *OPC arms the operation-complete bit in ESR.
+        *ESR? is then polled until bit 0 is set.
+
+        On timeout the active measurement is aborted and
+        TriggerTimeoutError is raised.
+        """
+
+        if timeout_s <= 0:
+            raise ValueError(
+                "timeout_s must be greater than 0"
+            )
+
+        if poll_interval_s <= 0:
+            raise ValueError(
+                "poll_interval_s must be greater than 0"
+            )
+
+        # Clear a stale OPC bit from an earlier operation.
+        self.get_event_status_register()
+
+        self.scpi.write(
+            "*OPC"
+        )
+
+        deadline = (
+            monotonic()
+            + timeout_s
+        )
+
+        while True:
+            if monotonic() >= deadline:
+                self.abort()
+
+                raise TriggerTimeoutError(
+                    "FSW measurement did not complete "
+                    f"within {timeout_s}s"
+                )
+
+            event_status = (
+                self.get_event_status_register()
+            )
+
+            # IEEE 488.2 ESR bit 0 = Operation Complete.
+            if event_status & 0x01:
+                return
+
+            remaining_s = (
+                deadline
+                - monotonic()
+            )
+
+            if remaining_s <= 0:
+                continue
+
+            sleep(
+                min(
+                    poll_interval_s,
+                    remaining_s,
+                )
+            )
+
     def get_trace_format(
         self,
     ) -> str:
@@ -307,6 +391,8 @@ class RohdeSchwarzFSWDriver(
         channel: int = 1,
         window: int = 1,
         trace: int = 1,
+        timeout_s: float | None = None,
+        poll_interval_s: float = 0.05,
     ) -> SpectrumTrace:
         """
         Perform one measurement and read TRACE data.
@@ -327,9 +413,15 @@ class RohdeSchwarzFSWDriver(
             channel=channel,
         )
 
-        if not self.wait_operation_complete():
-            raise RuntimeError(
-                "FSW measurement did not complete"
+        if timeout_s is None:
+            if not self.wait_operation_complete():
+                raise RuntimeError(
+                    "FSW measurement did not complete"
+                )
+        else:
+            self.wait_operation_complete_bounded(
+                timeout_s,
+                poll_interval_s=poll_interval_s,
             )
 
         start_hz = (

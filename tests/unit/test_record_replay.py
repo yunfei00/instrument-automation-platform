@@ -147,7 +147,7 @@ def replay_session(
     replay.assert_complete()
 
 
-def test_mismatch(
+def assert_mismatch(
     path: Path,
 ):
     replay = ReplayTransport(
@@ -166,6 +166,23 @@ def test_mismatch(
         raise AssertionError(
             "Replay mismatch was not detected"
         )
+
+
+def test_mismatch(
+    tmp_path: Path,
+):
+    session_path = (
+        tmp_path
+        / "session.jsonl"
+    )
+
+    create_session(
+        session_path
+    )
+
+    assert_mismatch(
+        session_path
+    )
 
 
 def main():
@@ -192,7 +209,7 @@ def main():
             session_path
         )
 
-        test_mismatch(
+        assert_mismatch(
             session_path
         )
 
