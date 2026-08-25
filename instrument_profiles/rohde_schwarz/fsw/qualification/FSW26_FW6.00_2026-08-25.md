@@ -175,6 +175,109 @@ Conclusion:
 
 ABORt is suitable as the FSW cancellation primitive.
 
+## Bounded measurement completion
+
+PASS - HARDWARE VERIFIED
+
+The original acquisition path used a blocking `*OPC?` query.
+During an EXT-trigger wait combined with a long VISA timeout,
+a communication failure previously surfaced only after
+approximately 121.124 s.
+
+A bounded completion path was implemented using:
+
+- `*OPC`
+- periodic `*ESR?` polling
+- configurable overall timeout
+- `ABORt` on timeout
+
+### Timeout verification
+
+Test condition:
+
+- trigger source: EXT
+- configured measurement timeout: 3.0 s
+
+Observed:
+
+- timeout surfaced after: 3.017329 s
+- ESR poll count: 31
+- maximum ESR query time: 0.005012 s
+- average ESR query time: 0.002678 s
+- exception: TriggerTimeoutError
+- SCPI error queue: empty
+- original trigger state restored
+- continuous mode restored to ON
+
+Result:
+
+BOUNDED TIMEOUT PASS
+
+The ESR query itself remained fast and did not become
+a replacement blocking point.
+
+### Normal acquisition comparison
+
+The legacy blocking path and the new bounded path were
+compared under the same instrument configuration.
+
+Legacy `*OPC?` path:
+
+- 2.994684 s
+- 2.984877 s
+- 2.967219 s
+
+Bounded `*OPC` + `*ESR?` path:
+
+- 2.999942 s
+- 2.987340 s
+- 2.990177 s
+
+Observed:
+
+- 1001 trace points
+- SCPI error queue empty
+- bounded path introduced no meaningful acquisition latency
+
+Conclusion:
+
+The long blocking measurement-completion problem is resolved
+for bounded commercial acquisition.
+
+## Runtime cancellation
+
+PASS - HARDWARE VERIFIED
+
+The bounded acquisition path was extended with a cooperative
+caller cancellation callback.
+
+Test condition:
+
+- trigger source: EXT
+- measurement actively waiting for trigger
+- cancellation requested 1.0 s after acquisition start
+
+Observed:
+
+- exception: OperationCanceledError
+- total acquisition time: 1.049991 s
+- cancellation request to exception: 0.049610 s
+- `ABORt` used to stop the active measurement
+- SCPI error queue: empty
+- trigger restored to IMM
+- continuous mode restored to ON
+
+Result:
+
+RUNTIME CANCEL PASS
+
+Conclusion:
+
+An active FSW measurement can be canceled while waiting for
+a trigger. Cancellation is detected within approximately one
+polling interval and the measurement is terminated using
+`ABORt`.
+
 ## Record / Replay
 
 PASS
@@ -222,6 +325,8 @@ Hardware verified:
 - trace.integrity: PASS
 - error.queue: PASS
 - control.abort: PASS
+- control.bounded_wait: PASS
+- control.runtime_cancel: PASS
 - connection.disconnect: PASS
 - connection.reconnect: PASS
 - record_replay: PASS
@@ -240,8 +345,24 @@ acquisition feature set.
 All mandatory qualification requirements have passed on real hardware
 or, for Record/Replay, using a session recorded from that real hardware.
 
-Known limitation:
+Resolved engineering issue:
 
-Long blocking *OPC? waits can delay communication-loss detection up
-to the configured VISA timeout. This must be addressed before the
-commercial recovery mechanism is considered complete.
+The commercial bounded acquisition path no longer relies on a long
+blocking `*OPC?` wait. It uses `*OPC` + `*ESR?` polling with an
+overall timeout and cooperative cancellation, and issues `ABORt`
+when the operation times out or is canceled.
+
+Hardware verification confirmed:
+
+- bounded timeout behavior
+- fast ESR polling
+- normal trace acquisition
+- runtime cancellation
+- clean SCPI error queue
+- restoration of instrument state
+
+Remaining Phase 7 / Phase 8 verification:
+
+Physical network loss while the new bounded polling path is active
+should be re-tested to quantify communication-loss detection latency
+with the new implementation.
