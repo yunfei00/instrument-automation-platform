@@ -130,6 +130,34 @@ class VisaTransport(Transport):
         except Exception as exc:
             raise self._translate_error(exc) from exc
 
+    def query_ieee_block_bytes(
+        self,
+        command: str,
+        *,
+        expect_termination: bool = False,
+    ) -> bytes:
+        """Query an IEEE 488.2 definite-length block and return its payload.
+
+        PyVISA reads the block length from the IEEE header and stops after the
+        declared payload length. ``expect_termination=False`` is intentional:
+        some instruments do not append a terminator after a binary block, and
+        waiting for one can turn an otherwise complete transfer into a timeout.
+        """
+
+        resource = self._require_resource()
+
+        try:
+            values = resource.query_binary_values(
+                command,
+                datatype="B",
+                container=bytes,
+                header_fmt="ieee",
+                expect_termination=expect_termination,
+            )
+            return bytes(values)
+        except Exception as exc:
+            raise self._translate_error(exc) from exc
+
     def clear(self) -> None:
         resource = self._require_resource()
 
