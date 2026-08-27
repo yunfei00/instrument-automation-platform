@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import faulthandler
+from importlib import metadata
 from pathlib import Path
+import platform
 import sys
 
 
@@ -29,6 +31,27 @@ for package in [
         sys.path.insert(0, str(source))
 
 
+def _package_version(name: str) -> str:
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return "not installed"
+
+
+def print_diagnostics() -> None:
+    """Print environment details without opening an instrument session."""
+
+    print("Instrument Lab diagnostics")
+    print(f"Python       : {sys.version.split()[0]}")
+    print(f"Executable   : {sys.executable}")
+    print(f"Platform     : {platform.platform()}")
+    print(f"Machine      : {platform.machine()}")
+    print(f"PySide6      : {_package_version('PySide6')}")
+    print(f"PyVISA       : {_package_version('PyVISA')}")
+    print(f"PyVISA-py    : {_package_version('PyVISA-py')}")
+    print(f"Repo root    : {ROOT}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Instrument Automation Platform engineering GUI"
@@ -38,7 +61,16 @@ def main() -> int:
         default=str(ROOT),
         help="Repository root containing instrument_profiles",
     )
+    parser.add_argument(
+        "--diagnostics",
+        action="store_true",
+        help="Print Python/Qt/VISA package versions and exit",
+    )
     args = parser.parse_args()
+
+    if args.diagnostics:
+        print_diagnostics()
+        return 0
 
     try:
         from instrument_lab.gui_stable import run_gui
