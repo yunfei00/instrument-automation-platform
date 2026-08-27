@@ -104,6 +104,26 @@ def test_extract_and_render_scpi_placeholders():
         )
 
 
+def test_repository_instrument_profiles_are_discoverable():
+    profiles = discover_instrument_profiles(ROOT)
+    by_key = {
+        profile.key: profile
+        for profile in profiles
+    }
+
+    expected = {
+        "keysight/dsox3000",
+        "rohde_schwarz/fsw",
+        "rohde_schwarz/cmw500",
+    }
+
+    assert expected.issubset(by_key)
+
+    for key in expected:
+        assert by_key[key].command_count > 0
+        assert by_key[key].categories
+
+
 def test_discover_profile_and_nested_catalog(tmp_path: Path):
     profile_dir = (
         tmp_path
