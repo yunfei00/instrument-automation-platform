@@ -11,7 +11,11 @@ The first manually verified command groups are:
 - acquisition
 - waveform
 
-Hardware verification has not started yet.
+Hardware verification has started on the target DSO-X 3034A.
+
+Hardware-verified front-panel mapping:
+
+- Horizontal `Push to Zero` -> `:TIMebase:POSition 0` (verified 2026-08-27)
 
 ## Front-Panel "Push to Zero" Mapping
 
@@ -41,6 +45,10 @@ Driver helper:
 driver.zero_timebase_position()
 ```
 
+Hardware verification status: **PASS / hardware_verified**.
+
+On 2026-08-27, the target DSO-X 3034A was exercised on real hardware. The operator confirmed that pressing the Horizontal `Push to Zero` control and sending `:TIMebase:POSition 0` produced the expected equivalent zero-position behavior. Exact serial number, firmware revision, and raw numeric responses were not captured in this verification note and must not be inferred.
+
 ### Vertical channel position knob
 
 In the Vertical control section, pressing a channel position knob resets that channel's vertical offset to zero.
@@ -63,6 +71,8 @@ Driver helper:
 driver.zero_channel_offset(1)
 ```
 
+Hardware verification status: **pending**. This mapping remains `manual_verified` until the corresponding Vertical channel position knob is explicitly checked on real hardware.
+
 Do not confuse either control with the Trigger Level knob. The trigger-level knob is labeled "Push for 50%" and performs a different operation.
 
 ### Hardware verification procedure
@@ -75,7 +85,7 @@ For each Push-to-Zero mapping:
 4. Set a clearly non-zero value again.
 5. Send the SCPI zero command and query again.
 6. Confirm the front-panel result and SCPI result are operationally equivalent.
-7. Record model, serial number, firmware, raw responses, elapsed time, errors, and timestamp.
+7. Record model, serial number, firmware, raw responses, elapsed time, errors, and timestamp when available.
 
 ## DIGitize
 
@@ -110,9 +120,13 @@ The first driver implementation should follow this logical sequence:
 
 ## Hardware Verification
 
-Pending.
+Started.
 
-Real hardware qualification must record:
+Verified so far:
+
+- `timebase.push_to_zero`: PASS on real DSO-X 3034A hardware (2026-08-27).
+
+Real hardware qualification records should capture, when available:
 
 - instrument model
 - serial number
