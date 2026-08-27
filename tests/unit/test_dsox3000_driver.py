@@ -359,5 +359,25 @@ def test_delay_validation():
         )
 
 
+def test_set_acquisition_type_commands_and_validation():
+    transport = MockTransport()
+    driver = KeysightDSOX3000Driver(transport)
+
+    driver.set_acquisition_type("NORMal")
+    assert transport.writes[-1] == ":ACQuire:TYPE NORMal"
+
+    driver.set_acquisition_type("AVERage")
+    assert transport.writes[-1] == ":ACQuire:TYPE AVERage"
+
+    driver.set_acquisition_type("HRESolution")
+    assert transport.writes[-1] == ":ACQuire:TYPE HRESolution"
+
+    driver.set_acquisition_type("PEAK")
+    assert transport.writes[-1] == ":ACQuire:TYPE PEAK"
+
+    with pytest.raises(ValueError):
+        driver.set_acquisition_type("INVALID")
+
+
 if __name__ == "__main__":
     main()
