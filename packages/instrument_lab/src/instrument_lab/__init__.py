@@ -4,8 +4,10 @@ from .gui_backend import (
     InstrumentCommandEntry,
     InstrumentProfile,
     discover_instrument_profiles,
+    extract_placeholders,
     find_repo_root,
     normalize_visa_resource,
+    render_command_template,
     save_candidate_command,
 )
 from .models import (
@@ -32,10 +34,12 @@ __all__ = [
     "SafetyLevel",
     "VerificationStatus",
     "discover_instrument_profiles",
+    "extract_placeholders",
     "find_repo_root",
     "generate_markdown",
     "normalize_visa_resource",
     "parse_response",
+    "render_command_template",
     "save_candidate_command",
     "save_probe_results",
 ]
