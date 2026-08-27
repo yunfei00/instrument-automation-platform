@@ -4,8 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import faulthandler
 from pathlib import Path
 import sys
+
+
+# Native Qt/VISA faults do not become normal Python exceptions.  Keep Python
+# fatal-signal diagnostics enabled so a terminal run can still provide useful
+# thread stacks when a vendor library crashes the process.
+faulthandler.enable(all_threads=True)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,7 +41,7 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        from instrument_lab.gui import run_gui
+        from instrument_lab.gui_stable import run_gui
     except ModuleNotFoundError as exc:
         if exc.name == "PySide6":
             print(
