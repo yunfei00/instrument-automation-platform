@@ -17,6 +17,10 @@ Hardware-verified front-panel mapping:
 
 - Horizontal `Push to Zero` -> `:TIMebase:POSition 0` (verified 2026-08-27)
 
+Manual-verified front-panel mapping pending hardware confirmation:
+
+- Horizontal scale `Push for Fine` -> `:TIMebase:VERNier ON|OFF`; physical press toggles the state.
+
 ## Front-Panel "Push to Zero" Mapping
 
 The DSO-X 3034A has more than one front-panel control that can be described as "Push to Zero". The control must be identified by panel section before mapping it to SCPI.
@@ -87,6 +91,41 @@ For each Push-to-Zero mapping:
 6. Confirm the front-panel result and SCPI result are operationally equivalent.
 7. Record model, serial number, firmware, raw responses, elapsed time, errors, and timestamp when available.
 
+## Front-Panel "Push for Fine" Mapping
+
+The large Horizontal scale/time-per-division knob is labeled `Push for Fine`. Pressing it toggles the horizontal scale adjustment between normal/coarse steps and vernier/fine steps.
+
+SCPI state control:
+
+```text
+:TIMebase:VERNier ON
+:TIMebase:VERNier OFF
+```
+
+Verification query:
+
+```text
+:TIMebase:VERNier?
+```
+
+The query returns `1` when fine/vernier adjustment is enabled and `0` when it is disabled.
+
+There is no separate documented SCPI `TOGGLE` command. To emulate one physical press remotely:
+
+1. Query `:TIMebase:VERNier?`.
+2. If the result is `0`, send `:TIMebase:VERNier ON`.
+3. If the result is `1`, send `:TIMebase:VERNier OFF`.
+
+Hardware verification status: **pending / manual_verified**.
+
+Recommended real-hardware check:
+
+1. Query `:TIMebase:VERNier?` and record the state.
+2. Press the Horizontal `Push for Fine` knob once.
+3. Query again and confirm the state toggled.
+4. Send the opposite state through SCPI and confirm the front-panel fine/coarse behavior changes equivalently.
+5. Query `:SYSTem:ERRor?` and confirm no command error.
+
 ## DIGitize
 
 The Programmer's Guide describes DIGitize as a specialized RUN command.
@@ -106,17 +145,24 @@ Important behavior:
 
 ## Waveform
 
-The first driver implementation should follow this logical sequence:
+The Programmer's Guide requires `:TIMebase:MODE MAIN` for `:DIGitize` and `:WAVeform` subsystem operations. ROLL, XY, or WINDow/zoom mode can produce a settings conflict.
 
-1. Configure acquisition.
-2. Configure waveform points mode.
+Changing oscilloscope or waveform configuration can clear waveform buffers. A fresh acquisition should therefore be captured before reading waveform data.
+
+Recommended DSO-X waveform sequence:
+
+1. `:TIMebase:MODE MAIN`
+2. Configure acquisition as required.
 3. Select waveform source.
 4. Select waveform format.
-5. Acquire data.
-6. Query waveform preamble.
-7. Read waveform data.
-8. Convert raw samples using preamble metadata.
-9. Validate point count and payload length.
+5. Select waveform transfer points.
+6. `:DIGitize <source>` to acquire fresh data.
+7. Query waveform preamble.
+8. Immediately read `:WAVeform:DATA?` as an IEEE 488.2 definite-length binary block.
+9. Convert raw samples using preamble metadata.
+10. Validate point count and payload length.
+
+For VISA binary transfer, prefer a length-aware IEEE block reader. Do not rely on a generic raw read waiting for an additional message terminator after the declared payload; some instrument/backend combinations can otherwise time out after the complete payload has already been received.
 
 ## Hardware Verification
 
@@ -125,6 +171,11 @@ Started.
 Verified so far:
 
 - `timebase.push_to_zero`: PASS on real DSO-X 3034A hardware (2026-08-27).
+
+Pending:
+
+- `timebase.push_for_fine`
+- `waveform.binary` end-to-end fresh-acquisition transfer
 
 Real hardware qualification records should capture, when available:
 
