@@ -52,6 +52,13 @@
       "description": "Verify the Horizontal position/delay-knob Push to Zero is operationally equivalent to :TIMebase:POSition 0."
     },
     {
+      "id": "timebase.push_for_fine",
+      "name": "Horizontal Push for Fine / Vernier Equivalence",
+      "category": "timebase",
+      "mandatory": false,
+      "description": "Verify pressing the horizontal scale knob toggles the same fine/coarse state reported by :TIMebase:VERNier? and controlled by :TIMebase:VERNier ON|OFF."
+    },
+    {
       "id": "trigger.basic",
       "name": "Trigger Query",
       "category": "trigger",
@@ -74,7 +81,8 @@
       "id": "waveform.binary",
       "name": "Binary Waveform Acquisition",
       "category": "waveform",
-      "mandatory": true
+      "mandatory": true,
+      "description": "Validate binary waveform transfer using MAIN timebase mode, a fresh DIGitize acquisition, configured waveform source/format/points, and IEEE 488.2 definite-length block reading."
     },
     {
       "id": "waveform.point_integrity",
