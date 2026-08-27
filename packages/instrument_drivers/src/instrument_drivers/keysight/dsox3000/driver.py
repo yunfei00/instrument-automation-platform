@@ -142,6 +142,28 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             )
         )
 
+    def set_channel_offset(
+        self,
+        channel: int,
+        offset: float,
+    ) -> None:
+        self._validate_channel(channel)
+
+        self.scpi.write(
+            f":CHANnel{channel}:OFFSet {offset}"
+        )
+
+    def zero_channel_offset(
+        self,
+        channel: int,
+    ) -> None:
+        """Equivalent to pressing the channel Position Push to Zero knob."""
+
+        self._validate_channel(channel)
+        self.scpi.write(
+            f":CHANnel{channel}:OFFSet 0"
+        )
+
     def get_timebase_scale(self) -> float:
         return float(
             self.scpi.query(
@@ -162,6 +184,21 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             self.scpi.query(
                 ":TIMebase:POSition?"
             )
+        )
+
+    def set_timebase_position(
+        self,
+        position: float,
+    ) -> None:
+        self.scpi.write(
+            f":TIMebase:POSition {position}"
+        )
+
+    def zero_timebase_position(self) -> None:
+        """Equivalent to pressing Horizontal Position Push to Zero."""
+
+        self.scpi.write(
+            ":TIMebase:POSition 0"
         )
 
     def get_trigger_mode(self) -> str:
