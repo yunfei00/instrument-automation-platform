@@ -4,7 +4,7 @@ Instrument Lab GUI is the generic engineering/debugging workbench for the Instru
 
 ## Current Status
 
-Phase 1 is implemented with the first Phase 2 authoring increment.
+Phase 1 is implemented. Phase 2 is partially implemented with automatic placeholder parameters and candidate-command authoring.
 
 Available now:
 
@@ -16,16 +16,19 @@ Available now:
 - connect/disconnect
 - automatic `*IDN?`
 - baseline command browser and filter
-- query/write execution with editable SCPI text
+- automatic parameter editors for placeholders such as `<n>`, `<i>` and `<scale>`
+- query/write execution using rendered SCPI templates
 - safety confirmation for disruptive/destructive catalog commands
 - raw SCPI query/write console
 - response and elapsed-time display
 - session log
 - save raw SCPI as an unverified candidate command
+- duplicate command-id protection for candidates
+- headless backend tests and GUI syntax compilation in GitHub Actions
 
 Not implemented yet:
 
-- automatic placeholder parameter widgets
+- candidate-to-verified catalog promotion/diff workflow
 - session JSON/CSV export
 - automatic error-queue checking
 - qualification execution UI
@@ -98,19 +101,26 @@ Selecting a command shows:
 - query template
 - set/action template
 
-Phase 1 keeps command text editable. Replace placeholders before execution, for example:
+Placeholders are detected automatically. For example, selecting:
 
 ```text
-:CHANnel<n>:OFFSet?
+:CHANnel<n>:OFFSet <offset>
 ```
 
-becomes:
+creates parameter inputs for:
 
 ```text
-:CHANnel1:OFFSet?
+<n>
+<offset>
 ```
 
-Phase 2 will generate these placeholder editors automatically.
+Entering `1` and `0` renders and sends:
+
+```text
+:CHANnel1:OFFSet 0
+```
+
+The same mechanism handles application-instance placeholders such as CMW500 `<i>`.
 
 ## Raw SCPI
 
@@ -151,6 +161,8 @@ Connect instrument
 Confirm *IDN?
     ->
 Browse existing baseline commands
+    ->
+Fill generated command parameters when required
     ->
 Use Raw SCPI for unknown commands
     ->
