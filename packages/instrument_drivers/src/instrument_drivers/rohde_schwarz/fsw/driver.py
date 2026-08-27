@@ -13,42 +13,27 @@ from instrument_core import (
 )
 from instrument_scpi import SCPIClient
 
-from instrument_drivers.registry import (
-    register_driver,
-)
+from instrument_drivers.registry import register_driver
 
-from .spectrum import (
-    SpectrumTrace,
-    build_spectrum_trace,
-    parse_ascii_trace,
-)
+from .spectrum import SpectrumTrace, build_spectrum_trace, parse_ascii_trace
 
 
 @register_driver(
     manufacturer="ROHDE&SCHWARZ",
     family="FSW",
-    models=(
-        "FSW*",
-    ),
+    models=("FSW*",),
     version="0.1.0",
     status="experimental",
 )
-class RohdeSchwarzFSWDriver(
-    InstrumentDriver
-):
+class RohdeSchwarzFSWDriver(InstrumentDriver):
     """Initial driver for the R&S FSW family."""
 
     def __init__(self, transport):
         super().__init__(transport)
-
-        self.scpi = SCPIClient(
-            transport
-        )
+        self.scpi = SCPIClient(transport)
 
     @property
-    def capabilities(
-        self,
-    ) -> CapabilitySet:
+    def capabilities(self) -> CapabilitySet:
         return CapabilitySet.from_values(
             Capability.SPECTRUM,
             Capability.TRIGGER,
@@ -57,9 +42,7 @@ class RohdeSchwarzFSWDriver(
             Capability.REMOTE_LOCAL,
         )
 
-    def identify(
-        self,
-    ) -> InstrumentIdentity:
+    def identify(self) -> InstrumentIdentity:
         return self.scpi.identify()
 
     def reset(self) -> None:
@@ -72,18 +55,14 @@ class RohdeSchwarzFSWDriver(
         except Exception:
             return False
 
-    def get_errors(
-        self,
-    ) -> list[tuple[int, str]]:
+    def get_errors(self) -> list[tuple[int, str]]:
         return self.scpi.drain_error_queue()
 
     def clear_errors(self) -> None:
         self.scpi.clear_status()
 
     def abort(self) -> None:
-        self.scpi.write(
-            "ABORt"
-        )
+        self.scpi.write("ABORt")
 
     def remote(self) -> None:
         return None
@@ -91,202 +70,74 @@ class RohdeSchwarzFSWDriver(
     def local(self) -> None:
         return None
 
-    def query(
-        self,
-        command: str,
-    ) -> str:
-        return self.scpi.query(
-            command
-        )
+    def query(self, command: str) -> str:
+        return self.scpi.query(command)
 
-    def write(
-        self,
-        command: str,
-    ) -> None:
-        self.scpi.write(
-            command
-        )
+    def write(self, command: str) -> None:
+        self.scpi.write(command)
 
-    def get_center_frequency(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:FREQuency:CENTer?"
-            )
-        )
+    def get_center_frequency(self) -> float:
+        return float(self.scpi.query("SENSe:FREQuency:CENTer?"))
 
-    def set_center_frequency(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:FREQuency:CENTer {value_hz}"
-        )
+    def set_center_frequency(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:FREQuency:CENTer {value_hz}")
 
-    def get_span(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:FREQuency:SPAN?"
-            )
-        )
+    def get_span(self) -> float:
+        return float(self.scpi.query("SENSe:FREQuency:SPAN?"))
 
-    def set_span(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:FREQuency:SPAN {value_hz}"
-        )
+    def set_span(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:FREQuency:SPAN {value_hz}")
 
-    def get_start_frequency(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:FREQuency:STARt?"
-            )
-        )
+    def get_start_frequency(self) -> float:
+        return float(self.scpi.query("SENSe:FREQuency:STARt?"))
 
-    def set_start_frequency(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:FREQuency:STARt {value_hz}"
-        )
+    def set_start_frequency(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:FREQuency:STARt {value_hz}")
 
-    def get_stop_frequency(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:FREQuency:STOP?"
-            )
-        )
+    def get_stop_frequency(self) -> float:
+        return float(self.scpi.query("SENSe:FREQuency:STOP?"))
 
-    def set_stop_frequency(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:FREQuency:STOP {value_hz}"
-        )
+    def set_stop_frequency(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:FREQuency:STOP {value_hz}")
 
-    def get_rbw(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:BANDwidth:RESolution?"
-            )
-        )
+    def get_rbw(self) -> float:
+        return float(self.scpi.query("SENSe:BANDwidth:RESolution?"))
 
-    def set_rbw(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:BANDwidth:RESolution {value_hz}"
-        )
+    def set_rbw(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:BANDwidth:RESolution {value_hz}")
 
-    def get_vbw(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:BANDwidth:VIDeo?"
-            )
-        )
+    def get_vbw(self) -> float:
+        return float(self.scpi.query("SENSe:BANDwidth:VIDeo?"))
 
-    def set_vbw(
-        self,
-        value_hz: float,
-    ) -> None:
-        self.scpi.write(
-            f"SENSe:BANDwidth:VIDeo {value_hz}"
-        )
+    def set_vbw(self, value_hz: float) -> None:
+        self.scpi.write(f"SENSe:BANDwidth:VIDeo {value_hz}")
 
-    def get_sweep_time(
-        self,
-    ) -> float:
-        return float(
-            self.scpi.query(
-                "SENSe:SWEep:TIME?"
-            )
-        )
+    def get_sweep_time(self) -> float:
+        return float(self.scpi.query("SENSe:SWEep:TIME?"))
 
-    def get_trigger_source(
-        self,
-    ) -> str:
-        return self.scpi.query(
-            "TRIGger:SEQuence:SOURce?"
-        )
+    def get_trigger_source(self) -> str:
+        return self.scpi.query("TRIGger:SEQuence:SOURce?")
 
-    def set_trigger_source(
-        self,
-        source: str,
-    ) -> None:
-        self.scpi.write(
-            "TRIGger:SEQuence:SOURce "
-            + source
-        )
+    def set_trigger_source(self, source: str) -> None:
+        self.scpi.write("TRIGger:SEQuence:SOURce " + source)
 
-    def get_continuous(
-        self,
-        channel: int = 1,
-    ) -> bool:
-        value = self.scpi.query(
-            f"INITiate{channel}:CONTinuous?"
-        )
+    def get_continuous(self, channel: int = 1) -> bool:
+        value = self.scpi.query(f"INITiate{channel}:CONTinuous?")
+        return value.strip().upper() in {"1", "ON", "TRUE"}
 
-        return (
-            value.strip().upper()
-            in {
-                "1",
-                "ON",
-                "TRUE",
-            }
-        )
-
-    def set_continuous(
-        self,
-        enabled: bool,
-        channel: int = 1,
-    ) -> None:
+    def set_continuous(self, enabled: bool, channel: int = 1) -> None:
         value = "ON" if enabled else "OFF"
+        self.scpi.write(f"INITiate{channel}:CONTinuous {value}")
 
-        self.scpi.write(
-            f"INITiate{channel}:CONTinuous {value}"
-        )
+    def initiate(self, channel: int = 1) -> None:
+        self.scpi.write(f"INITiate{channel}:IMMediate")
 
-    def initiate(
-        self,
-        channel: int = 1,
-    ) -> None:
-        self.scpi.write(
-            f"INITiate{channel}:IMMediate"
-        )
+    def wait_operation_complete(self) -> bool:
+        return self.scpi.wait_operation_complete()
 
-    def wait_operation_complete(
-        self,
-    ) -> bool:
-        return (
-            self.scpi.wait_operation_complete()
-        )
-
-    def get_event_status_register(
-        self,
-    ) -> int:
+    def get_event_status_register(self) -> int:
         """Read and clear the IEEE 488.2 Event Status Register."""
-
-        return int(
-            self.scpi.query(
-                "*ESR?"
-            )
-        )
+        return int(self.scpi.query("*ESR?"))
 
     def wait_operation_complete_bounded(
         self,
@@ -295,106 +146,45 @@ class RohdeSchwarzFSWDriver(
         poll_interval_s: float = 0.05,
         cancel_check: Callable[[], bool] | None = None,
     ) -> None:
-        """
-        Wait for an overlapped operation without blocking on *OPC?.
-
-        *OPC arms the operation-complete bit in ESR.
-        *ESR? is then polled until bit 0 is set.
-
-        On timeout the active measurement is aborted and
-        TriggerTimeoutError is raised.
-        """
-
-        if (
-            timeout_s is not None
-            and timeout_s <= 0
-        ):
-            raise ValueError(
-                "timeout_s must be greater than 0"
-            )
-
+        """Wait for an overlapped operation without blocking on *OPC?."""
+        if timeout_s is not None and timeout_s <= 0:
+            raise ValueError("timeout_s must be greater than 0")
         if poll_interval_s <= 0:
-            raise ValueError(
-                "poll_interval_s must be greater than 0"
-            )
+            raise ValueError("poll_interval_s must be greater than 0")
 
-        # Clear a stale OPC bit from an earlier operation.
+        # Clear a stale OPC bit from an earlier operation, then arm OPC.
         self.get_event_status_register()
-
-        self.scpi.write(
-            "*OPC"
-        )
-
-        deadline = (
-            None
-            if timeout_s is None
-            else monotonic() + timeout_s
-        )
+        self.scpi.write("*OPC")
+        deadline = None if timeout_s is None else monotonic() + timeout_s
 
         while True:
-            if (
-                cancel_check is not None
-                and cancel_check()
-            ):
+            if cancel_check is not None and cancel_check():
                 self.abort()
+                raise OperationCanceledError("FSW measurement canceled")
 
-                raise OperationCanceledError(
-                    "FSW measurement canceled"
-                )
-
-            if (
-                deadline is not None
-                and monotonic() >= deadline
-            ):
+            if deadline is not None and monotonic() >= deadline:
                 self.abort()
-
                 raise TriggerTimeoutError(
                     "FSW measurement did not complete "
                     f"within {timeout_s}s"
                 )
 
-            event_status = (
-                self.get_event_status_register()
-            )
-
-            # IEEE 488.2 ESR bit 0 = Operation Complete.
-            if event_status & 0x01:
+            if self.get_event_status_register() & 0x01:
                 return
 
             if deadline is None:
-                sleep(
-                    poll_interval_s
-                )
+                sleep(poll_interval_s)
                 continue
 
-            remaining_s = (
-                deadline
-                - monotonic()
-            )
+            remaining_s = deadline - monotonic()
+            if remaining_s > 0:
+                sleep(min(poll_interval_s, remaining_s))
 
-            if remaining_s <= 0:
-                continue
+    def get_trace_format(self) -> str:
+        return self.scpi.query("FORMat:DATA?")
 
-            sleep(
-                min(
-                    poll_interval_s,
-                    remaining_s,
-                )
-            )
-
-    def get_trace_format(
-        self,
-    ) -> str:
-        return self.scpi.query(
-            "FORMat:DATA?"
-        )
-
-    def set_trace_ascii(
-        self,
-    ) -> None:
-        self.scpi.write(
-            "FORMat:DATA ASCii"
-        )
+    def set_trace_ascii(self) -> None:
+        self.scpi.write("FORMat:DATA ASCii")
 
     def read_trace_ascii(
         self,
@@ -402,14 +192,56 @@ class RohdeSchwarzFSWDriver(
         window: int = 1,
         trace: int = 1,
     ) -> tuple[float, ...]:
+        response = self.scpi.query(f"TRACe{window}:DATA? TRACE{trace}")
+        return parse_ascii_trace(response)
 
-        response = self.scpi.query(
-            f"TRACe{window}:DATA? TRACE{trace}"
+    def arm_trace_ascii(self, *, channel: int = 1) -> None:
+        """Arm one ASCII trace acquisition without waiting for completion.
+
+        This split primitive is required for externally-triggered workflows:
+        the FSW can be armed first, another instrument can generate the
+        hardware trigger, and completion/readout can happen afterwards.
+        """
+        self.set_continuous(False, channel=channel)
+        self.set_trace_ascii()
+        self.initiate(channel=channel)
+
+    def read_completed_trace_ascii(
+        self,
+        *,
+        window: int = 1,
+        trace: int = 1,
+    ) -> SpectrumTrace:
+        """Read an already-completed trace without starting a measurement."""
+        start_hz = self.get_start_frequency()
+        stop_hz = self.get_stop_frequency()
+        levels = self.read_trace_ascii(window=window, trace=trace)
+        return build_spectrum_trace(
+            levels,
+            start_hz=start_hz,
+            stop_hz=stop_hz,
         )
 
-        return parse_ascii_trace(
-            response
-        )
+    def wait_and_read_trace_ascii(
+        self,
+        *,
+        window: int = 1,
+        trace: int = 1,
+        timeout_s: float | None = None,
+        poll_interval_s: float = 0.05,
+        cancel_check: Callable[[], bool] | None = None,
+    ) -> SpectrumTrace:
+        """Wait for a previously-armed trace and then read it."""
+        if timeout_s is None and cancel_check is None:
+            if not self.wait_operation_complete():
+                raise RuntimeError("FSW measurement did not complete")
+        else:
+            self.wait_operation_complete_bounded(
+                timeout_s,
+                poll_interval_s=poll_interval_s,
+                cancel_check=cancel_check,
+            )
+        return self.read_completed_trace_ascii(window=window, trace=trace)
 
     def acquire_trace_ascii(
         self,
@@ -421,57 +253,12 @@ class RohdeSchwarzFSWDriver(
         poll_interval_s: float = 0.05,
         cancel_check: Callable[[], bool] | None = None,
     ) -> SpectrumTrace:
-        """
-        Perform one measurement and read TRACE data.
-
-        This is intentionally conservative:
-        reference-level and sweep-point candidate commands
-        are not used until hardware verification.
-        """
-
-        self.set_continuous(
-            False,
-            channel=channel,
-        )
-
-        self.set_trace_ascii()
-
-        self.initiate(
-            channel=channel,
-        )
-
-        if (
-            timeout_s is None
-            and cancel_check is None
-        ):
-            if not self.wait_operation_complete():
-                raise RuntimeError(
-                    "FSW measurement did not complete"
-                )
-        else:
-            self.wait_operation_complete_bounded(
-                timeout_s,
-                poll_interval_s=poll_interval_s,
-                cancel_check=cancel_check,
-            )
-
-        start_hz = (
-            self.get_start_frequency()
-        )
-
-        stop_hz = (
-            self.get_stop_frequency()
-        )
-
-        levels = (
-            self.read_trace_ascii(
-                window=window,
-                trace=trace,
-            )
-        )
-
-        return build_spectrum_trace(
-            levels,
-            start_hz=start_hz,
-            stop_hz=stop_hz,
+        """Perform one measurement and read TRACE data."""
+        self.arm_trace_ascii(channel=channel)
+        return self.wait_and_read_trace_ascii(
+            window=window,
+            trace=trace,
+            timeout_s=timeout_s,
+            poll_interval_s=poll_interval_s,
+            cancel_check=cancel_check,
         )
