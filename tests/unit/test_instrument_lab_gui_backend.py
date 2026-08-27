@@ -23,6 +23,7 @@ from instrument_lab.gui_backend import (
     discover_instrument_profiles,
     extract_placeholders,
     normalize_visa_resource,
+    omit_optional_scpi_segments,
     render_command_template,
     save_candidate_command,
 )
@@ -102,6 +103,26 @@ def test_extract_and_render_scpi_placeholders():
             ":CHANnel<n>:SCALe <scale>",
             {"n": "1"},
         )
+
+
+def test_optional_scpi_manual_segments_are_not_sent_literally():
+    assert omit_optional_scpi_segments(
+        "SYSTem:ERRor[:NEXT]?"
+    ) == "SYSTem:ERRor?"
+
+    assert render_command_template(
+        "SYSTem:ERRor[:NEXT]?",
+        {},
+    ) == "SYSTem:ERRor?"
+
+    # Nested optional argument notation is omitted by default.
+    assert omit_optional_scpi_segments(
+        ":DIGitize [<source>[,...<source>]]"
+    ) == ":DIGitize"
+
+    assert extract_placeholders(
+        ":DIGitize [<source>[,...<source>]]"
+    ) == ()
 
 
 def test_repository_instrument_profiles_are_discoverable():
