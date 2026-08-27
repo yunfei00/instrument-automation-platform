@@ -7,6 +7,7 @@ from .gui_backend import (
     extract_placeholders,
     find_repo_root,
     normalize_visa_resource,
+    omit_optional_scpi_segments,
     render_command_template,
     save_candidate_command,
 )
@@ -38,6 +39,7 @@ __all__ = [
     "find_repo_root",
     "generate_markdown",
     "normalize_visa_resource",
+    "omit_optional_scpi_segments",
     "parse_response",
     "render_command_template",
     "save_candidate_command",
