@@ -129,13 +129,14 @@ def omit_optional_scpi_segments(template: str) -> str:
 
 
 def extract_placeholders(*templates: str) -> tuple[str, ...]:
-    """Return ordered unique ``<placeholder>`` names from SCPI templates."""
+    """Return required placeholder names from executable SCPI templates."""
 
     result: list[str] = []
     seen: set[str] = set()
 
     for template in templates:
-        for match in _PLACEHOLDER_PATTERN.finditer(template or ""):
+        executable = omit_optional_scpi_segments(template or "")
+        for match in _PLACEHOLDER_PATTERN.finditer(executable):
             name = match.group(1)
             if name in seen:
                 continue
@@ -149,9 +150,9 @@ def render_command_template(
     template: str,
     values: Mapping[str, str],
 ) -> str:
-    """Render a SCPI catalog template using named placeholder values."""
+    """Render the shortest executable form of a SCPI catalog template."""
 
-    template = template.strip()
+    template = omit_optional_scpi_segments(template)
 
     if not template:
         raise ValueError("SCPI command template must not be empty")
