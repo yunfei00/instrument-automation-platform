@@ -1,0 +1,5 @@
+PySide6>=6.6,<7
+PyVISA>=1.14,<2
+# Optional pure-Python VISA backend. Vendor VISA (Keysight/R&S/etc.)
+# remains preferred when already installed on the lab PC.
+PyVISA-py>=0.7,<1
