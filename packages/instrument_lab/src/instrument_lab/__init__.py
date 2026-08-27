@@ -1,5 +1,13 @@
 from .catalog import CommandCatalog
 from .documentation import generate_markdown
+from .gui_backend import (
+    InstrumentCommandEntry,
+    InstrumentProfile,
+    discover_instrument_profiles,
+    find_repo_root,
+    normalize_visa_resource,
+    save_candidate_command,
+)
 from .models import (
     CommandDefinition,
     CommandKind,
@@ -16,12 +24,18 @@ __all__ = [
     "CommandCatalog",
     "CommandDefinition",
     "CommandKind",
+    "InstrumentCommandEntry",
+    "InstrumentProfile",
     "ProbeResult",
     "ProbeRunner",
     "ResponseType",
     "SafetyLevel",
     "VerificationStatus",
+    "discover_instrument_profiles",
+    "find_repo_root",
     "generate_markdown",
+    "normalize_visa_resource",
     "parse_response",
+    "save_candidate_command",
     "save_probe_results",
 ]
