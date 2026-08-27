@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "packages/instrument_lab/**"
+      - "packages/instrument_core/src/instrument_core/transport/visa.py"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
       - "tools/instrument_lab_gui.py"
@@ -12,6 +13,7 @@ on:
   pull_request:
     paths:
       - "packages/instrument_lab/**"
+      - "packages/instrument_core/src/instrument_core/transport/visa.py"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
       - "tools/instrument_lab_gui.py"
@@ -36,6 +38,7 @@ jobs:
 
       - name: Compile GUI modules
         run: |
+          python -m py_compile packages/instrument_core/src/instrument_core/transport/visa.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_backend.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_io.py
