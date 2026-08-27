@@ -84,6 +84,20 @@ class VisaTransport(Transport):
 
         return TransportError(str(exc))
 
+    def set_timeout_ms(self, timeout_ms: int) -> None:
+        """Update the active VISA timeout and remember it in the config."""
+
+        if timeout_ms <= 0:
+            raise ValueError("VISA timeout must be greater than zero")
+
+        self.config.timeout_ms = timeout_ms
+
+        if self._resource is not None:
+            try:
+                self._resource.timeout = timeout_ms
+            except Exception as exc:
+                raise self._translate_error(exc) from exc
+
     def write(self, command: str) -> None:
         resource = self._require_resource()
 
