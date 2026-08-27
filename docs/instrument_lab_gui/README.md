@@ -12,6 +12,7 @@ Available now:
 - recursive command catalog loading
 - instrument profile selection
 - plain IP/hostname or full VISA resource input
+- per-profile local address memory after a successful connection
 - configurable VISA timeout/backend
 - connect/disconnect
 - automatic `*IDN?`
@@ -24,6 +25,7 @@ Available now:
 - session log
 - save raw SCPI as an unverified candidate command
 - duplicate command-id protection for candidates
+- dedicated VISA I/O thread for native-session stability
 - headless backend tests and GUI syntax compilation in GitHub Actions
 
 Not implemented yet:
@@ -62,6 +64,12 @@ From the repository root:
 python tools/instrument_lab_gui.py
 ```
 
+Environment diagnostics can be printed without opening an instrument session:
+
+```bash
+python tools/instrument_lab_gui.py --diagnostics
+```
+
 ## Connect
 
 Select the instrument profile and enter either a plain address:
@@ -83,6 +91,24 @@ TCPIP0::<address>::inst0::INSTR
 ```
 
 If an instrument requires a different resource type, enter the complete VISA resource explicitly.
+
+### Per-instrument address memory
+
+Instrument Lab remembers the address separately for each instrument profile.
+
+Example:
+
+```text
+keysight/dsox3000      -> 192.168.10.21
+rohde_schwarz/fsw      -> 192.168.10.31
+rohde_schwarz/cmw500   -> 192.168.10.41
+```
+
+The address is saved only after the connection succeeds and `*IDN?` returns successfully. A typo or failed connection therefore does not replace the previously working address.
+
+When the user later selects the same profile, the saved address is restored automatically.
+
+These addresses are stored in the operating system's local per-user Qt settings through `QSettings`. They are not written to `instrument_profiles`, source files, candidate catalogs, or Git, so lab network addresses are not committed to the repository.
 
 ## Baseline Commands
 
@@ -156,9 +182,13 @@ A candidate must later be reviewed and/or hardware-qualified before being promot
 ```text
 Select profile
     ->
+Saved address is restored when available
+    ->
 Connect instrument
     ->
 Confirm *IDN?
+    ->
+Successful address is remembered locally
     ->
 Browse existing baseline commands
     ->
