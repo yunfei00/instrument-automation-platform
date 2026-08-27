@@ -1,7 +1,8 @@
 """Headless backend helpers for Instrument Lab GUI.
 
 This module intentionally has no Qt dependency so profile discovery,
-address normalization and candidate authoring can be tested in CI.
+address normalization, command template rendering and candidate
+authoring can be tested in CI.
 """
 
 from __future__ import annotations
@@ -9,10 +10,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Iterable
+import re
+from typing import Iterable, Mapping
 
 from .catalog import CommandCatalog
 from .models import CommandDefinition
+
+
+_PLACEHOLDER_PATTERN = re.compile(r"<([A-Za-z][A-Za-z0-9_]*)>")
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,6 +104,55 @@ def normalize_visa_resource(address: str) -> str:
         return value
 
     return f"TCPIP0::{value}::inst0::INSTR"
+
+
+def extract_placeholders(*templates: str) -> tuple[str, ...]:
+    """Return ordered unique ``<placeholder>`` names from SCPI templates."""
+
+    result: list[str] = []
+    seen: set[str] = set()
+
+    for template in templates:
+        for match in _PLACEHOLDER_PATTERN.finditer(template or ""):
+            name = match.group(1)
+            if name in seen:
+                continue
+            seen.add(name)
+            result.append(name)
+
+    return tuple(result)
+
+
+def render_command_template(
+    template: str,
+    values: Mapping[str, str],
+) -> str:
+    """Render a SCPI catalog template using named placeholder values."""
+
+    template = template.strip()
+
+    if not template:
+        raise ValueError("SCPI command template must not be empty")
+
+    missing: list[str] = []
+
+    def replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        value = str(values.get(name, "")).strip()
+        if not value:
+            missing.append(name)
+            return match.group(0)
+        return value
+
+    rendered = _PLACEHOLDER_PATTERN.sub(replace, template)
+
+    if missing:
+        unique = ", ".join(dict.fromkeys(missing))
+        raise ValueError(
+            f"Missing values for SCPI placeholders: {unique}"
+        )
+
+    return rendered
 
 
 def _catalog_paths(profile_dir: Path) -> list[Path]:
