@@ -211,6 +211,18 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             ":TRIGger:SWEep?"
         )
 
+    def set_trigger_sweep(self, sweep: str) -> None:
+        """Set the trigger sweep used by a subsequent DIGitize operation."""
+
+        normalized = sweep.strip().upper()
+        if normalized not in {"AUTO", "NORM"}:
+            raise ValueError(
+                "DSO-X trigger sweep must be AUTO or NORM"
+            )
+        self.scpi.write(
+            f":TRIGger:SWEep {normalized}"
+        )
+
     def get_trigger_source(self) -> str:
         return self.scpi.query(
             ":TRIGger:EDGE:SOURce?"
@@ -430,7 +442,6 @@ class KeysightDSOX3000Driver(InstrumentDriver):
                 ":MEASure:VPP?"
             )
         )
-
 
     def get_waveform_byte_order(self) -> str:
         return self.scpi.query(
