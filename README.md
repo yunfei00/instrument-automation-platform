@@ -76,6 +76,30 @@ Each supported instrument family should gradually contain:
 - engineering notes
 - generated documentation
 
+### Engineering Tooling
+
+The repository may include generic engineering tools that operate on
+platform knowledge without implementing customer business workflows.
+
+`Instrument Lab GUI` is the main interactive engineering workbench. It
+can discover instrument profiles, connect to a selected instrument,
+browse and execute baseline commands, run arbitrary raw SCPI, inspect
+responses/timing and save newly discovered commands as unverified
+candidates.
+
+Run from a repository checkout:
+
+```bash
+python -m pip install -r requirements-gui.txt
+python tools/instrument_lab_gui.py
+```
+
+Design and roadmap:
+
+- `docs/instrument_lab_gui/README.md`
+- `docs/instrument_lab_gui/ROADMAP.md`
+- `docs/instrument_lab_gui/ARCHITECTURE.md`
+
 ## What Does NOT Belong Here
 
 The following belong in independent application repositories:
