@@ -1,15 +1,25 @@
 """Stability wrapper for Instrument Lab GUI.
 
-The original GUI remains the visual implementation.  This subclass replaces
+The original GUI remains the visual implementation. This subclass replaces
 its transient QThreadPool VISA execution with one persistent QThread whose
 worker owns the native VISA session for its entire lifetime.
+
+It also stores successful instrument addresses locally per profile so lab
+users do not need to re-enter the same address on every launch.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QMetaObject, QObject, QThread, Qt, Signal
+from PySide6.QtCore import (
+    QMetaObject,
+    QObject,
+    QSettings,
+    QThread,
+    Qt,
+    Signal,
+)
 from PySide6.QtWidgets import QApplication, QMessageBox
 
 from .gui import InstrumentLabWindow
@@ -27,14 +37,31 @@ class IORequests(QObject):
 class StableInstrumentLabWindow(InstrumentLabWindow):
     """Instrument Lab window with strict VISA thread ownership."""
 
+    SETTINGS_ORGANIZATION = "instrument-automation-platform"
+    SETTINGS_APPLICATION = "InstrumentLab"
+
     def __init__(
         self,
         repo_root: str | Path | None = None,
     ) -> None:
+        # QSettings is created before the base window loads profiles because
+        # profile selection calls the overridden _profile_changed() method.
+        self._settings = QSettings(
+            self.SETTINGS_ORGANIZATION,
+            self.SETTINGS_APPLICATION,
+        )
+        self._pending_profile_key = ""
+        self._pending_address_text = ""
+
         super().__init__(repo_root=repo_root)
 
         self._io_connected = False
         self._pending_operation_name = ""
+
+        self.address_edit.setToolTip(
+            "The last successfully connected address is saved locally "
+            "for each instrument profile."
+        )
 
         self._io_thread = QThread(self)
         self._io_worker = InstrumentIOWorker()
@@ -63,18 +90,47 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
 
         self._io_thread.start()
 
+    @staticmethod
+    def _address_settings_key(profile_key: str) -> str:
+        return f"profiles/{profile_key}/address"
+
+    def _profile_changed(self, _index: int | None = None) -> None:
+        """Load the locally remembered address for the selected profile."""
+
+        super()._profile_changed(_index)
+
+        if self.current_profile is None:
+            self.address_edit.clear()
+            return
+
+        saved_address = self._settings.value(
+            self._address_settings_key(self.current_profile.key),
+            "",
+            type=str,
+        )
+        self.address_edit.setText(saved_address)
+
+    def _set_connection_inputs_enabled(self) -> None:
+        editable = not self._io_connected and not self._busy
+        self.profile_combo.setEnabled(editable)
+        self.address_edit.setEnabled(editable)
+        self.timeout_spin.setEnabled(editable)
+        self.backend_edit.setEnabled(editable)
+
     def _begin_io(self, operation_name: str) -> bool:
         if self._busy:
             return False
         self._busy = True
         self._pending_operation_name = operation_name
         self._update_action_state()
+        self._set_connection_inputs_enabled()
         return True
 
     def _finish_io(self) -> None:
         self._busy = False
         self._pending_operation_name = ""
         self._update_action_state()
+        self._set_connection_inputs_enabled()
 
     def _connect_or_disconnect(self) -> None:
         if self._io_connected:
@@ -86,10 +142,10 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         if self._busy or self._io_connected:
             return
 
+        address_text = self.address_edit.text().strip()
+
         try:
-            resource = normalize_visa_resource(
-                self.address_edit.text()
-            )
+            resource = normalize_visa_resource(address_text)
         except ValueError as exc:
             QMessageBox.warning(
                 self,
@@ -103,6 +159,13 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
 
         if not self._begin_io("connect"):
             return
+
+        self._pending_profile_key = (
+            self.current_profile.key
+            if self.current_profile is not None
+            else ""
+        )
+        self._pending_address_text = address_text
 
         self._append_log("CONNECT", resource, "")
         self._io_requests.connect_requested.emit(
@@ -121,6 +184,22 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         self.connected_resource = resource
         self.idn_label.setText(idn)
         self._set_connected_state(True)
+
+        if self._pending_profile_key and self._pending_address_text:
+            self._settings.setValue(
+                self._address_settings_key(self._pending_profile_key),
+                self._pending_address_text,
+            )
+            self._settings.sync()
+            self._append_log(
+                "ADDRESS SAVED",
+                self._pending_profile_key,
+                self._pending_address_text,
+            )
+
+        self._pending_profile_key = ""
+        self._pending_address_text = ""
+
         self._append_log(
             "RESPONSE",
             "*IDN?",
@@ -226,10 +305,12 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         if worker_operation == "connect":
             self._io_connected = False
             self.connected_resource = ""
+            self._pending_profile_key = ""
+            self._pending_address_text = ""
             self._set_connected_state(False)
 
         if worker_operation == "disconnect":
-            # If close failed, do not allow the old session to be reused.  The
+            # If close failed, do not allow the old session to be reused. The
             # worker cleared ownership before attempting native close.
             self._io_connected = False
             self.connected_resource = ""
@@ -253,7 +334,7 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         )
 
     def closeEvent(self, event) -> None:  # noqa: N802 - Qt API name.
-        # Never close a native VISA session from the GUI thread.  A blocking
+        # Never close a native VISA session from the GUI thread. A blocking
         # queued call waits for any in-flight command to finish and then closes
         # the session on its owning worker thread.
         if self._io_thread.isRunning():
