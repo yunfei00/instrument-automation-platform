@@ -240,6 +240,36 @@ class KeysightDSOX3000Driver(InstrumentDriver):
             ":ACQuire:TYPE?"
         )
 
+    def set_acquisition_type(self, acquisition_type: str) -> None:
+        """Set the acquisition mode used by subsequent waveform captures.
+
+        A previous front-panel session can leave the oscilloscope in averaging
+        mode. In that state ``:DIGitize`` waits until the configured average
+        count has completed, which can legitimately exceed a normal VISA I/O
+        timeout. Product one-shot workflows therefore need an explicit way to
+        select NORMal acquisition and later restore the previous mode.
+        """
+
+        normalized = acquisition_type.strip().upper()
+        aliases = {
+            "NORM": "NORMal",
+            "NORMAL": "NORMal",
+            "AVER": "AVERage",
+            "AVERAGE": "AVERage",
+            "HRES": "HRESolution",
+            "HRESOLUTION": "HRESolution",
+            "PEAK": "PEAK",
+        }
+        command_value = aliases.get(normalized)
+        if command_value is None:
+            raise ValueError(
+                "DSO-X acquisition type must be NORMal, AVERage, "
+                "HRESolution or PEAK"
+            )
+        self.scpi.write(
+            f":ACQuire:TYPE {command_value}"
+        )
+
     def get_acquisition_points(self) -> int:
         return int(
             float(
