@@ -56,13 +56,15 @@
       "safety": "safe",
       "response_type": "float",
       "unit": "V",
-      "description": "Configure or query vertical channel offset.",
+      "description": "Configure or query vertical channel offset; zero offset corresponds to the channel position knob Push to Zero action.",
+      "notes": "Front-panel equivalent for channel n: press that channel's Vertical position knob labeled Push to Zero. Remote zero equivalent: :CHANnel<n>:OFFSet 0.",
       "manual_id": "dsox3000_programmers_guide",
       "manual_page": 285,
       "manual_section": "CHANnel<n> Commands",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["DSO-X 3034A"]
+      "supported_models": ["DSO-X 3034A"],
+      "tags": ["front_panel_mapping", "push_to_zero"]
     },
     {
       "id": "channel.range",
