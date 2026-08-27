@@ -104,6 +104,27 @@
       "verification_status": "manual_verified",
       "probe_enabled": true,
       "supported_models": ["DSO-X 3034A"]
+    },
+    {
+      "id": "timebase.vernier",
+      "name": "Timebase Vernier / Push for Fine",
+      "category": "timebase",
+      "command": ":TIMebase:VERNier?",
+      "set_command": ":TIMebase:VERNier <value>",
+      "query_command": ":TIMebase:VERNier?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "boolean",
+      "description": "Enable, disable, or query the horizontal timebase vernier (fine scale adjustment) mode.",
+      "response_notes": "Query returns 0 for coarse adjustment or 1 for vernier/fine adjustment. Set accepts 0/OFF or 1/ON.",
+      "notes": "Front-panel mapping: pressing the horizontal scale knob labeled Push for Fine toggles coarse/fine adjustment. SCPI exposes the state rather than a one-command toggle: use :TIMebase:VERNier? and then set the opposite state to emulate one physical press.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 908,
+      "manual_section": "TIMebase Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["DSO-X 3034A"],
+      "tags": ["front_panel_mapping", "push_for_fine", "vernier"]
     }
   ]
 }
