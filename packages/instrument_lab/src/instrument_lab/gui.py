@@ -17,7 +17,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
@@ -38,8 +37,10 @@ from .gui_backend import (
     InstrumentCommandEntry,
     InstrumentProfile,
     discover_instrument_profiles,
+    extract_placeholders,
     find_repo_root,
     normalize_visa_resource,
+    render_command_template,
     save_candidate_command,
 )
 from .models import SafetyLevel
@@ -62,7 +63,7 @@ class FunctionWorker(QRunnable):
     def run(self) -> None:
         try:
             result = self.function()
-        except Exception as exc:  # GUI boundary: display any transport error.
+        except Exception as exc:  # GUI boundary: display transport failures.
             self.signals.error.emit(str(exc))
         else:
             self.signals.result.emit(result)
@@ -91,10 +92,11 @@ class CandidateCommandDialog(QDialog):
 
         self.kind_combo = QComboBox()
         self.kind_combo.addItems(["query", "set", "action"])
-        if command_text.strip().endswith("?"):
-            self.kind_combo.setCurrentText("query")
-        else:
-            self.kind_combo.setCurrentText("set")
+        self.kind_combo.setCurrentText(
+            "query"
+            if command_text.strip().endswith("?")
+            else "set"
+        )
 
         self.response_combo = QComboBox()
         self.response_combo.addItems(
@@ -110,6 +112,7 @@ class CandidateCommandDialog(QDialog):
         )
 
         self.safety_combo = QComboBox()
+        # Unknown commands default to conservative, not safe.
         self.safety_combo.addItems(
             ["disruptive", "safe", "destructive"]
         )
@@ -129,7 +132,8 @@ class CandidateCommandDialog(QDialog):
         layout.addRow("Description", self.description_edit)
 
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Cancel
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
         )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
@@ -157,6 +161,7 @@ class InstrumentLabWindow(QMainWindow):
         repo_root: str | Path | None = None,
     ):
         super().__init__()
+
         self.repo_root = Path(
             repo_root or find_repo_root()
         ).resolve()
@@ -166,14 +171,15 @@ class InstrumentLabWindow(QMainWindow):
         self.current_entry: InstrumentCommandEntry | None = None
         self.transport: VisaTransport | None = None
         self.connected_resource = ""
+        self.placeholder_edits: dict[str, QLineEdit] = {}
         self._busy = False
 
         self.thread_pool = QThreadPool(self)
-        # Serialize VISA operations for a single instrument session.
+        # Serialize all VISA operations for one instrument session.
         self.thread_pool.setMaxThreadCount(1)
 
         self.setWindowTitle("Instrument Lab")
-        self.resize(1320, 860)
+        self.resize(1320, 900)
 
         self._build_ui()
         self._load_profiles()
@@ -215,7 +221,7 @@ class InstrumentLabWindow(QMainWindow):
         self.connection_status = QLabel("Disconnected")
         self.idn_label = QLabel("")
         self.idn_label.setTextInteractionFlags(
-            Qt.TextSelectableByMouse
+            Qt.TextInteractionFlag.TextSelectableByMouse
         )
 
         connection_layout.addWidget(QLabel("Instrument"), 0, 0)
@@ -233,7 +239,7 @@ class InstrumentLabWindow(QMainWindow):
 
         root.addWidget(connection_group)
 
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
         root.addWidget(main_splitter, 1)
 
         browser_widget = QWidget()
@@ -280,13 +286,18 @@ class InstrumentLabWindow(QMainWindow):
 
         self.command_meta = QLabel("")
         self.command_meta.setWordWrap(True)
+
         self.command_description = QPlainTextEdit()
         self.command_description.setReadOnly(True)
-        self.command_description.setMaximumHeight(100)
+        self.command_description.setMaximumHeight(105)
+
+        self.parameter_widget = QWidget()
+        self.parameter_layout = QFormLayout(self.parameter_widget)
+        self.parameter_layout.setContentsMargins(0, 0, 0, 0)
 
         self.query_edit = QLineEdit()
         self.query_edit.setPlaceholderText(
-            "Query command; replace placeholders before execution"
+            "Query command template"
         )
         self.query_button = QPushButton("Query")
         self.query_button.clicked.connect(
@@ -295,7 +306,7 @@ class InstrumentLabWindow(QMainWindow):
 
         self.send_edit = QLineEdit()
         self.send_edit.setPlaceholderText(
-            "Set/action command; replace placeholders before execution"
+            "Set/action command template"
         )
         self.send_button = QPushButton("Write")
         self.send_button.clicked.connect(
@@ -305,12 +316,14 @@ class InstrumentLabWindow(QMainWindow):
         command_layout.addWidget(self.command_title, 0, 0, 1, 3)
         command_layout.addWidget(self.command_meta, 1, 0, 1, 3)
         command_layout.addWidget(self.command_description, 2, 0, 1, 3)
-        command_layout.addWidget(QLabel("Query"), 3, 0)
-        command_layout.addWidget(self.query_edit, 3, 1)
-        command_layout.addWidget(self.query_button, 3, 2)
-        command_layout.addWidget(QLabel("Set/Action"), 4, 0)
-        command_layout.addWidget(self.send_edit, 4, 1)
-        command_layout.addWidget(self.send_button, 4, 2)
+        command_layout.addWidget(QLabel("Parameters"), 3, 0)
+        command_layout.addWidget(self.parameter_widget, 3, 1, 1, 2)
+        command_layout.addWidget(QLabel("Query"), 4, 0)
+        command_layout.addWidget(self.query_edit, 4, 1)
+        command_layout.addWidget(self.query_button, 4, 2)
+        command_layout.addWidget(QLabel("Set/Action"), 5, 0)
+        command_layout.addWidget(self.send_edit, 5, 1)
+        command_layout.addWidget(self.send_button, 5, 2)
 
         right_layout.addWidget(command_group)
 
@@ -323,9 +336,7 @@ class InstrumentLabWindow(QMainWindow):
         self.raw_edit.setPlaceholderText(
             "Enter any SCPI command, including commands not yet in the baseline"
         )
-        self.raw_edit.returnPressed.connect(
-            self._raw_query
-        )
+        self.raw_edit.returnPressed.connect(self._raw_query)
 
         self.raw_query_button = QPushButton("Query")
         self.raw_query_button.clicked.connect(self._raw_query)
@@ -352,15 +363,22 @@ class InstrumentLabWindow(QMainWindow):
 
         log_group = QGroupBox("Session Log")
         log_layout = QVBoxLayout(log_group)
+
         self.log_edit = QPlainTextEdit()
         self.log_edit.setReadOnly(True)
         self.log_edit.setLineWrapMode(
-            QPlainTextEdit.NoWrap
+            QPlainTextEdit.LineWrapMode.NoWrap
         )
+
         clear_log_button = QPushButton("Clear Log")
         clear_log_button.clicked.connect(self.log_edit.clear)
+
         log_layout.addWidget(self.log_edit, 1)
-        log_layout.addWidget(clear_log_button, 0, Qt.AlignRight)
+        log_layout.addWidget(
+            clear_log_button,
+            0,
+            Qt.AlignmentFlag.AlignRight,
+        )
         right_layout.addWidget(log_group, 1)
 
         main_splitter.addWidget(right_widget)
@@ -401,7 +419,7 @@ class InstrumentLabWindow(QMainWindow):
         self.profile_combo.blockSignals(False)
         self._profile_changed()
 
-    def _profile_changed(self) -> None:
+    def _profile_changed(self, _index: int | None = None) -> None:
         index = self.profile_combo.currentIndex()
 
         if index < 0 or index >= len(self.profiles):
@@ -412,17 +430,22 @@ class InstrumentLabWindow(QMainWindow):
 
         self.current_profile = self.profiles[index]
         profile = self.current_profile
+
         self.profile_summary.setText(
             f"Profile: {profile.key} | "
             f"Family: {profile.family or '-'} | "
             f"Commands: {profile.command_count} | "
             f"Categories: {len(profile.categories)}"
         )
+
         self.current_entry = None
         self._clear_command_detail()
         self._populate_command_tree()
 
-    def _populate_command_tree(self) -> None:
+    def _populate_command_tree(
+        self,
+        _text: str | None = None,
+    ) -> None:
         self.command_tree.clear()
 
         if self.current_profile is None:
@@ -464,7 +487,11 @@ class InstrumentLabWindow(QMainWindow):
                     command.verification_status.value,
                 ]
             )
-            item.setData(0, Qt.UserRole, entry)
+            item.setData(
+                0,
+                Qt.ItemDataRole.UserRole,
+                entry,
+            )
             category_item.addChild(item)
 
         self.command_tree.expandAll()
@@ -474,7 +501,10 @@ class InstrumentLabWindow(QMainWindow):
         if not items:
             return
 
-        entry = items[0].data(0, Qt.UserRole)
+        entry = items[0].data(
+            0,
+            Qt.ItemDataRole.UserRole,
+        )
         if not isinstance(entry, InstrumentCommandEntry):
             return
 
@@ -527,6 +557,43 @@ class InstrumentLabWindow(QMainWindow):
 
         self.query_edit.setText(query_text)
         self.send_edit.setText(set_text)
+        self._build_parameter_fields(query_text, set_text)
+
+    def _clear_parameter_fields(self) -> None:
+        self.placeholder_edits.clear()
+
+        while self.parameter_layout.count():
+            item = self.parameter_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    def _build_parameter_fields(self, *templates: str) -> None:
+        self._clear_parameter_fields()
+        placeholders = extract_placeholders(*templates)
+
+        if not placeholders:
+            self.parameter_layout.addRow(QLabel("No placeholders"))
+            return
+
+        for name in placeholders:
+            editor = QLineEdit()
+            editor.setPlaceholderText(
+                "e.g. 1"
+                if name.lower() in {"n", "i"}
+                else f"value for <{name}>"
+            )
+            self.placeholder_edits[name] = editor
+            self.parameter_layout.addRow(
+                f"<{name}>",
+                editor,
+            )
+
+    def _parameter_values(self) -> dict[str, str]:
+        return {
+            name: editor.text()
+            for name, editor in self.placeholder_edits.items()
+        }
 
     def _clear_command_detail(self) -> None:
         self.command_title.setText("Select a command")
@@ -534,6 +601,7 @@ class InstrumentLabWindow(QMainWindow):
         self.command_description.clear()
         self.query_edit.clear()
         self.send_edit.clear()
+        self._build_parameter_fields()
 
     def _connect_or_disconnect(self) -> None:
         if self.transport is None:
@@ -644,27 +712,18 @@ class InstrumentLabWindow(QMainWindow):
         if safety == SafetyLevel.SAFE:
             return True
 
-        text = (
-            f"This catalog command is marked {safety.value}.\n\n"
-            "It may change instrument state. Continue?"
-        )
         answer = QMessageBox.warning(
             self,
             "Instrument Command Safety",
-            text,
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            f"This catalog command is marked {safety.value}.\n\n"
+            "It may change instrument state. Continue?",
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
-        return answer == QMessageBox.Yes
+        return answer == QMessageBox.StandardButton.Yes
 
-    @staticmethod
-    def _has_unresolved_placeholders(command: str) -> bool:
-        return "<" in command and ">" in command
-
-    def _validate_executable_command(
-        self,
-        command: str,
-    ) -> bool:
+    def _validate_raw_command(self, command: str) -> bool:
         if not command.strip():
             QMessageBox.warning(
                 self,
@@ -673,27 +732,56 @@ class InstrumentLabWindow(QMainWindow):
             )
             return False
 
-        if self._has_unresolved_placeholders(command):
+        if extract_placeholders(command):
             QMessageBox.warning(
                 self,
                 "Unresolved Placeholder",
-                "Replace placeholders such as <n> or <scale> before execution.",
+                "Replace raw-console placeholders before execution.",
             )
             return False
 
         return True
 
+    def _render_baseline_command(
+        self,
+        template: str,
+    ) -> str | None:
+        if not template.strip():
+            QMessageBox.warning(
+                self,
+                "Missing Command",
+                "No SCPI command template is available for this operation.",
+            )
+            return None
+
+        try:
+            return render_command_template(
+                template,
+                self._parameter_values(),
+            )
+        except ValueError as exc:
+            QMessageBox.warning(
+                self,
+                "Command Parameters",
+                str(exc),
+            )
+            return None
+
     def _query_baseline_command(self) -> None:
-        command = self.query_edit.text().strip()
-        if not self._validate_executable_command(command):
+        command = self._render_baseline_command(
+            self.query_edit.text()
+        )
+        if command is None:
             return
         if not self._confirm_catalog_safety():
             return
         self._execute_query(command, "QUERY")
 
     def _write_baseline_command(self) -> None:
-        command = self.send_edit.text().strip()
-        if not self._validate_executable_command(command):
+        command = self._render_baseline_command(
+            self.send_edit.text()
+        )
+        if command is None:
             return
         if not self._confirm_catalog_safety():
             return
@@ -701,13 +789,13 @@ class InstrumentLabWindow(QMainWindow):
 
     def _raw_query(self) -> None:
         command = self.raw_edit.text().strip()
-        if not self._validate_executable_command(command):
+        if not self._validate_raw_command(command):
             return
         self._execute_query(command, "RAW QUERY")
 
     def _raw_write(self) -> None:
         command = self.raw_edit.text().strip()
-        if not self._validate_executable_command(command):
+        if not self._validate_raw_command(command):
             return
         self._execute_write(command, "RAW WRITE")
 
@@ -813,7 +901,7 @@ class InstrumentLabWindow(QMainWindow):
             command_text,
             self,
         )
-        if dialog.exec() != QDialog.Accepted:
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
         profile_key = self.current_profile.key
