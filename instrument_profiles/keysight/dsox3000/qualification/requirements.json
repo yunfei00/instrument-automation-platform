@@ -32,10 +32,24 @@
       "mandatory": true
     },
     {
+      "id": "channel.push_to_zero",
+      "name": "Vertical Push to Zero Equivalence",
+      "category": "channel",
+      "mandatory": false,
+      "description": "Verify a channel position-knob Push to Zero is operationally equivalent to :CHANnel<n>:OFFSet 0."
+    },
+    {
       "id": "timebase.basic",
       "name": "Timebase Query",
       "category": "timebase",
       "mandatory": true
+    },
+    {
+      "id": "timebase.push_to_zero",
+      "name": "Horizontal Push to Zero Equivalence",
+      "category": "timebase",
+      "mandatory": false,
+      "description": "Verify the Horizontal position/delay-knob Push to Zero is operationally equivalent to :TIMebase:POSition 0."
     },
     {
       "id": "trigger.basic",
