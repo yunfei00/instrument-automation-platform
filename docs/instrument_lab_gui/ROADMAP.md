@@ -17,7 +17,7 @@ a developer should be able to connect to the instrument, inspect and execute eve
 
 ## Phase 1 - Debug Console MVP
 
-Status: implementation target for the first usable release.
+Status: **implemented**.
 
 Scope:
 
@@ -30,45 +30,52 @@ Scope:
 - browse commands from all catalog JSON files under the selected profile
 - show command metadata: category, safety, verification status, unit, description and source catalog
 - execute catalog query commands
-- execute catalog set/action command text after placeholder editing
+- execute catalog set/action commands
 - raw SCPI console for commands that are not in the baseline
 - show timestamp, operation, command, response, elapsed time and failures in an in-memory session log
 - warn before executing catalog commands marked `disruptive` or `destructive`
+- serialize VISA operations on a worker thread so the GUI remains responsive
 
 Acceptance criteria:
 
 - DSO-X 3034A, FSW and CMW500 profiles are discoverable without hard-coded GUI pages.
 - A user can connect using a plain IP address or full VISA resource.
-- Any catalog query that does not require unresolved placeholders can be executed.
-- Any catalog set/action template can be loaded into an editable command field and sent after the user fills placeholders.
+- Catalog query/set/action templates can be executed after required parameters are provided.
 - Arbitrary SCPI can be queried or written from the raw console.
 - Connection and I/O errors are visible without crashing the GUI.
 
 ## Phase 2 - Command Authoring
 
-Scope:
+Status: **partially implemented**.
 
-- detect placeholders such as `<n>`, `<scale>` and `<source>`
+Implemented:
+
+- detect placeholders such as `<n>`, `<i>`, `<scale>` and `<source>`
 - generate parameter editors automatically
 - validate required placeholders before execution
-- save a successfully tested raw command as a candidate command
+- save a tested raw command as a candidate command
 - candidates are stored separately from verified catalogs
 - default candidate status is `candidate`
 - default candidate `probe_enabled` is false
-- review/edit candidate metadata before promotion
-- repository diff preview before modifying a verified catalog
+- refuse duplicate command ids
+- collect candidate name/category/kind/response type/safety/unit/description
 
-First increment included with Phase 1:
+Remaining:
 
-- raw command can be saved to `commands/candidates.json`
-- candidate is never automatically promoted to `manual_verified` or `hardware_verified`
+- candidate review list/editor
+- repository diff preview
+- controlled promotion from candidate to a selected verified catalog
+- promotion validation rules
 
 Acceptance criteria:
 
 - no candidate command can silently overwrite an existing command id
 - saving a candidate produces valid catalog JSON loadable by `CommandCatalog`
+- placeholder rendering is headless-testable and shared by GUI execution
 
 ## Phase 3 - Safety and Session Evidence
+
+Status: **planned**.
 
 Scope:
 
@@ -89,6 +96,8 @@ Acceptance criteria:
 
 ## Phase 4 - Hardware Qualification Workflow
 
+Status: **planned**.
+
 Scope:
 
 - load profile qualification requirements
@@ -105,6 +114,8 @@ Acceptance criteria:
 
 ## Phase 5 - Windows Packaging and Releases
 
+Status: **planned**.
+
 Scope:
 
 - PyInstaller build
@@ -119,6 +130,12 @@ Acceptance criteria:
 
 - a Windows lab PC can run Instrument Lab without manually configuring repository `PYTHONPATH`
 - each tagged release produces a downloadable GUI artifact
+
+## Quality Gate
+
+A dedicated GitHub Actions workflow compiles the GUI modules and runs the headless GUI-backend unit tests when relevant files change.
+
+The GUI backend remains Qt-free so command discovery, template rendering and candidate authoring can be checked without installing a desktop environment in CI.
 
 ## Non-Goals
 
