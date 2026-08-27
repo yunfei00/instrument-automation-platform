@@ -5,9 +5,9 @@ thread. This avoids handing native VISA session objects between transient
 QThreadPool workers or closing a session from the GUI thread while I/O is in
 progress.
 
-Binary catalog queries are read with ``query_raw`` instead of the text path.
-Any I/O timeout invalidates the current VISA session so unread data cannot
-poison subsequent SCPI commands.
+Binary catalog queries use the VISA IEEE 488.2 block reader instead of a raw
+read-until-end operation. Any I/O timeout invalidates the current VISA session
+so unread data cannot poison subsequent SCPI commands.
 """
 
 from __future__ import annotations
@@ -18,37 +18,23 @@ from PySide6.QtCore import QObject, Signal, Slot
 
 from instrument_core.errors import InstrumentTimeoutError
 from instrument_core.transport import TransportConfig, VisaTransport
-from instrument_scpi import parse_definite_length_block
 
 
 BINARY_QUERY_MIN_TIMEOUT_MS = 30000
 BINARY_PREVIEW_BYTES = 32
 
 
-def describe_binary_response(data: bytes) -> str:
-    """Return a compact text summary without rendering the full payload."""
+def describe_binary_payload(data: bytes) -> str:
+    """Return a compact summary of an IEEE block payload."""
 
     preview = data[:BINARY_PREVIEW_BYTES].hex(" ")
 
-    try:
-        block = parse_definite_length_block(data)
-    except ValueError as exc:
-        return (
-            "Binary/raw response\n"
-            f"Transfer bytes: {len(data)}\n"
-            "IEEE 488.2 definite-length block: no\n"
-            f"Parser note: {exc}\n"
-            f"First {min(len(data), BINARY_PREVIEW_BYTES)} bytes: {preview}"
-        )
-
     return (
         "Binary response\n"
-        f"Transfer bytes: {len(data)}\n"
         "IEEE 488.2 definite-length block: yes\n"
-        f"Header bytes: {len(block.header)}\n"
-        f"Payload bytes: {len(block.payload)}\n"
-        f"Trailing bytes: {len(block.trailing)}\n"
-        f"First {min(len(data), BINARY_PREVIEW_BYTES)} bytes: {preview}"
+        f"Payload bytes: {len(data)}\n"
+        "Termination wait: disabled\n"
+        f"First {min(len(data), BINARY_PREVIEW_BYTES)} payload bytes: {preview}"
     )
 
 
@@ -77,8 +63,6 @@ class InstrumentIOWorker(QObject):
         resource = self._resource
         transport = self._transport
 
-        # Clear ownership first so a failing native close cannot leave the
-        # Python side believing the session is still usable.
         self._transport = None
         self._resource = ""
 
@@ -184,7 +168,7 @@ class InstrumentIOWorker(QObject):
 
     @Slot(str)
     def query_binary(self, command: str) -> None:
-        """Read one binary/raw response using an extended temporary timeout."""
+        """Read one IEEE 488.2 block using an extended temporary timeout."""
 
         transport = self._transport
         if transport is None:
@@ -205,9 +189,12 @@ class InstrumentIOWorker(QObject):
                 transport.set_timeout_ms(binary_timeout_ms)
 
             started = time.perf_counter()
-            data = transport.query_raw(command)
+            payload = transport.query_ieee_block_bytes(
+                command,
+                expect_termination=False,
+            )
             elapsed_ms = (time.perf_counter() - started) * 1000.0
-            summary = describe_binary_response(data)
+            summary = describe_binary_payload(payload)
 
             if binary_timeout_ms != previous_timeout_ms:
                 transport.set_timeout_ms(previous_timeout_ms)
@@ -260,7 +247,5 @@ class InstrumentIOWorker(QObject):
         try:
             self._close_transport()
         except Exception:
-            # Application shutdown must continue even if a vendor VISA close
-            # routine reports an error. The owning thread will terminate next.
             pass
         self.shutdown_finished.emit()
