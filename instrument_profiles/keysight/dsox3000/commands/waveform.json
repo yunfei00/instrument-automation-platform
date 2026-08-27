@@ -25,9 +25,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.count",
@@ -45,9 +43,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.data",
@@ -65,10 +61,9 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": [
-        "DSO-X 3034A"
-      ],
-      "notes": "Binary probe support will be implemented separately before automatic hardware probing."
+      "supported_models": ["DSO-X 3034A"],
+      "tags": ["binary_transfer", "ieee488_block", "requires_fresh_acquisition"],
+      "notes": "Before DATA?: use :TIMebase:MODE MAIN, configure waveform source/format/points, acquire fresh data with :DIGitize <source>, then immediately read DATA?. The GUI uses a length-aware IEEE 488.2 block reader with termination waiting disabled. Binary automatic probing remains disabled until end-to-end hardware qualification passes."
     },
     {
       "id": "waveform.format",
@@ -87,9 +82,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.points",
@@ -107,9 +100,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.points_mode",
@@ -128,9 +119,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ],
+      "supported_models": ["DSO-X 3034A"],
       "notes": "Set syntax is documented on page 1008 and query syntax on page 1009."
     },
     {
@@ -149,9 +138,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.source",
@@ -170,9 +157,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.type",
@@ -190,9 +175,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "waveform.unsigned",
@@ -211,9 +194,7 @@
       "manual_section": "WAVeform Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     }
   ]
 }
