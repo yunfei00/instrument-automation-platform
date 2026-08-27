@@ -39,14 +39,14 @@
       "response_type": "float",
       "unit": "s",
       "description": "Configure or query horizontal delay/position from the trigger event to the display reference point.",
-      "notes": "Front-panel equivalent: press the Horizontal position/delay knob labeled Push to Zero. Remote zero equivalent: :TIMebase:POSition 0. The Programmer's Guide states that :TIMebase:POSition is an alias for :TIMebase:DELay.",
+      "notes": "Front-panel equivalent: press the Horizontal position/delay knob labeled Push to Zero. Remote zero equivalent: :TIMebase:POSition 0. The Programmer's Guide states that :TIMebase:POSition is an alias for :TIMebase:DELay. Hardware verified on DSO-X 3034A on 2026-08-27: operator confirmed the front-panel Push to Zero and SCPI zero command produced the expected equivalent result.",
       "manual_id": "dsox3000_programmers_guide",
       "manual_page": 904,
       "manual_section": "TIMebase Commands",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": true,
       "supported_models": ["DSO-X 3034A"],
-      "tags": ["front_panel_mapping", "push_to_zero"]
+      "tags": ["front_panel_mapping", "push_to_zero", "hardware_verified"]
     },
     {
       "id": "timebase.range",
