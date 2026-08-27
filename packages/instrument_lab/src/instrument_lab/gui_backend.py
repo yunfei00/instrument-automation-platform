@@ -18,6 +18,7 @@ from .models import CommandDefinition
 
 
 _PLACEHOLDER_PATTERN = re.compile(r"<([A-Za-z][A-Za-z0-9_]*)>")
+_OPTIONAL_SCPI_SEGMENT_PATTERN = re.compile(r"\[[^\[\]]*\]")
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,6 +105,27 @@ def normalize_visa_resource(address: str) -> str:
         return value
 
     return f"TCPIP0::{value}::inst0::INSTR"
+
+
+def omit_optional_scpi_segments(template: str) -> str:
+    """Remove SCPI manual optional segments written inside ``[...]``.
+
+    Catalogs may preserve programming-manual syntax such as
+    ``SYSTem:ERRor[:NEXT]?``. The brackets are notation and must not be
+    sent literally. Instrument Lab uses the shortest legal form by
+    omitting optional segments by default. Nested optional segments are
+    removed from the inside out.
+    """
+
+    result = template.strip()
+
+    while True:
+        updated = _OPTIONAL_SCPI_SEGMENT_PATTERN.sub("", result)
+        if updated == result:
+            break
+        result = updated
+
+    return result.strip()
 
 
 def extract_placeholders(*templates: str) -> tuple[str, ...]:
