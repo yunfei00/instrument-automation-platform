@@ -25,12 +25,14 @@ from PySide6.QtWidgets import QApplication, QMessageBox
 from .gui import InstrumentLabWindow
 from .gui_backend import normalize_visa_resource
 from .gui_io import InstrumentIOWorker
+from .models import ResponseType
 
 
 class IORequests(QObject):
     connect_requested = Signal(str, int, object)
     disconnect_requested = Signal(str)
     query_requested = Signal(str)
+    binary_query_requested = Signal(str)
     write_requested = Signal(str)
 
 
@@ -78,6 +80,9 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         self._io_requests.query_requested.connect(
             self._io_worker.query
         )
+        self._io_requests.binary_query_requested.connect(
+            self._io_worker.query_binary
+        )
         self._io_requests.write_requested.connect(
             self._io_worker.write
         )
@@ -85,8 +90,14 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         self._io_worker.connected.connect(self._io_connected_result)
         self._io_worker.disconnected.connect(self._io_disconnected_result)
         self._io_worker.query_finished.connect(self._io_query_result)
+        self._io_worker.binary_query_finished.connect(
+            self._io_binary_query_result
+        )
         self._io_worker.write_finished.connect(self._io_write_result)
         self._io_worker.operation_error.connect(self._io_error)
+        self._io_worker.connection_lost.connect(
+            self._io_connection_lost
+        )
 
         self._io_thread.start()
 
@@ -235,6 +246,16 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         )
         return False
 
+    def _selected_query_is_binary(self, label: str) -> bool:
+        """Use catalog response metadata only for baseline Query actions."""
+
+        return (
+            label == "QUERY"
+            and self.current_entry is not None
+            and self.current_entry.command.response_type
+            == ResponseType.BINARY
+        )
+
     def _execute_query(
         self,
         command: str,
@@ -243,11 +264,23 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
         if not self._ensure_connected() or self._busy:
             return
 
-        if not self._begin_io(label.lower()):
+        is_binary = self._selected_query_is_binary(label)
+        operation_name = (
+            "binary query"
+            if is_binary
+            else label.lower()
+        )
+
+        if not self._begin_io(operation_name):
             return
 
-        self._append_log(label, command, "")
-        self._io_requests.query_requested.emit(command)
+        display_label = "BINARY QUERY" if is_binary else label
+        self._append_log(display_label, command, "")
+
+        if is_binary:
+            self._io_requests.binary_query_requested.emit(command)
+        else:
+            self._io_requests.query_requested.emit(command)
 
     def _io_query_result(
         self,
@@ -260,6 +293,26 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
             "RESPONSE",
             command,
             f"{response}  ({elapsed_ms:.1f} ms)",
+        )
+        self._finish_io()
+
+    def _io_binary_query_result(
+        self,
+        command: str,
+        summary: str,
+        elapsed_ms: float,
+    ) -> None:
+        self.last_response.setPlainText(summary)
+
+        compact_summary = " | ".join(
+            line.strip()
+            for line in summary.splitlines()
+            if line.strip()
+        )
+        self._append_log(
+            "BINARY RESPONSE",
+            command,
+            f"{compact_summary}  ({elapsed_ms:.1f} ms)",
         )
         self._finish_io()
 
@@ -291,6 +344,41 @@ class StableInstrumentLabWindow(InstrumentLabWindow):
             f"{elapsed_ms:.1f} ms",
         )
         self._finish_io()
+
+    def _io_connection_lost(
+        self,
+        worker_operation: str,
+        message: str,
+    ) -> None:
+        """A timeout closes the session so stale unread data cannot survive."""
+
+        operation_name = (
+            self._pending_operation_name
+            or worker_operation
+        )
+
+        self._io_connected = False
+        self.connected_resource = ""
+        self.idn_label.clear()
+        self._set_connected_state(False)
+
+        self.last_response.setPlainText(
+            f"TIMEOUT / SESSION CLOSED: {message}"
+        )
+        self._append_log(
+            "SESSION CLOSED",
+            operation_name,
+            message,
+        )
+        self._finish_io()
+
+        QMessageBox.warning(
+            self,
+            "Instrument Session Reset",
+            "The command timed out. The VISA session was closed so unread "
+            "response data cannot affect later commands.\n\nReconnect to "
+            f"continue.\n\n{message}",
+        )
 
     def _io_error(
         self,
