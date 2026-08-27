@@ -21,7 +21,9 @@ for package in [
 
 from instrument_lab.gui_backend import (
     discover_instrument_profiles,
+    extract_placeholders,
     normalize_visa_resource,
+    render_command_template,
     save_candidate_command,
 )
 
@@ -71,6 +73,35 @@ def test_normalize_visa_resource():
 
     with pytest.raises(ValueError):
         normalize_visa_resource("   ")
+
+
+def test_extract_and_render_scpi_placeholders():
+    assert extract_placeholders(
+        ":CHANnel<n>:OFFSet <offset>",
+        ":CHANnel<n>:OFFSet?",
+    ) == ("n", "offset")
+
+    assert render_command_template(
+        ":CHANnel<n>:OFFSet <offset>",
+        {
+            "n": "1",
+            "offset": "0",
+        },
+    ) == ":CHANnel1:OFFSet 0"
+
+    assert render_command_template(
+        "FETCh:LTE:MEAS<i>:MEValuation:STATe?",
+        {"i": "1"},
+    ) == "FETCh:LTE:MEAS1:MEValuation:STATe?"
+
+    with pytest.raises(
+        ValueError,
+        match="Missing values",
+    ):
+        render_command_template(
+            ":CHANnel<n>:SCALe <scale>",
+            {"n": "1"},
+        )
 
 
 def test_discover_profile_and_nested_catalog(tmp_path: Path):
