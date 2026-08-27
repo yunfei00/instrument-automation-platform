@@ -178,6 +178,50 @@ def main():
     )
 
 
+def test_push_to_zero_equivalents():
+    transport = MockTransport()
+
+    driver = KeysightDSOX3000Driver(
+        transport
+    )
+
+    driver.set_timebase_position(
+        2.5e-6
+    )
+
+    assert (
+        transport.writes[-1]
+        == ":TIMebase:POSition 2.5e-06"
+    )
+
+    driver.zero_timebase_position()
+
+    assert (
+        transport.writes[-1]
+        == ":TIMebase:POSition 0"
+    )
+
+    driver.set_channel_offset(
+        1,
+        0.25,
+    )
+
+    assert (
+        transport.writes[-1]
+        == ":CHANnel1:OFFSet 0.25"
+    )
+
+    driver.zero_channel_offset(1)
+
+    assert (
+        transport.writes[-1]
+        == ":CHANnel1:OFFSet 0"
+    )
+
+    with pytest.raises(ValueError):
+        driver.zero_channel_offset(5)
+
+
 def test_delay_and_n_pulses_measurements():
     transport = MockTransport()
 
