@@ -1,6 +1,6 @@
 """PyVISA based instrument transport."""
 
-from typing import Any
+from typing import Any, Optional
 
 from instrument_core.errors import (
     InstrumentConnectionError,
@@ -14,7 +14,7 @@ from .base import Transport, TransportConfig
 class VisaTransport(Transport):
     """VISA implementation of the common Transport interface."""
 
-    def __init__(self, config: TransportConfig, backend: str | None = None):
+    def __init__(self, config: TransportConfig, backend: Optional[str] = None):
         super().__init__(config)
         self.backend = backend
         self._resource_manager: Any = None
