@@ -8,7 +8,20 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parents[1]
-for package in ("instrument_core", "instrument_lab"):
+
+# Keep repository-checkout execution consistent with Instrument Lab GUI.
+# Importing ``instrument_lab.port_bridge_gui`` first initializes the
+# ``instrument_lab`` package, whose public API currently imports SCPI probing
+# helpers.  Therefore all baseline packages that may be reached during package
+# initialization must be visible on sys.path, even when the bridge itself only
+# needs a subset of them.
+for package in (
+    "instrument_core",
+    "instrument_scpi",
+    "instrument_lab",
+    "instrument_drivers",
+    "instrument_qualification",
+):
     source = ROOT / "packages" / package / "src"
     if source.is_dir():
         sys.path.insert(0, str(source))
