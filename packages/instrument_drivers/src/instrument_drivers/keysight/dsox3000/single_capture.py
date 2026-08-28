@@ -2,11 +2,12 @@
 
 The product requirement is intentionally front-panel equivalent: press Single,
 wait for the single acquisition to arm and finish, then read the waveform that
-was just acquired.  This is deliberately different from ``:DIGitize``.
+was just acquired. This is deliberately different from ``:DIGitize``.
 
 Keysight's programmer guide states that ``:SINGle`` is the same as pressing the
-front-panel Single key.  For single-shot synchronization the guide recommends
-waiting for the Arm Event Register and then polling the RUN bit in
+front-panel Single key. Its polling synchronization example first stops any
+previous acquisition and waits for that STOP to complete, then sends
+``:SINGle``, waits for the Arm Event Register, and finally polls the RUN bit in
 ``:OPERegister:CONDition?`` until the oscilloscope is stopped.
 """
 
@@ -34,17 +35,18 @@ def acquire_single_word_waveform(
 ):
     """Acquire one front-panel-equivalent Single shot and return WORD waveform.
 
-    Sequence:
+    Sequence follows Keysight's polling synchronization guidance:
 
     1. Configure waveform transfer source/format before acquisition.
-    2. Clear a stale Arm Event Register value.
-    3. Send ``:SINGle``.
-    4. Wait until ``:AER?`` reports that the trigger system became armed.
-    5. Wait until RUN bit 3 in ``:OPERegister:CONDition?`` clears.
-    6. Read preamble and waveform data without issuing ``:DIGitize``.
+    2. Stop any previous RUN/Single acquisition and wait for STOP to complete.
+    3. Clear a stale Arm Event Register value.
+    4. Send ``:SINGle``.
+    5. Wait until ``:AER?`` reports that the trigger system became armed.
+    6. Wait until RUN bit 3 in ``:OPERegister:CONDition?`` clears.
+    7. Read preamble and waveform data without issuing ``:DIGitize``.
 
-    A single deadline covers both arm and acquisition completion so a missing
-    trigger cannot block a production workflow forever.
+    A single deadline covers arm and acquisition completion so a missing trigger
+    cannot block a production workflow forever.
     """
 
     if timeout_s <= 0:
@@ -55,7 +57,18 @@ def acquire_single_word_waveform(
     driver.set_waveform_source(channel)
     driver.set_waveform_format("WORD")
 
-    # AER is latched until read.  Clear any previous arm event so the following
+    # Keysight's official polling example explicitly stops any previous
+    # acquisition and synchronizes that STOP before starting a new Single.  This
+    # matters when the front panel was previously left in Run/continuous mode:
+    # otherwise the RUN condition can remain asserted across the new request.
+    driver.write(":STOP")
+    stop_complete = str(driver.query("*OPC?")).strip()
+    if stop_complete != "1":
+        raise RuntimeError(
+            f"DSO-X did not acknowledge STOP before Single: *OPC?={stop_complete!r}"
+        )
+
+    # AER is latched until read. Clear any previous arm event so the following
     # value belongs to this exact :SINGle acquisition.
     driver.query(":AER?")
     driver.write(":SINGle")
@@ -102,16 +115,19 @@ def _wait_until_armed(
     poll_interval_s: float,
     cancel_check: CancelCheck | None,
 ) -> None:
+    last_aer = 0
     while True:
         _check_cancel(driver, cancel_check)
         if monotonic() >= deadline:
+            diagnostics = _single_diagnostics(driver)
             _abort_quietly(driver)
             raise TriggerTimeoutError(
-                "DSO-X Single acquisition did not arm before timeout"
+                "DSO-X Single acquisition did not arm before timeout; "
+                f"last_AER={last_aer}{diagnostics}"
             )
 
-        value = int(float(str(driver.query(":AER?")).strip()))
-        if value != 0:
+        last_aer = int(float(str(driver.query(":AER?")).strip()))
+        if last_aer != 0:
             return
         sleep(min(poll_interval_s, max(0.0, deadline - monotonic())))
 
@@ -123,20 +139,39 @@ def _wait_until_stopped(
     poll_interval_s: float,
     cancel_check: CancelCheck | None,
 ) -> None:
+    last_condition = 0
     while True:
         _check_cancel(driver, cancel_check)
         if monotonic() >= deadline:
+            diagnostics = _single_diagnostics(driver)
             _abort_quietly(driver)
             raise TriggerTimeoutError(
-                "DSO-X Single acquisition did not complete before timeout"
+                "DSO-X Single acquisition did not complete before timeout; "
+                f"last_operation_condition={last_condition} "
+                f"(RUN={(last_condition & 0x08) != 0}, "
+                f"WAIT_TRIG={(last_condition & 0x20) != 0}){diagnostics}"
             )
 
-        condition = int(
+        last_condition = int(
             float(str(driver.query(":OPERegister:CONDition?")).strip())
         )
-        if (condition & 0x08) == 0:
+        if (last_condition & 0x08) == 0:
             return
         sleep(min(poll_interval_s, max(0.0, deadline - monotonic())))
+
+
+def _single_diagnostics(driver: Any) -> str:
+    values: list[str] = []
+    for label, command in (
+        ("trigger_sweep", ":TRIGger:SWEep?"),
+        ("trigger_source", ":TRIGger:EDGE:SOURce?"),
+    ):
+        try:
+            value = str(driver.query(command)).strip()
+        except Exception:
+            continue
+        values.append(f"{label}={value!r}")
+    return ("; " + ", ".join(values)) if values else ""
 
 
 def _check_cancel(driver: Any, cancel_check: CancelCheck | None) -> None:
