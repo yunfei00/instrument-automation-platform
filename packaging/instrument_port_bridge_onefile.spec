@@ -18,7 +18,10 @@ PACKAGE_PATHS = [
     )
 ]
 
-hiddenimports = collect_submodules("pyvisa_py")
+hiddenimports = collect_submodules(
+    "pyvisa_py",
+    filter=lambda name: not name.startswith("pyvisa_py.testsuite"),
+)
 datas = copy_metadata("PyVISA") + copy_metadata("PyVISA-py")
 
 
