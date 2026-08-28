@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import socket
 import threading
-from collections.abc import Callable
+from typing import Callable
 
 from instrument_core.transport.base import TransportConfig
 from instrument_core.transport.visa import VisaTransport
