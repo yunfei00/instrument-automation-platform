@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 
-@dataclass(slots=True)
+@dataclass
 class TransportConfig:
     resource: str
     timeout_ms: int = 5000

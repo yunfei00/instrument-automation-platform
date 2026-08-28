@@ -1,0 +1,72 @@
+name: Instrument Port Bridge FSW Legacy
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/instrument_port_bridge_fsw_legacy.py"
+      - "packages/instrument_core/src/instrument_core/__init__.py"
+      - "packages/instrument_core/src/instrument_core/bridge/**"
+      - "packages/instrument_core/src/instrument_core/transport/**"
+      - "packaging/instrument_port_bridge_fsw_legacy*.spec"
+      - "packaging/build_fsw_legacy.ps1"
+      - "packaging/requirements-fsw-legacy.txt"
+      - ".github/workflows/instrument-port-bridge-fsw-legacy.yml"
+
+jobs:
+  build-fsw-legacy:
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.8.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.8.10"
+          architecture: "x64"
+
+      - name: Install legacy dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade "pip<25"
+          python -m pip install -r packaging/requirements-fsw-legacy.txt
+          python -m pip install pytest==7.4.4
+
+      - name: Verify Python 3.8 bridge import and unit tests
+        shell: pwsh
+        run: |
+          python -m pytest -q tests/unit/test_bridge_protocol.py
+          python tools/instrument_port_bridge_fsw_legacy.py --diagnostics-file legacy-source-diagnostics.txt
+          Get-Content legacy-source-diagnostics.txt
+          if (-not (Select-String -Path legacy-source-diagnostics.txt -Pattern '^status=ok$' -Quiet)) {
+            throw "FSW Legacy source diagnostics failed"
+          }
+
+      - name: Build and smoke-test legacy executables
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File packaging/build_fsw_legacy.ps1 -Mode Both -SkipInstall
+
+      - name: Create test package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-fsw-legacy | Out-Null
+          Compress-Archive `
+            -Path "dist/fsw-legacy/onedir/InstrumentPortBridgeFSWLegacy" `
+            -DestinationPath "release-fsw-legacy/InstrumentPortBridge-FSW-Legacy-win64.zip" `
+            -Force
+          Copy-Item `
+            "dist/fsw-legacy/onefile/InstrumentPortBridgeFSWLegacy.exe" `
+            "release-fsw-legacy/InstrumentPortBridge-FSW-Legacy-onefile.exe" `
+            -Force
+          Get-ChildItem release-fsw-legacy | Format-Table Name, Length
+
+      - name: Upload FSW legacy test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: InstrumentPortBridge-FSW-Legacy-win64
+          path: release-fsw-legacy/*
+          if-no-files-found: error
+          retention-days: 30

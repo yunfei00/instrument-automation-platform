@@ -1,0 +1,4 @@
+# FSW legacy build baseline.
+# Python 3.8 is the last CPython line supporting Windows 7.
+PyVISA==1.14.1
+PyInstaller==5.13.2
