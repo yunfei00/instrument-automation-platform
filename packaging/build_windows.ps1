@@ -93,6 +93,51 @@ function Assert-FrozenDiagnostics {
     Get-Content $diag
 }
 
+function Assert-MsvcRuntimeConsistency {
+    param([Parameter(Mandatory = $true)][string]$DistributionRoot)
+
+    $runtimeNames = @(
+        "MSVCP140.dll",
+        "MSVCP140_1.dll",
+        "MSVCP140_2.dll",
+        "VCRUNTIME140.dll",
+        "VCRUNTIME140_1.dll"
+    )
+
+    foreach ($runtimeName in $runtimeNames) {
+        $files = @(Get-ChildItem -Path $DistributionRoot -Recurse -File | Where-Object {
+            $_.Name -ieq $runtimeName
+        })
+        if ($files.Count -eq 0) { continue }
+
+        $hashes = @{}
+        foreach ($file in $files) {
+            $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            $version = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($file.FullName).FileVersion
+            Write-Host "msvc_runtime=$runtimeName version=$version hash=$hash path=$($file.FullName)"
+            $hashes[$hash] = $true
+        }
+        if ($hashes.Count -ne 1) {
+            throw "$runtimeName is bundled from multiple incompatible runtime builds"
+        }
+    }
+
+    # CPython's host runtime used to be 14.38 while Qt 6.9.3 needs 14.44.
+    # The root-level VCRUNTIME is loaded very early, so it must be the same DLL
+    # as Qt's app-local copy or Windows can reuse an older DLL and fail later
+    # with ERROR_PROC_NOT_FOUND while importing PySide6.QtCore.
+    $rootRuntime = Join-Path $DistributionRoot "_internal\VCRUNTIME140.dll"
+    $qtRuntime = Join-Path $DistributionRoot "_internal\PySide6\VCRUNTIME140.dll"
+    if ((Test-Path $rootRuntime) -and (Test-Path $qtRuntime)) {
+        $rootHash = (Get-FileHash $rootRuntime -Algorithm SHA256).Hash
+        $qtHash = (Get-FileHash $qtRuntime -Algorithm SHA256).Hash
+        if ($rootHash -ne $qtHash) {
+            throw "Root CPython VCRUNTIME differs from the Qt VCRUNTIME"
+        }
+    }
+    Write-Host "msvc_runtime_consistency=ok"
+}
+
 function Build-Onedir {
     Remove-Item -Recurse -Force "dist\onedir", "build\onedir" -ErrorAction SilentlyContinue
     & $PythonExe -m PyInstaller `
@@ -103,14 +148,16 @@ function Build-Onedir {
         "packaging\instrument_port_bridge.spec"
     if ($LASTEXITCODE -ne 0) { throw "onedir PyInstaller build failed" }
 
-    $qtCore = "dist\onedir\InstrumentPortBridge\_internal\PySide6\Qt6Core.dll"
+    $distributionRoot = "dist\onedir\InstrumentPortBridge"
+    $qtCore = "$distributionRoot\_internal\PySide6\Qt6Core.dll"
     & $PythonExe "packaging\check_windows_dependencies.py" $qtCore
     if ($LASTEXITCODE -ne 0) {
         throw "Qt6Core contains a blocked system dependency; use the pinned portable Qt build"
     }
+    Assert-MsvcRuntimeConsistency -DistributionRoot $distributionRoot
 
     Assert-FrozenDiagnostics `
-        -ExePath "dist\onedir\InstrumentPortBridge\InstrumentPortBridge.exe" `
+        -ExePath "$distributionRoot\InstrumentPortBridge.exe" `
         -DiagnosticsPath "build\diagnostics-onedir.txt" `
         -Label "onedir"
 }
