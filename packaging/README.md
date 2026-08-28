@@ -16,6 +16,22 @@ Two Windows x64 deliverables are produced:
 Both builds execute the same application code and both must pass frozen runtime
 diagnostics before they are published.
 
+## Reproducible Qt baseline
+
+Windows release builds use `packaging/requirements-windows-build.txt` instead
+of whichever Qt packages happen to be installed in the developer environment.
+The release baseline intentionally pins PySide6 6.9.3. Qt 6.10+ Windows builds
+added dependencies on system ICU DLLs such as `icuuc.dll`; those dependencies
+can make an otherwise valid packaged application fail with:
+
+```text
+ImportError: DLL load failed while importing QtCore
+```
+
+on older or tightly-managed Windows lab PCs. The build therefore also inspects
+the packaged `Qt6Core.dll` and rejects release output that imports the blocked
+ICU system DLLs.
+
 ## Local Windows build
 
 From PowerShell at the repository root:
@@ -24,6 +40,11 @@ From PowerShell at the repository root:
 powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1
 ```
 
+The default local build deletes and recreates `.venv-port-bridge-build`,
+installs the pinned Windows build toolchain, clears Qt/Conda/Python environment
+variables that can contaminate DLL discovery, builds both formats, and launches
+both frozen executables in diagnostics mode.
+
 To build only one format:
 
 ```powershell
@@ -31,8 +52,9 @@ powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1 -Mode Onedi
 powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1 -Mode Onefile
 ```
 
-The script installs `requirements-gui.txt` and PyInstaller by default. Use
-`-SkipInstall` only when the build environment is already prepared.
+Use `-SkipInstall` only in a controlled CI environment that has already
+installed `packaging/requirements-windows-build.txt`. It is not recommended for
+normal developer builds.
 
 ## Frozen diagnostics
 
@@ -60,9 +82,10 @@ Network TCP -> TCP forwarding does not require a vendor VISA runtime.
 ## GitHub release
 
 The workflow `.github/workflows/instrument-port-bridge-release.yml` builds on
-`windows-latest`. Pull requests touching the bridge packaging path perform a
-full Windows packaging check. A pushed tag matching `v*` additionally creates
-or updates the GitHub Release and uploads:
+`windows-latest` using the same pinned Windows dependency set. Pull requests
+touching the bridge packaging path perform a full Windows packaging check. A
+pushed tag matching `v*` additionally creates or updates the GitHub Release and
+uploads:
 
 - stable onedir ZIP
 - portable onefile EXE

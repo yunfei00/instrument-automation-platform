@@ -1,0 +1,11 @@
+# Reproducible Windows build toolchain for Instrument Port Bridge.
+#
+# PySide6 is intentionally pinned below Qt 6.10. Qt 6.10+ Windows builds
+# introduced a dependency on system ICU DLLs (for example icuuc.dll), which
+# reduces portability to older/managed Windows 10 lab PCs. 6.9.3 provides the
+# Qt Widgets functionality used by this tool without that newer dependency.
+PySide6==6.9.3
+PyVISA==1.16.2
+PyVISA-py==0.8.1
+PyInstaller==6.22.2
+pyinstaller-hooks-contrib==2026.7
