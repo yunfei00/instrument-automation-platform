@@ -7,7 +7,7 @@ from threading import Lock
 from time import monotonic
 
 
-@dataclass(slots=True)
+@dataclass
 class TcpBridgeConfig:
     listen_host: str = "0.0.0.0"
     listen_port: int = 15025
@@ -25,7 +25,7 @@ class TcpBridgeConfig:
             raise ValueError("connect_timeout_s must be greater than zero")
 
 
-@dataclass(slots=True)
+@dataclass
 class VisaBridgeConfig:
     resource: str
     listen_host: str = "0.0.0.0"
@@ -55,7 +55,7 @@ def _validate_port(name: str, value: int) -> None:
         raise ValueError(f"{name} must be between 1 and 65535")
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True)
 class BridgeStatsSnapshot:
     bytes_from_client: int
     bytes_to_client: int
