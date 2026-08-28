@@ -5,18 +5,24 @@ on:
     paths:
       - "packages/instrument_lab/**"
       - "packages/instrument_core/src/instrument_core/transport/visa.py"
+      - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
+      - "tests/unit/test_bridge_protocol.py"
       - "tools/instrument_lab_gui.py"
+      - "tools/instrument_port_bridge.py"
       - "requirements-gui.txt"
       - ".github/workflows/instrument-lab-gui-ci.yml"
   pull_request:
     paths:
       - "packages/instrument_lab/**"
       - "packages/instrument_core/src/instrument_core/transport/visa.py"
+      - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
+      - "tests/unit/test_bridge_protocol.py"
       - "tools/instrument_lab_gui.py"
+      - "tools/instrument_port_bridge.py"
       - "requirements-gui.txt"
       - ".github/workflows/instrument-lab-gui-ci.yml"
   workflow_dispatch:
@@ -36,14 +42,24 @@ jobs:
       - name: Install test dependency
         run: python -m pip install pytest
 
-      - name: Compile GUI modules
+      - name: Compile GUI and bridge modules
         run: |
           python -m py_compile packages/instrument_core/src/instrument_core/transport/visa.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/__init__.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/models.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/protocol.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/tcp_bridge.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/visa_bridge.py
+          python -m py_compile packages/instrument_core/src/instrument_core/bridge/discovery.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_backend.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_io.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_stable.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/port_bridge_gui.py
           python -m py_compile tools/instrument_lab_gui.py
+          python -m py_compile tools/instrument_port_bridge.py
 
-      - name: Run GUI backend tests
-        run: python -m pytest -q tests/unit/test_instrument_lab_gui_backend.py
+      - name: Run GUI and bridge backend tests
+        run: |
+          python -m pytest -q tests/unit/test_instrument_lab_gui_backend.py
+          python -m pytest -q tests/unit/test_bridge_protocol.py
