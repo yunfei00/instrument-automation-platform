@@ -20,9 +20,10 @@ from instrument_drivers.keysight.dsox3000 import (
 
 
 class FakeDriver:
-    def __init__(self, *, never_arm=False):
+    def __init__(self, *, never_arm=False, never_complete=False):
         self.calls = []
         self.never_arm = never_arm
+        self.never_complete = never_complete
         self.aer_reads = 0
         self.condition_reads = 0
         self.aborted = False
@@ -38,16 +39,24 @@ class FakeDriver:
 
     def query(self, command):
         self.calls.append(("query", command))
+        if command == "*OPC?":
+            return "1"
         if command == ":AER?":
             self.aer_reads += 1
             if self.never_arm:
                 return "0"
-            # First read clears the stale event before :SINGle.  The second
+            # First read clears the stale event before :SINGle. The second
             # read belongs to the new acquisition and reports armed.
             return "0" if self.aer_reads == 1 else "1"
         if command == ":OPERegister:CONDition?":
             self.condition_reads += 1
+            if self.never_complete:
+                return "40"  # RUN + WAIT_TRIG
             return "8" if self.condition_reads == 1 else "0"
+        if command == ":TRIGger:SWEep?":
+            return "NORM"
+        if command == ":TRIGger:EDGE:SOURce?":
+            return "CHAN1"
         raise AssertionError(command)
 
     def read_waveform_preamble(self):
@@ -82,7 +91,7 @@ class FakeDriver:
         self.calls.append(("write", ":STOP"))
 
 
-def test_single_capture_uses_single_then_reads_same_acquisition():
+def test_single_capture_stops_previous_run_then_reads_same_acquisition():
     driver = FakeDriver()
 
     waveform = acquire_single_word_waveform(
@@ -94,19 +103,22 @@ def test_single_capture_uses_single_then_reads_same_acquisition():
 
     assert waveform.raw_samples == (1, 2)
     assert waveform.voltage_volts == (0.001, 0.002)
-    assert ("write", ":SINGle") in driver.calls
     assert not any(
         call[0] == "write" and str(call[1]).upper().startswith(":DIGITIZE")
         for call in driver.calls
     )
 
+    stop_index = driver.calls.index(("write", ":STOP"))
+    opc_index = driver.calls.index(("query", "*OPC?"))
+    stale_aer_index = driver.calls.index(("query", ":AER?"))
     single_index = driver.calls.index(("write", ":SINGle"))
     data_index = driver.calls.index(("read", "data"))
-    assert single_index < data_index
-    assert driver.calls[:3] == [
+    assert stop_index < opc_index < stale_aer_index < single_index < data_index
+    assert driver.calls[:4] == [
         ("source", 1),
         ("format", "WORD"),
-        ("query", ":AER?"),
+        ("write", ":STOP"),
+        ("query", "*OPC?"),
     ]
 
 
@@ -121,4 +133,23 @@ def test_single_capture_times_out_and_stops_when_scope_never_arms():
             poll_interval_s=0.0001,
         )
 
+    assert driver.aborted is True
+
+
+def test_single_capture_completion_timeout_reports_trigger_state():
+    driver = FakeDriver(never_complete=True)
+
+    with pytest.raises(
+        TriggerTimeoutError,
+        match="RUN=True, WAIT_TRIG=True",
+    ) as exc_info:
+        acquire_single_word_waveform(
+            driver,
+            1,
+            timeout_s=0.002,
+            poll_interval_s=0.0001,
+        )
+
+    assert "trigger_sweep='NORM'" in str(exc_info.value)
+    assert "trigger_source='CHAN1'" in str(exc_info.value)
     assert driver.aborted is True
