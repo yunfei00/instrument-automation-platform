@@ -19,9 +19,13 @@ PACKAGE_PATHS = [
 ]
 
 # PyVISA-py is discovered dynamically as a VISA backend.  Explicitly collect
-# its modules and distribution metadata so ResourceManager("@py") works in a
-# frozen application.  Vendor VISA runtimes/DLLs are intentionally external.
-hiddenimports = collect_submodules("pyvisa_py")
+# its runtime modules and distribution metadata so ResourceManager("@py") works
+# in a frozen application.  Test-suite modules are excluded from production
+# builds to avoid pulling pytest and lab-only test helpers into the EXE.
+hiddenimports = collect_submodules(
+    "pyvisa_py",
+    filter=lambda name: not name.startswith("pyvisa_py.testsuite"),
+)
 datas = copy_metadata("PyVISA") + copy_metadata("PyVISA-py")
 
 
