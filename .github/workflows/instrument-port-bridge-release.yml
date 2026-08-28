@@ -1,0 +1,131 @@
+name: Instrument Port Bridge Windows Release
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "packaging/**"
+      - "tools/instrument_port_bridge.py"
+      - "packages/instrument_core/src/instrument_core/bridge/**"
+      - "packages/instrument_core/src/instrument_core/transport/visa.py"
+      - "packages/instrument_lab/src/instrument_lab/port_bridge_gui.py"
+      - "packages/instrument_lab/src/instrument_lab/__init__.py"
+      - "packages/instrument_scpi/**"
+      - "requirements-gui.txt"
+      - ".github/workflows/instrument-port-bridge-release.yml"
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-gui.txt
+          python -m pip install pytest "pyinstaller>=6.10,<7"
+
+      - name: Run bridge unit tests
+        shell: pwsh
+        run: |
+          python -m pytest -q tests/unit/test_bridge_protocol.py
+
+      - name: Run source runtime diagnostics
+        shell: pwsh
+        run: |
+          python tools/instrument_port_bridge.py --diagnostics-file source-diagnostics.txt
+          Get-Content source-diagnostics.txt
+          if (-not (Select-String -Path source-diagnostics.txt -Pattern '^status=ok$' -Quiet)) {
+            throw "Source runtime diagnostics failed"
+          }
+
+      - name: Build and smoke-test Windows executables
+        shell: pwsh
+        run: |
+          powershell -ExecutionPolicy Bypass -File packaging/build_windows.ps1 -Mode Both -SkipInstall
+
+      - name: Resolve package version
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq "tag") {
+            $version = $env:GITHUB_REF_NAME
+          } else {
+            $version = "dev-" + $env:GITHUB_SHA.Substring(0, 7)
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Package version: $version"
+
+      - name: Create release files and checksums
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+
+          $stableZip = "release/InstrumentPortBridge-$version-win64.zip"
+          $portableExe = "release/InstrumentPortBridge-$version-win64-onefile.exe"
+
+          Compress-Archive `
+            -Path "dist/onedir/InstrumentPortBridge" `
+            -DestinationPath $stableZip `
+            -Force
+
+          Copy-Item `
+            "dist/onefile/InstrumentPortBridge.exe" `
+            $portableExe `
+            -Force
+
+          $hashLines = Get-ChildItem release -File | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          }
+          $hashLines | Set-Content -Path "release/SHA256SUMS.txt" -Encoding utf8
+          Get-ChildItem release | Format-Table Name, Length
+          Get-Content "release/SHA256SUMS.txt"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: InstrumentPortBridge-${{ steps.version.outputs.version }}-win64
+          path: release/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $files = Get-ChildItem release -File | ForEach-Object { $_.FullName }
+
+          gh release view $tag --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag @files --clobber --repo $env:GITHUB_REPOSITORY
+          } else {
+            gh release create $tag @files `
+              --repo $env:GITHUB_REPOSITORY `
+              --title "Instrument Port Bridge $tag" `
+              --generate-notes
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub Release publication failed"
+          }
