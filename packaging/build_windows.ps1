@@ -103,6 +103,12 @@ function Build-Onedir {
         "packaging\instrument_port_bridge.spec"
     if ($LASTEXITCODE -ne 0) { throw "onedir PyInstaller build failed" }
 
+    $qtCore = "dist\onedir\InstrumentPortBridge\_internal\PySide6\Qt6Core.dll"
+    & $PythonExe "packaging\check_windows_dependencies.py" $qtCore
+    if ($LASTEXITCODE -ne 0) {
+        throw "Qt6Core contains a blocked system dependency; use the pinned portable Qt build"
+    }
+
     Assert-FrozenDiagnostics `
         -ExePath "dist\onedir\InstrumentPortBridge\InstrumentPortBridge.exe" `
         -DiagnosticsPath "build\diagnostics-onedir.txt" `
