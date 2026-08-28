@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """Stable onedir PyInstaller build for Instrument Port Bridge."""
 
+import importlib.util
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_submodules, copy_metadata
@@ -18,9 +19,18 @@ PACKAGE_PATHS = [
     )
 ]
 
-# PyVISA-py is discovered dynamically as a VISA backend.  Explicitly collect
+helper_spec = importlib.util.spec_from_file_location(
+    "port_bridge_pyinstaller_runtime",
+    ROOT / "packaging" / "pyinstaller_runtime.py",
+)
+if helper_spec is None or helper_spec.loader is None:
+    raise RuntimeError("Unable to load PyInstaller runtime helper")
+runtime_helper = importlib.util.module_from_spec(helper_spec)
+helper_spec.loader.exec_module(runtime_helper)
+
+# PyVISA-py is discovered dynamically as a VISA backend. Explicitly collect
 # its runtime modules and distribution metadata so ResourceManager("@py") works
-# in a frozen application.  Test-suite modules are excluded from production
+# in a frozen application. Test-suite modules are excluded from production
 # builds to avoid pulling pytest and lab-only test helpers into the EXE.
 hiddenimports = collect_submodules(
     "pyvisa_py",
@@ -42,6 +52,11 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+# CPython 3.11 from the GitHub/local build host may contribute VCRUNTIME 14.38
+# while PySide6 6.9.3 contributes 14.44. Windows reuses the first DLL loaded by
+# basename, which can make QtCore fail with ERROR_PROC_NOT_FOUND. Normalize all
+# collected MSVC v14 DLLs to the PySide6 14.44 runtime before assembling output.
+a.binaries = runtime_helper.normalize_msvc_runtime_binaries(a.binaries)
 pyz = PYZ(a.pure)
 
 exe = EXE(

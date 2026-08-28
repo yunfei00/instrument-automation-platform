@@ -1,6 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 """Portable onefile PyInstaller build for Instrument Port Bridge."""
 
+import importlib.util
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_submodules, copy_metadata
@@ -17,6 +18,15 @@ PACKAGE_PATHS = [
         "instrument_qualification",
     )
 ]
+
+helper_spec = importlib.util.spec_from_file_location(
+    "port_bridge_pyinstaller_runtime",
+    ROOT / "packaging" / "pyinstaller_runtime.py",
+)
+if helper_spec is None or helper_spec.loader is None:
+    raise RuntimeError("Unable to load PyInstaller runtime helper")
+runtime_helper = importlib.util.module_from_spec(helper_spec)
+helper_spec.loader.exec_module(runtime_helper)
 
 hiddenimports = collect_submodules(
     "pyvisa_py",
@@ -38,6 +48,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+a.binaries = runtime_helper.normalize_msvc_runtime_binaries(a.binaries)
 pyz = PYZ(a.pure)
 
 exe = EXE(
