@@ -25,9 +25,7 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "acquire.count",
@@ -46,9 +44,7 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "acquire.mode",
@@ -67,9 +63,7 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "acquire.points",
@@ -86,9 +80,7 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "acquire.sample_rate",
@@ -107,9 +99,7 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
     },
     {
       "id": "acquire.type",
@@ -128,9 +118,62 @@
       "manual_section": "ACQuire Commands",
       "verification_status": "manual_verified",
       "probe_enabled": true,
-      "supported_models": [
-        "DSO-X 3034A"
-      ]
+      "supported_models": ["DSO-X 3034A"]
+    },
+    {
+      "id": "root.arm_event",
+      "name": "Arm Event Register",
+      "category": "acquisition",
+      "command": ":AER?",
+      "query_command": ":AER?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Read and clear the Arm Event Register. A value of 1 means the trigger system reached the armed state and was ready to accept a trigger.",
+      "response_notes": "The register is latched and is cleared when read, so a one-shot workflow should clear a stale value before :SINGle and then poll for the new arm event.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 206,
+      "manual_section": "Root Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["DSO-X 3034A"]
+    },
+    {
+      "id": "root.operation_condition",
+      "name": "Operation Status Condition Register",
+      "category": "acquisition",
+      "command": ":OPERegister:CONDition?",
+      "query_command": ":OPERegister:CONDition?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "integer",
+      "description": "Query the Operation Status Condition Register; bit 3 is RUN and is set while the oscilloscope is not stopped.",
+      "response_notes": "For a :SINGle workflow, wait for AER first, then poll until RUN bit 3 (0x08) clears before reading the captured waveform.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 221,
+      "manual_section": "Root Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["DSO-X 3034A"]
+    },
+    {
+      "id": "root.single",
+      "name": "Single Acquisition",
+      "category": "acquisition",
+      "command": ":SINGle",
+      "set_command": ":SINGle",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Acquire a single trigger of data; this is the programming equivalent of pressing the front-panel Single key.",
+      "response_notes": "Use AER to verify the new acquisition armed and Operation Status RUN bit to detect completion before reading waveform data.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 236,
+      "manual_section": "Root Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["DSO-X 3034A"],
+      "notes": "Do not execute in the generic safe probe. Product data collection requires this command before each saved DSO-X waveform."
     },
     {
       "id": "root.digitize",
@@ -141,17 +184,15 @@
       "kind": "action",
       "safety": "disruptive",
       "response_type": "raw",
-      "description": "Start an acquisition. The command can optionally specify one or more sources.",
-      "response_notes": "No normal query response. Hardware behavior must be validated by scenario test.",
+      "description": "Start a blocking acquisition. The command can optionally specify one or more sources.",
+      "response_notes": "No normal query response. It is not equivalent to the customer's required front-panel Single action.",
       "manual_id": "dsox3000_programmers_guide",
       "manual_page": 213,
       "manual_section": "Root Commands",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": [
-        "DSO-X 3034A"
-      ],
-      "notes": "The manual states that DIGitize is a specialized RUN command and blocks subsequent commands until acquisition completes. Do not execute in the generic safe command probe."
+      "supported_models": ["DSO-X 3034A"],
+      "notes": "The manual states that DIGitize is a specialized RUN command and blocks subsequent commands until acquisition completes. Do not execute in the generic safe command probe, and do not use it as a substitute for :SINGle in the final product recipe."
     }
   ]
 }
