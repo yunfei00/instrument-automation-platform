@@ -1,73 +1,81 @@
-# CMW500 Platform Architecture Validation
+# CMW500 平台架构验证记录
 
-## Purpose
+## 目的
 
-The CMW500 is used as the third reference instrument to test whether
-the v0.1.0 platform baseline remains suitable for a modular tester.
+使用 CMW500 作为第三类 Reference Instrument，验证 v0.1.0 基线能否支持 Modular Communication Tester，而不把仪表特有概念错误提升到 Core。
 
-## Finding 1 - Sub-Instruments Are Endpoints
+## 发现 1：Sub-Instrument 是远控 Endpoint
 
-The CMW500 may be split into multiple sub-instruments.
+CMW500 可以被划分为多个 Sub-Instrument，Remote Channel 会分配到不同 Sub-Instrument。
 
-Remote channels are assigned to sub-instruments.
+典型形式：
 
-Examples include:
+- HiSLIP `hislip0` -> sub-instrument 1
+- HiSLIP `hislip1` -> sub-instrument 2
+- VXI-11 `inst0` -> sub-instrument 1
+- VXI-11 `inst1` -> sub-instrument 2
 
-- HiSLIP hislip0 -> sub-instrument 1
-- HiSLIP hislip1 -> sub-instrument 2
-- VXI-11 inst0 -> sub-instrument 1
-- VXI-11 inst1 -> sub-instrument 2
+因此 Sub-Instrument 的选择首先由 VISA Resource / Transport Endpoint 表达。
 
-Therefore sub-instrument selection belongs primarily to the VISA
-resource / transport endpoint.
+结论：通用 `Transport` 无需修改；不同 Remote Endpoint 可以创建独立 Driver Instance。
 
-The generic Transport abstraction does not need modification.
+## 发现 2：Application Lifecycle 属于 CMW500 家族
 
-A separate driver instance may be created for each remote endpoint.
+CMW500 Measurement 围绕 Firmware Application 组织，典型命令：
 
-## Finding 2 - Application Lifecycle Is Device Specific
-
-CMW500 measurement operations are organized around firmware
-applications.
-
-Typical command families use forms such as:
-
+```text
 INITiate:<Application>:MEASurement<i>
 FETCh:<Application>:...
 READ:<Application>:...
 STOP:<Application>:...
 ABORt:<Application>:...
+```
 
-These are not generic whole-instrument operations.
+这些不是所有仪表都具备的“整机级”统一生命周期。
 
-Application lifecycle logic should initially remain inside the CMW500
-driver family rather than being promoted into instrument_core.
+结论：Application Lifecycle 先保留在 CMW500 Driver Family 内部，不提升到 `instrument_core`。只有后续多个互不相关的仪表家族都证明需要同一种抽象时，才考虑通用化。
 
-Only after additional modular instruments show the same abstraction
-should a generic application/session abstraction be considered.
+## 发现 3：Generic Abort 必须是可选能力
 
-## Finding 3 - Generic Abort Must Be Optional
+旧版 `InstrumentDriver` 强制每个 Driver 实现 Whole-Device `abort()`。
 
-The original InstrumentDriver contract required every instrument to
-implement a whole-device abort method.
+CMW500 证明 `ABORt` 可能只对某个 Application / Measurement 有意义，并不存在自然的全局 Abort 语义。
 
-CMW500 demonstrates that an abort operation may only be meaningful for
-a specific application or measurement.
+因此 `reset/abort/remote/local` 调整为可选 Driver Behavior；不支持时由基类明确抛 `UnsupportedCapabilityError`。
 
-Therefore generic reset/abort/remote/local operations are optional
-driver behaviors rather than mandatory abstract methods.
+## 发现 4：技术 Application 不进入 Base Driver
 
-## Finding 4 - Do Not Add Cellular Technology Yet
-
-The base driver should first support:
+Base Driver 只负责：
 
 - identity
 - system error queue
 - installed options
-- installed software versions
-- remote resources
+- installed software version
+- remote resource
 - sub-instrument discovery
 
-LTE, WCDMA, GSM, WLAN, Bluetooth and other firmware applications are
-separate CMW500 capability modules and should be added only when
-required and when the corresponding manuals are available.
+LTE、WCDMA、GSM、WLAN、Bluetooth 等属于独立 CMW500 Application Module。
+
+## 发现 5：LTE Multi Evaluation 纵向链可独立完成
+
+真实 LTE 3.5.50 硬件验证了：
+
+```text
+OFF,INV,INV
+  -> INITiate
+RDY,ADJ,INV
+  -> FETCh EVM
+Reliability + EVM fields
+  -> ABORt
+OFF,INV,INV
+```
+
+同时完成了 `INV` 哨兵值和 EVM 返回字段的 Domain Parser。
+
+整个过程没有要求修改 Transport、SCPIClient 或 `instrument_core`。
+
+## 结论
+
+CMW500 复杂仪表压力验证：**PASS**。
+
+后续 CMW500 功能应由真实项目需求驱动，不为了“命令数量完整”而一次性实现数百条 LTE/WCDMA/GSM/WLAN/Bluetooth 命令。

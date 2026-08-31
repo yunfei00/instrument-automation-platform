@@ -272,7 +272,7 @@ def main():
 
         generate_markdown(
             doc_path,
-            title="R&S FSW Hardware Probe Report",
+            title="R&S FSW 实机命令探测报告",
             commands=commands,
             results=results,
             metadata={

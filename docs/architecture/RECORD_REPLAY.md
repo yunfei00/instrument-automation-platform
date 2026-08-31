@@ -1,44 +1,44 @@
-# Record / Replay Architecture
+# Record / Replay 架构
 
-## Purpose
+## 目的
 
-Instrument bugs are often difficult to reproduce because the physical
-instrument may exist only in a laboratory or customer environment.
+仪表问题经常发生在实验室或客户现场，开发时未必还能拿到同一台物理仪表。Record / Replay 用于记录真实通信会话，并在之后没有硬件的环境里重新执行 Driver 行为。
 
-Record / Replay allows real instrument communication to be captured and
-later reproduced without the physical hardware.
+## 架构
 
-## Architecture
+正常模式：
 
-Normal operation:
-
+```text
 Driver
--> SCPI
--> VisaTransport
--> Instrument
+  -> SCPI
+  -> VisaTransport
+  -> Instrument
+```
 
-Recording:
+记录模式：
 
+```text
 Driver
--> SCPI
--> RecordingTransport
--> VisaTransport
--> Instrument
+  -> SCPI
+  -> RecordingTransport
+  -> VisaTransport
+  -> Instrument
+```
 
-Replay:
+回放模式：
 
+```text
 Driver
--> SCPI
--> ReplayTransport
--> Recorded Session
+  -> SCPI
+  -> ReplayTransport
+  -> Recorded Session
+```
 
-The driver does not need different logic for recording or replay.
+Driver 不需要为 Record 或 Replay 编写另一套逻辑。
 
-## Session Format
+## Session 格式
 
-Version 1 uses JSON Lines.
-
-A session contains:
+Version 1 使用 JSON Lines，事件包括：
 
 - session metadata
 - open
@@ -49,75 +49,58 @@ A session contains:
 - clear
 - close
 
-Binary data is stored using Base64 encoding.
-
-Each event also contains a sequence number.
-
-Real recordings may additionally contain timing information.
+二进制数据使用 Base64 保存，每个事件包含 sequence number；真实记录还可以保存 timing 信息。
 
 ## Strict Replay
 
-Replay is intentionally strict.
+Replay 刻意采用严格匹配。
 
-If the driver sends:
+如果 Driver 实际发送：
 
-    :TIMebase:SCALe?
+```text
+:TIMebase:SCALe?
+```
 
-but the recorded session expects:
+而 Session 记录期待：
 
-    :CHANnel1:SCALe?
+```text
+:CHANnel1:SCALe?
+```
 
-Replay fails immediately.
+Replay 会立即失败。这样可以发现 Driver 的通信行为是否在修改后发生了意外变化。
 
-This helps detect driver behavior changes and regression problems.
+## 典型用途
 
-## Use Cases
+### 现场问题复现
 
-### Customer Failure Reproduction
+在现场记录失败会话，离开仪表后仍可重放分析。
 
-Record the failing session at the customer site and replay it later
-without the instrument.
+### Driver 回归
 
-### Driver Regression Testing
+保存一段已知正确的真实会话，Driver 修改后重新 Replay，检查命令顺序和行为是否变化。
 
-Capture a known-good hardware session.
+### 二进制数据开发
 
-After changing the driver, replay the session to check whether the
-driver communication behavior changed unexpectedly.
+真实采一次 Waveform / Trace Binary Payload，后续 Parser 开发无需反复占用硬件。
 
-### Binary Data Development
+### Firmware 对比
 
-Capture waveform or spectrum binary responses once.
+在不同 Firmware 上执行相同 Scenario，比较命令和返回格式差异。
 
-Develop and debug parsers without repeatedly using real hardware.
+## 仓库策略
 
-### Firmware Comparison
+真实硬件的大型 Session 默认属于本地工程资产，不自动提交 Git。
 
-Record equivalent scenarios on different firmware versions and compare
-their command responses.
+如果用于回归，可以提交**小型且已脱敏**的 Replay Fixture。公司/客户设备标识、网络地址等不能进入公开仓库。
 
-## Repository Policy
+## 后续增强
 
-Large real hardware recordings are local engineering artifacts by
-default.
-
-They should not automatically be committed to Git.
-
-Small sanitized replay fixtures may be committed under tests when they
-are useful for regression testing.
-
-## Future Extensions
-
-Planned improvements:
-
-- recorded exceptions
+- exception replay
 - timeout replay
 - disconnect replay
-- response-delay simulation
-- session metadata
-- driver version
-- firmware information
-- instrument options
+- response delay simulation
+- 更完整的 session metadata
+- driver/firmware/options 信息
 - session sanitization
 - session diff
 - binary payload externalization

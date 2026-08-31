@@ -1,83 +1,61 @@
-# Repository Scope
+# 仓库范围
 
-## This Repository
+## 本仓库是什么
 
-instrument-automation-platform is an instrument infrastructure and
-instrument knowledge repository.
+`instrument-automation-platform` 是“仪表基础设施 + 仪表工程知识库”。
 
-Its basic unit is:
+基本管理单元是：**一个仪表家族**。
 
-ONE instrument family.
-
-Examples:
+例如：
 
 - Keysight DSO-X 3000 X-Series
 - Rohde & Schwarz FSW
+- Rohde & Schwarz CMW500
 - Keysight N9020A
 - Siglent SDS3000X HD
 
-## Application Boundary
+## 与业务应用的边界
 
-An application may use one instrument or many instruments.
+业务应用可以使用一台仪表，也可以同时使用多台仪表；平台不负责业务编排。
 
-The platform does not care.
+例如：
 
-For example:
+```text
+应用 A：DSO-X 3034A
 
-Application A:
-    DSO-X 3034A
+应用 B：DSO-X 3034A + FSW
 
-Application B:
-    DSO-X 3034A
-    +
-    FSW
+应用 C：N9020A + XY 运动平台
+```
 
-Application C:
-    N9020A
-    +
-    XY motion platform
+这些应用都可以复用本仓库，但它们自己的流程不能反向进入基线。
 
-All three applications reuse this repository.
+## Driver 负责什么
 
-But their workflows do not enter this repository.
+Driver 负责一个仪表家族自身的通用行为，例如：
 
-## Driver Responsibility
-
-A driver owns behavior of one instrument family.
-
-Examples:
-
-- connect
-- identify
-- reset
+- connect / identify
 - error handling
-- channel configuration
-- frequency configuration
-- trigger configuration
-- waveform acquisition
-- spectrum trace acquisition
-- measurement queries
-- marker operations
+- channel / frequency / trigger 配置
+- waveform / spectrum trace 获取
+- measurement query
+- marker 操作
+- 仪表家族内部 Application（当确属该仪表自身结构时）
 
-## Driver Does Not Own
+## Driver 不负责什么
 
-A driver does not own:
+- 与另一台仪表协调
+- 客户业务 Workflow
+- 产品 UI 流程
+- 客户命名规则
+- 项目目录结构
+- 多设备时序策略
+- 联合报告生成
 
-- coordination with another instrument
-- business workflows
-- user-interface workflow
-- customer-specific naming
-- project directory structure
-- multi-device timing policy
-- combined report generation
+## 设计判断题
 
-## Design Test
+新增代码前先问：
 
-Before adding code, ask:
+> 如果这台仪表被单独用于一个完全不同的项目，这段代码是否仍然有意义？
 
-"Would this code still make sense if this instrument were used alone
-in a completely different project?"
-
-If YES, it probably belongs here.
-
-If NO, it belongs in an application repository.
+如果答案是 YES，它大概率属于这里；如果答案是 NO，它应进入应用仓库。

@@ -1,191 +1,194 @@
-# Engineering Notes
+# DSO-X 3000 工程记录
 
-## Target Device
+## 目标仪表
 
-Keysight DSO-X 3034A
+Keysight DSO-X 3034A。
 
-## Knowledge Status
+## 知识状态
 
-The first manually verified command groups are:
+第一批已完成 Manual Verification 的命令组包括：
 
 - acquisition
 - waveform
 
-Hardware verification has started on the target DSO-X 3034A.
+目标 DSO-X 3034A 的 Hardware Verification 已开始。
 
-Hardware-verified front-panel mapping:
+已完成前面板映射：
 
-- Horizontal `Push to Zero` -> `:TIMebase:POSition 0` (verified 2026-08-27)
+- Horizontal `Push to Zero` -> `:TIMebase:POSition 0`，2026-08-27 实机通过。
 
-Manual-verified front-panel mapping pending hardware confirmation:
+已由手册确认、等待实机确认：
 
-- Horizontal scale `Push for Fine` -> `:TIMebase:VERNier ON|OFF`; physical press toggles the state.
+- Horizontal Scale `Push for Fine` -> `:TIMebase:VERNier ON|OFF`，物理按压用于切换状态。
 
-## Front-Panel "Push to Zero" Mapping
+## 前面板 `Push to Zero` 映射
 
-The DSO-X 3034A has more than one front-panel control that can be described as "Push to Zero". The control must be identified by panel section before mapping it to SCPI.
+DSO-X 3034A 上不止一个控件可以描述为 `Push to Zero`，必须先区分面板区域再映射到 SCPI。
 
-### Horizontal position / delay knob
+### Horizontal Position / Delay Knob
 
-In the Horizontal control section, the small position/delay knob moves the trigger point relative to the display time-reference point. Pressing this knob resets the horizontal delay/position to 0.00 s.
+Horizontal 区域的小 Position/Delay Knob 用于调整 Trigger Point 相对 Display Time Reference Point 的位置。按下 Knob 会把水平 Delay/Position 归零到 0.00 s。
 
-Remote equivalent:
+远程等效命令：
 
 ```text
 :TIMebase:POSition 0
 ```
 
-Verification query:
+验证 Query：
 
 ```text
 :TIMebase:POSition?
 ```
 
-The Programmer's Guide defines `:TIMebase:POSition` as the time interval from the trigger event to the display reference point and states that it is an alias for `:TIMebase:DELay`.
+Programmer's Guide 将 `:TIMebase:POSition` 定义为 Trigger Event 到 Display Reference Point 的时间间隔，并说明它是 `:TIMebase:DELay` 的 Alias。
 
-Driver helper:
+Driver Helper：
 
 ```python
 driver.zero_timebase_position()
 ```
 
-Hardware verification status: **PASS / hardware_verified**.
+Hardware Verification：**PASS / hardware_verified**。
 
-On 2026-08-27, the target DSO-X 3034A was exercised on real hardware. The operator confirmed that pressing the Horizontal `Push to Zero` control and sending `:TIMebase:POSition 0` produced the expected equivalent zero-position behavior. Exact serial number, firmware revision, and raw numeric responses were not captured in this verification note and must not be inferred.
+2026-08-27 在真实 DSO-X 3034A 上验证：物理按下 Horizontal `Push to Zero` 与发送 `:TIMebase:POSition 0` 都能产生预期的水平位置归零行为。该次记录没有保存 Serial Number、Firmware Revision 和精确 Raw Numeric Response，因此这些信息不做推断。
 
-### Vertical channel position knob
+### Vertical Channel Position Knob
 
-In the Vertical control section, pressing a channel position knob resets that channel's vertical offset to zero.
+Vertical 区域按下某 Channel 的 Position Knob，会把该 Channel Vertical Offset 归零。
 
-Remote equivalent for channel 1:
+Channel 1 的远程等效命令：
 
 ```text
 :CHANnel1:OFFSet 0
 ```
 
-Verification query:
+验证 Query：
 
 ```text
 :CHANnel1:OFFSet?
 ```
 
-Driver helper:
+Driver Helper：
 
 ```python
 driver.zero_channel_offset(1)
 ```
 
-Hardware verification status: **pending**. This mapping remains `manual_verified` until the corresponding Vertical channel position knob is explicitly checked on real hardware.
+Hardware Verification：**pending**。该映射继续保持 `manual_verified`，直到对应 Vertical Position Knob 在真实硬件上明确确认。
 
-Do not confuse either control with the Trigger Level knob. The trigger-level knob is labeled "Push for 50%" and performs a different operation.
+不要与 Trigger Level Knob 混淆。Trigger Level Knob 标记为 `Push for 50%`，属于不同操作。
 
-### Hardware verification procedure
+### Hardware Verification Procedure
 
-For each Push-to-Zero mapping:
+每个 Push-to-Zero Mapping 建议按以下步骤验证：
 
-1. Set a clearly non-zero position/offset.
-2. Query and record the non-zero value.
-3. Press the corresponding front-panel knob and query again; confirm the result is zero or instrument-zero within display/firmware tolerance.
-4. Set a clearly non-zero value again.
-5. Send the SCPI zero command and query again.
-6. Confirm the front-panel result and SCPI result are operationally equivalent.
-7. Record model, serial number, firmware, raw responses, elapsed time, errors, and timestamp when available.
+1. 先设置明显的非零 Position / Offset。
+2. Query 并记录非零值。
+3. 按下对应前面板 Knob，再 Query，确认归零或在显示/Firmware 允许误差内归零。
+4. 再次设置明显非零值。
+5. 发送 SCPI Zero Command，再 Query。
+6. 确认 Front Panel 和 SCPI 操作在功能上等效。
+7. 在条件允许时记录 Model、Firmware、Raw Response、Elapsed Time、Error、Timestamp；公开仓库中对唯一设备信息脱敏。
 
-## Front-Panel "Push for Fine" Mapping
+## 前面板 `Push for Fine` 映射
 
-The large Horizontal scale/time-per-division knob is labeled `Push for Fine`. Pressing it toggles the horizontal scale adjustment between normal/coarse steps and vernier/fine steps.
+Horizontal Scale / Time-per-Division 大旋钮标记为 `Push for Fine`。按压用于切换正常/粗调步进和 Vernier/Fine 调整。
 
-SCPI state control:
+SCPI State Control：
 
 ```text
 :TIMebase:VERNier ON
 :TIMebase:VERNier OFF
 ```
 
-Verification query:
+验证 Query：
 
 ```text
 :TIMebase:VERNier?
 ```
 
-The query returns `1` when fine/vernier adjustment is enabled and `0` when it is disabled.
+Query 返回 `1` 表示 Fine/Vernier 已启用，`0` 表示关闭。
 
-There is no separate documented SCPI `TOGGLE` command. To emulate one physical press remotely:
+手册没有单独的 SCPI `TOGGLE` Command。要远程模拟一次物理按压：
 
-1. Query `:TIMebase:VERNier?`.
-2. If the result is `0`, send `:TIMebase:VERNier ON`.
-3. If the result is `1`, send `:TIMebase:VERNier OFF`.
+1. Query `:TIMebase:VERNier?`。
+2. 如果返回 `0`，发送 `:TIMebase:VERNier ON`。
+3. 如果返回 `1`，发送 `:TIMebase:VERNier OFF`。
 
-Hardware verification status: **pending / manual_verified**.
+Hardware Verification：**pending / manual_verified**。
 
-Recommended real-hardware check:
+推荐实机检查：
 
-1. Query `:TIMebase:VERNier?` and record the state.
-2. Press the Horizontal `Push for Fine` knob once.
-3. Query again and confirm the state toggled.
-4. Send the opposite state through SCPI and confirm the front-panel fine/coarse behavior changes equivalently.
-5. Query `:SYSTem:ERRor?` and confirm no command error.
+1. Query `:TIMebase:VERNier?` 并记录状态。
+2. 物理按一次 Horizontal `Push for Fine`。
+3. 再次 Query，确认状态切换。
+4. 通过 SCPI 设置相反状态，确认前面板 Fine/Coarse 行为等效变化。
+5. Query `:SYSTem:ERRor?`，确认无命令错误。
 
-## DIGitize
+## `DIGitize`
 
-The Programmer's Guide describes DIGitize as a specialized RUN command.
+Programmer's Guide 将 `DIGitize` 描述为一种专用 RUN Command。
 
-Syntax:
+语法：
 
+```text
 :DIGitize [<source>[,...<source>]]
+```
 
-Important behavior:
+重要行为：
 
-- It starts acquisition.
-- One or more sources may be specified.
-- It can block subsequent remote commands until acquisition completes.
-- It should not be executed by the generic safe command probe.
-- Trigger wait and timeout behavior must be tested as a scenario rather than as an isolated query.
-- The acquisition engine should not depend on fixed sleep delays.
+- 启动 Acquisition。
+- 可以指定一个或多个 Source。
+- 在采集完成前可能阻塞后续 Remote Command。
+- 不应由 Generic Safe Probe 执行。
+- Trigger Wait / Timeout 必须作为 Scenario Test，而不是孤立命令测试。
+- Acquisition Engine 不应依赖固定 Sleep 作为同步机制。
 
 ## Waveform
 
-The Programmer's Guide requires `:TIMebase:MODE MAIN` for `:DIGitize` and `:WAVeform` subsystem operations. ROLL, XY, or WINDow/zoom mode can produce a settings conflict.
+Programmer's Guide 要求 `:DIGitize` 和 `:WAVeform` Subsystem 在 `:TIMebase:MODE MAIN` 下工作。ROLL、XY 或 WINDow/Zoom Mode 可能产生 Setting Conflict。
 
-Changing oscilloscope or waveform configuration can clear waveform buffers. A fresh acquisition should therefore be captured before reading waveform data.
+修改 Scope / Waveform Configuration 可能清空 Waveform Buffer，因此读取数据前应进行 Fresh Acquisition。
 
-Recommended DSO-X waveform sequence:
+推荐 DSO-X Waveform Sequence：
 
 1. `:TIMebase:MODE MAIN`
-2. Configure acquisition as required.
-3. Select waveform source.
-4. Select waveform format.
-5. Select waveform transfer points.
-6. `:DIGitize <source>` to acquire fresh data.
-7. Query waveform preamble.
-8. Immediately read `:WAVeform:DATA?` as an IEEE 488.2 definite-length binary block.
-9. Convert raw samples using preamble metadata.
-10. Validate point count and payload length.
+2. 按需求配置 Acquisition。
+3. 选择 Waveform Source。
+4. 选择 Waveform Format。
+5. 选择 Waveform Transfer Points。
+6. `:DIGitize <source>` 获取新数据。
+7. Query Waveform Preamble。
+8. 立即把 `:WAVeform:DATA?` 按 IEEE 488.2 Definite-Length Binary Block 读取。
+9. 使用 Preamble Metadata 转换 Raw Sample。
+10. 验证 Point Count 和 Payload Length。
 
-For VISA binary transfer, prefer a length-aware IEEE block reader. Do not rely on a generic raw read waiting for an additional message terminator after the declared payload; some instrument/backend combinations can otherwise time out after the complete payload has already been received.
+对于 VISA Binary Transfer，应优先使用 Length-Aware IEEE Block Reader。不要在已读完声明 Payload 后继续依赖通用 Raw Read 等待额外文本 Terminator；部分仪表/Backend 组合会在完整 Payload 已经到达后仍因等待 Terminator 而 Timeout。
 
 ## Hardware Verification
 
-Started.
+状态：进行中。
 
-Verified so far:
+已确认：
 
-- `timebase.push_to_zero`: PASS on real DSO-X 3034A hardware (2026-08-27).
+- `timebase.push_to_zero`：真实 DSO-X 3034A PASS（2026-08-27）。
 
-Pending:
+待确认：
 
 - `timebase.push_for_fine`
-- `waveform.binary` end-to-end fresh-acquisition transfer
+- `waveform.binary` Fresh Acquisition 到 Binary Transfer 的端到端路径
 
-Real hardware qualification records should capture, when available:
+完整 Qualification 在条件允许时应记录：
 
 - instrument model
-- serial number
 - firmware
-- connection resource
+- connection/transport type
 - command
 - raw response
 - parsed response
 - elapsed time
 - errors
 - tested timestamp
+
+Serial Number、IP/VISA Resource 等唯一或公司敏感信息在公开仓库中必须脱敏。

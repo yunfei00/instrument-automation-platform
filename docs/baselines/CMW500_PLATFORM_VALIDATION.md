@@ -1,184 +1,136 @@
-# CMW500 Platform Validation
+# CMW500 平台架构验证
 
-## Purpose
+## 验证目的
 
-R&S CMW500 was selected as a complex third reference instrument
-to validate the reusable single-instrument architecture.
+选择 R&S CMW500 作为第三类、复杂度明显更高的参考仪表，用于验证“单仪表长期基线”是否能够支持模块化通信综测仪。
 
-The goal was architecture validation rather than LTE RF performance
-validation.
+本次目标是**架构验证**，不是 LTE RF 性能验收。
 
-## Reference Configuration
+## 脱敏参考配置
 
-Sanitized software configuration observed on real hardware:
+真实硬件上观察到的软件版本：
 
-- BASE: 3.5.120
-- LTE: 3.5.50
-- WCDMA: 3.5.40
-- GSM: 3.5.30
-- WLAN: 3.5.40
-- Bluetooth: 3.5.60
+- BASE：3.5.120
+- LTE：3.5.50
+- WCDMA：3.5.40
+- GSM：3.5.30
+- WLAN：3.5.40
+- Bluetooth：3.5.60
 
-Unique device identifiers, serial numbers, IP addresses, VISA
-resources and customer-specific option inventories are intentionally
-not stored.
+公开仓库不保存唯一设备 ID、序列号、IP、完整 VISA Resource 或客户/公司专用 Option 清单。
 
-## Sub-Instrument Validation
+## Sub-Instrument 验证
 
-Observed topology:
+观察到：
 
-- current sub-instrument: 1
-- sub-instrument count: 1
+- current sub-instrument：1
+- sub-instrument count：1
+- 可用远控机制包含 HiSLIP、VXI-11、USB
 
-Observed remote-control mechanisms included:
+结果：通用 Transport 抽象无需修改。
 
-- HiSLIP
-- VXI-11
-- USB
+## LTE Multi Evaluation 验证
 
-No modification to the generic Transport abstraction was required.
+真实硬件验证了以下路径：
 
-## LTE Multi Evaluation Validation
+1. 查询初始 Measurement State
+2. `INITiate` LTE Multi Evaluation
+3. 查询 Measurement State
+4. `FETCh` EVM Magnitude Average
+5. 查询 SCPI Error Queue
+6. `ABORt`
+7. 验证清理后的 State
 
-The following command path was verified on real hardware:
+实测状态：
 
-1. Query initial measurement state
-2. INITiate LTE Multi Evaluation
-3. Query measurement state
-4. Fetch EVM magnitude average result
-5. Query SCPI error queue
-6. ABORt measurement
-7. Verify cleanup state
+```text
+初始：      OFF,INV,INV
+INIT 后：   RDY,ADJ,INV
+ABORT 后：  OFF,INV,INV
+```
 
-Observed state sequence:
+## EVM 返回契约
 
-Initial:
+以下命令的真实响应已成功进入结构化 Parser：
 
-    OFF,INV,INV
+```text
+FETCh:LTE:MEAS1:MEValuation:EVMagnitude:AVERage?
+```
 
-After INITiate:
+确认特征：
 
-    RDY,ADJ,INV
+- 首字段为 Reliability
+- Normal Cyclic Prefix 布局可识别
+- 7 个 low-window EVM 字段
+- 7 个 high-window EVM 字段
+- `INV` 作为仪表无效/不可用哨兵值处理
+- Domain Model 保留 raw response
 
-After ABORt:
+本次观察到：
 
-    OFF,INV,INV
+```text
+Reliability = 6
+```
 
-## EVM Result Contract
+由于架构验证没有提供完整 LTE RF 测量激励，本次 EVM 数据本身不是有效性能结果；但 SCPI Error Queue 为无命令错误，因此命令链和返回 Parser 验证有效。
 
-A real response from:
+## 架构结论
 
-    FETCh:LTE:MEAS1:MEValuation:EVMagnitude:AVERage?
+### Transport：PASS
 
-was successfully parsed.
+CMW500 不需要修改通用 Transport。
 
-Observed result characteristics:
+### SCPI Layer：PASS
 
-- Reliability indicator present
-- Normal cyclic prefix result layout detected
-- 7 low-window EVM fields
-- 7 high-window EVM fields
-- INV values handled as invalid / unavailable values
-- Raw response retained by the parsing model
+现有 query/write/error handling 足够复用。
 
-Observed Reliability:
+### instrument_core：PASS
 
-    6
+没有把 CMW500 特有概念提升到 `instrument_core`。
 
-The measurement result itself was not valid because a complete LTE RF
-measurement stimulus was not part of this architecture-validation
-test.
+### Application Model：PASS
 
-The SCPI error queue reported no command error.
+LTE/WCDMA/GSM/WLAN/Bluetooth 等技术能力继续保留在：
 
-## Architecture Findings
+```text
+instrument_drivers/
+  rohde_schwarz/
+    cmw500/
+      applications/
+```
 
-### Transport
+### Measurement Lifecycle：PASS
 
-PASS
+Application 级 `INITiate / FETCh / READ / STOP / ABORt` 可以在 CMW500 家族内部建模，无需增加通用 Core 生命周期抽象。
 
-CMW500 required no change to the generic Transport layer.
+### Result Parsing：PASS
 
-### SCPI Layer
+平台已经验证：
 
-PASS
+```text
+Raw Instrument Response
+        ->
+Protocol / Domain Parser
+        ->
+Typed Result Model
+```
 
-Existing reusable SCPI query/write/error handling was sufficient.
-
-### Instrument Core
-
-PASS
-
-No CMW500-specific concepts were promoted into instrument_core.
-
-### Application Model
-
-PASS
-
-Technology-specific functionality remains local to:
-
-    instrument_drivers/
-      rohde_schwarz/
-        cmw500/
-          applications/
-            lte/
-
-This keeps LTE, WCDMA, GSM, WLAN and Bluetooth concerns outside the
-generic platform core.
-
-### Measurement Lifecycle
-
-PASS
-
-Application-specific:
-
-- INITiate
-- FETCh
-- READ
-- STOP
-- ABORt
-
-can be modeled without adding generic measurement lifecycle concepts
-to instrument_core.
-
-### Result Parsing
-
-PASS
-
-The architecture supports:
-
-    raw instrument response
-            ->
-    protocol/domain parser
-            ->
-    typed result model
-
-including instrument sentinel values such as INV.
+并能处理 `INV` 这类仪表专用哨兵值。
 
 ### Record / Replay
 
-The existing generic Record / Replay architecture remains applicable
-without CMW500-specific changes.
+现有通用架构仍适用，不需要 CMW500 特化修改。
 
-## Conclusion
+## 总结
 
-The platform baseline has now been exercised against three
-substantially different instrument classes:
+当前平台已经经历三类差异明显的仪表验证：
 
-- Keysight DSOX3000 oscilloscope family
-- Rohde & Schwarz FSW signal/spectrum analyzer family
-- Rohde & Schwarz CMW500 communications tester
+- Keysight DSOX3000 示波器家族
+- R&S FSW 信号/频谱分析仪家族
+- R&S CMW500 通信综测仪
 
-CMW500 provides evidence that the architecture can support a
-substantially more complex modular instrument without contaminating
-the platform core with product-specific concepts.
+CMW500 证明平台可以支持复杂模块化仪表，而不必把产品特有概念污染到 Core。
 
-CMW500 architecture validation status:
+**CMW500 架构验证：PASS。**
 
-    PASS
-
-Further implementation of hundreds of LTE commands is intentionally
-out of scope for this validation phase.
-
-Future CMW500 work should be demand-driven by actual product
-requirements.
+本阶段刻意不实现数百条 LTE 命令。后续 CMW500 能力应由真实项目需求驱动。

@@ -1,155 +1,155 @@
-# Instrument Lab GUI Roadmap
+# Instrument Lab GUI 路线图
 
-## Purpose
+## 定位
 
-Instrument Lab GUI is the engineering/debugging front end for the Instrument Automation Platform.
+Instrument Lab GUI 是 Instrument Automation Platform 的工程调试前端。
 
-It is not a customer product UI and it must not contain multi-instrument business workflows. Its job is to make the platform's reusable instrument knowledge directly usable during command discovery, driver development and hardware qualification.
+它不是客户产品 UI，也不能承载多仪表业务 Workflow。目标是把平台中已经沉淀的单仪表知识直接用于命令发现、Driver 开发和实机 Qualification。
 
-## Product Goal
+## 最终使用目标
 
-Given only:
+只需要：
 
-1. an instrument profile selection, and
-2. an instrument address,
+1. 选择 Instrument Profile；
+2. 输入仪表地址；
 
-a developer should be able to connect to the instrument, inspect and execute every command already present in the baseline, execute arbitrary SCPI commands that are not yet in the baseline, review responses/errors/timing, and gradually promote validated knowledge into the repository.
+工程人员就应该能够连接仪表、浏览并执行基线中的命令、运行任意 Raw SCPI、查看响应/错误/耗时，并把实机发现逐步沉淀回仓库。
 
-## Phase 1 - Debug Console MVP
+## Phase 1：Debug Console MVP
 
-Status: **implemented**.
+状态：**已完成**。
 
-Scope:
+范围：
 
-- discover instrument profiles from `instrument_profiles/`
-- select an instrument profile
-- accept either an IP/hostname or a complete VISA resource string
-- auto-convert a plain address to `TCPIP0::<address>::inst0::INSTR`
-- connect/disconnect through the existing `VisaTransport`
-- automatically issue `*IDN?` after connection
-- browse commands from all catalog JSON files under the selected profile
-- show command metadata: category, safety, verification status, unit, description and source catalog
-- execute catalog query commands
-- execute catalog set/action commands
-- raw SCPI console for commands that are not in the baseline
-- show timestamp, operation, command, response, elapsed time and failures in an in-memory session log
-- warn before executing catalog commands marked `disruptive` or `destructive`
-- serialize VISA operations on a worker thread so the GUI remains responsive
+- 从 `instrument_profiles/` 自动发现 Profile
+- 选择 Profile
+- 接受 IP/Hostname 或完整 VISA Resource
+- 普通地址自动转换为 `TCPIP0::<address>::inst0::INSTR`
+- 通过现有 `VisaTransport` Connect / Disconnect
+- 连接后自动 `*IDN?`
+- 浏览选定 Profile 下所有 Catalog JSON
+- 显示 category、safety、verification、unit、description、source
+- 执行 Catalog Query
+- 执行 Catalog Set / Action
+- Raw SCPI Console
+- 显示 timestamp、operation、command、response、elapsed time、failure
+- 执行 `disruptive` / `destructive` 命令前告警
+- Native VISA I/O 在专用 Worker Thread 串行执行
 
-Acceptance criteria:
+验收标准：
 
-- DSO-X 3034A, FSW and CMW500 profiles are discoverable without hard-coded GUI pages.
-- A user can connect using a plain IP address or full VISA resource.
-- Catalog query/set/action templates can be executed after required parameters are provided.
-- Arbitrary SCPI can be queried or written from the raw console.
-- Connection and I/O errors are visible without crashing the GUI.
+- DSO-X 3034A、FSW、CMW500 均无需型号专用页面即可发现。
+- 支持普通 IP 和完整 VISA Resource。
+- 必填参数填写后，可执行 Query / Set / Action Template。
+- Raw Console 可 Query/Write 任意 SCPI。
+- 连接或 I/O 错误不会导致 GUI 崩溃。
 
-## Phase 2 - Command Authoring
+## Phase 2：Command Authoring
 
-Status: **partially implemented**.
+状态：**部分完成**。
 
-Implemented:
+已完成：
 
-- detect placeholders such as `<n>`, `<i>`, `<scale>` and `<source>`
-- generate parameter editors automatically
-- validate required placeholders before execution
-- save a tested raw command as a candidate command
-- candidates are stored separately from verified catalogs
-- default candidate status is `candidate`
-- default candidate `probe_enabled` is false
-- refuse duplicate command ids
-- collect candidate name/category/kind/response type/safety/unit/description
+- 检测 `<n>`、`<i>`、`<scale>`、`<source>` 等 Placeholder
+- 自动生成参数编辑器
+- 执行前校验 Placeholder
+- 将已测试 Raw Command 保存为 Candidate
+- Candidate 与 Verified Catalog 分开保存
+- 默认 `verification_status = candidate`
+- 默认 `probe_enabled = false`
+- 禁止重复 Command ID
+- 收集 name/category/kind/response type/safety/unit/description
 
-Remaining:
+待完成：
 
-- candidate review list/editor
-- repository diff preview
-- controlled promotion from candidate to a selected verified catalog
-- promotion validation rules
+- Candidate Review List / Editor
+- Repository Diff Preview
+- 从 Candidate 受控 Promotion 到指定 Verified Catalog
+- Promotion Validation Rule
 
-Acceptance criteria:
+验收标准：
 
-- no candidate command can silently overwrite an existing command id
-- saving a candidate produces valid catalog JSON loadable by `CommandCatalog`
-- placeholder rendering is headless-testable and shared by GUI execution
+- Candidate 不得静默覆盖已有 Command ID。
+- 保存结果必须能被 `CommandCatalog` 正常加载。
+- Placeholder Rendering 必须可 Headless Test，并与 GUI 执行共用实现。
 
-## Phase 3 - Safety and Session Evidence
+## Phase 3：安全与 Session 证据
 
-Status: **planned**.
+状态：**规划中**。
 
-Scope:
+范围：
 
-- configurable automatic `SYSTem:ERRor?` checking
-- session export to JSON/CSV
-- command/response copy actions
-- elapsed-time statistics
-- retry/timeout controls
-- reconnect support
-- explicit high-risk command confirmation
-- session metadata: selected profile, resource, `*IDN?`, start/end time
-- optional record/replay integration
+- 可配置自动 `SYSTem:ERRor?` 检查
+- Session 导出 JSON/CSV
+- Command/Response Copy
+- Elapsed Time Statistics
+- Retry / Timeout 控制
+- Reconnect
+- 高风险命令明确二次确认
+- Session Metadata：Profile、Resource、`*IDN?`、开始/结束时间
+- 可选 Record / Replay 集成
 
-Acceptance criteria:
+验收标准：
 
-- a failed customer/lab session can be exported with enough evidence to reproduce the command sequence
-- GUI behavior remains independent of any customer-specific application
+- 一次失败的客户/实验室 Session 可以导出足够证据，后续能够复现 Command Sequence。
+- GUI 仍然不依赖任何客户专用业务流程。
 
-## Phase 4 - Hardware Qualification Workflow
+## Phase 4：Hardware Qualification 工作流
 
-Status: **planned**.
+状态：**规划中**。
 
-Scope:
+范围：
 
-- load profile qualification requirements
-- run individual qualification checks from the GUI
-- capture raw request/response evidence
-- record firmware/model/resource information
-- mark check PASS/FAIL
-- generate qualification Markdown/JSON
-- require explicit operator confirmation before upgrading knowledge to `hardware_verified`
+- 加载 Profile Qualification Requirements
+- 从 GUI 单独运行 Qualification Check
+- 保存 Raw Request / Response Evidence
+- 记录 Firmware / Model / Resource 类型
+- 标记 PASS / FAIL
+- 生成 Qualification Markdown / JSON
+- 提升到 `hardware_verified` 前必须显式人工确认
 
-Acceptance criteria:
+验收标准：
 
-- a hardware verification such as DSO-X 3034A `Push to Zero` can be performed and documented end-to-end inside Instrument Lab GUI
+- 类似 DSO-X 3034A `Push to Zero` 的实机验证可以在 Instrument Lab GUI 中端到端完成并形成文档。
 
-## Phase 5 - Windows Packaging and Releases
+## Phase 5：Windows Packaging 与 Release
 
-Status: **planned**.
+状态：**已有基础，继续完善**。
 
-Scope:
+范围：
 
-- PyInstaller build
-- Windows portable executable
-- GitHub Actions build workflow
-- build on tag
-- attach executable and checksum to release
-- version shown in GUI
-- smoke-test packaged executable
+- PyInstaller Build
+- Windows Portable Executable
+- GitHub Actions Build Workflow
+- Tag Build
+- Release Artifact + Checksum
+- GUI 显示版本
+- Packaged EXE Smoke Test
 
-Acceptance criteria:
+验收标准：
 
-- a Windows lab PC can run Instrument Lab without manually configuring repository `PYTHONPATH`
-- each tagged release produces a downloadable GUI artifact
+- Windows 实验室电脑无需手工配置仓库 `PYTHONPATH` 即可运行 Instrument Lab。
+- Tag Release 可以稳定产生可下载的 GUI Artifact。
 
 ## Quality Gate
 
-A dedicated GitHub Actions workflow compiles the GUI modules and runs the headless GUI-backend unit tests when relevant files change.
+GitHub Actions 会对 GUI Backend 和相关模块进行编译、Headless Test 与 Profile Discovery 验证。
 
-The GUI backend remains Qt-free so command discovery, template rendering and candidate authoring can be checked without installing a desktop environment in CI.
+Backend 必须保持 Qt-free，避免 CI 为了测试命令发现/模板渲染而依赖桌面环境。
 
 ## Non-Goals
 
-Instrument Lab GUI must not become:
+Instrument Lab GUI 不应变成：
 
-- a DSO-X-only tool
-- an FSW-only tool
-- a multi-instrument synchronized acquisition product
-- a near-field scanning UI
-- a customer report generator
-- a repository-specific business workflow engine
+- DSO-X 专用工具
+- FSW 专用工具
+- 多仪表同步采集产品
+- Near-Field Scanner UI
+- 客户报告生成器
+- 具体业务 Workflow Engine
 
-Those applications should consume the platform rather than be implemented inside it.
+这些应用应该消费 Platform，而不是被实现在 Platform 内部。
 
 ## Delivery Rule
 
-Every GUI feature that represents instrument knowledge should be driven by structured profile/catalog data wherever practical. Hard-coded instrument-specific widgets are allowed only when a reusable abstraction cannot represent the behavior and the reason is documented.
+凡是能够通过结构化 Profile/Catalog 驱动的仪表知识，都应优先数据驱动，而不是硬编码型号专用 Widget。只有通用抽象确实无法表达时，才允许仪表特有 UI，并要求记录原因。

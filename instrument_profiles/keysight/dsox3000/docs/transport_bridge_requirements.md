@@ -1,40 +1,48 @@
-# DSO-X 3000 X-Series transport bridge requirements
+# DSO-X 3000 X-Series 转发桥要求
 
-## Background
+## 背景
 
-The DSO-X waveform path is not text-only SCPI. `:WAVeform:DATA?` returns an IEEE 488.2 definite-length **binary block** when BYTE/WORD waveform format is selected.
+DSO-X Waveform Path 不是纯文本 SCPI。使用 BYTE/WORD Waveform Format 时，`:WAVeform:DATA?` 返回 IEEE 488.2 Definite-Length **Binary Block**。
 
-During 2026-08 hardware debugging, a USB-to-TCP forwarding tool was found to be converting returned waveform bytes as ASCII text. Ordinary text SCPI queries still worked, but binary waveform acquisition failed with an apparent VISA timeout inside `acquire_word_waveform()`.
+2026-08 实机调试中发现：某 USB -> TCP 转发工具把 Waveform Return Bytes 当成 ASCII Text 处理。普通 Text SCPI Query 仍然正常，但 `acquire_word_waveform()` 的 Binary Waveform Acquisition 表现为 VISA Timeout。
 
-The instrument and DSO-X SCPI commands were not the root cause. The forwarding layer was corrupting or delaying the binary response.
+根因不是仪表或 DSO-X SCPI，而是转发层破坏或延迟了 Binary Response。
 
-## Requirement
+## 强制要求
 
-Any USB/GPIB/VISA-to-TCP forwarding bridge used with DSO-X waveform acquisition must operate in **binary-transparent / raw byte** mode.
+任何用于 DSO-X Waveform Acquisition 的 USB/GPIB/VISA -> TCP Bridge 必须工作在**二进制透明（raw byte）**模式。
 
-It must not:
+不得：
 
-- decode returned bytes as ASCII/UTF-8 text;
-- normalize line endings inside binary payloads;
-- stop reading at embedded `\n` or `\r` bytes;
-- append or remove bytes from the IEEE 488.2 block payload;
-- convert binary samples to printable text unless the client explicitly requested ASCII waveform format.
+- 把返回 Bytes Decode 为 ASCII/UTF-8；
+- 修改 Binary Payload 内的换行；
+- 遇到 Payload 中嵌入的 `\n` / `\r` 就提前停止读取；
+- 对 IEEE 488.2 Block Payload 添加或删除字节；
+- 除非 Client 明确请求 ASCII Waveform，否则不得把 Binary Sample 转成可打印文本。
 
-## Diagnostic signature
+## 典型故障特征
 
-A bridge configuration problem can look like this:
+Bridge 配置问题通常表现为：
 
-1. `*IDN?`, trigger queries, timebase queries and measurement queries succeed;
-2. `:DIGitize` appears to run normally;
-3. `:WAVeform:DATA?` / `acquire_word_waveform()` times out or returns malformed data;
-4. changing trigger sweep or acquisition mode does not fix the failure.
+1. `*IDN?`、Trigger、Timebase、Measurement Query 均成功；
+2. `:DIGitize` 看似正常；
+3. `:WAVeform:DATA?` / `acquire_word_waveform()` Timeout 或返回 Malformed Data；
+4. 修改 Trigger Sweep / Acquisition Mode 仍不能解决。
 
-When this pattern appears, verify the forwarding tool's raw/binary mode before changing the DSO-X driver or increasing VISA timeouts.
+出现这种组合时，应先检查 Bridge Raw/Binary Mode，而不是立刻修改 DSO-X Driver 或盲目增加 VISA Timeout。
 
-## Recommended waveform read path
+## 推荐 Waveform Read Path
 
-For VISA transports, prefer a length-aware IEEE 488.2 block reader and do not wait for a text terminator after the declared binary payload. The platform `VisaTransport.query_ieee_block_bytes(..., expect_termination=False)` exists for this purpose.
+VISA Transport 应优先使用 Length-Aware IEEE 488.2 Block Reader，并且在读取完声明的 Binary Payload 后不要继续等待文本 Terminator。
 
-## Qualification note
+平台已有：
 
-Text-SCPI success alone is not sufficient to qualify a transport bridge for this instrument. Hardware qualification must include at least one real BYTE/WORD waveform transfer.
+```text
+VisaTransport.query_ieee_block_bytes(..., expect_termination=False)
+```
+
+用于这一场景。
+
+## Qualification 要求
+
+Text SCPI 成功不足以证明 Bridge 能支持该仪表。Transport Bridge Qualification 至少必须包含一次真实 BYTE/WORD Waveform Transfer。

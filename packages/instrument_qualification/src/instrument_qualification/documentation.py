@@ -1,4 +1,4 @@
-"""Generate qualification Markdown reports."""
+"""生成中文 Qualification Markdown 报告。"""
 
 from pathlib import Path
 
@@ -12,98 +12,35 @@ def generate_report_markdown(
     path: str | Path,
     report: QualificationReport,
 ) -> None:
-
     path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
-    path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    lines = []
-
-    lines.append(
-        "# Instrument Qualification Report"
-    )
-    lines.append("")
-
-    lines.append(
-        "## Instrument"
-    )
-    lines.append("")
-
-    lines.append(
-        f"- Driver family: "
-        f"{report.driver_family}"
-    )
-
-    lines.append(
-        f"- Target model: "
-        f"{report.target_model}"
-    )
-
-    lines.append(
-        f"- Driver version: "
-        f"{report.driver_version}"
-    )
-
-    lines.append(
-        f"- Serial number: "
-        f"{report.serial_number}"
-    )
-
-    lines.append(
-        f"- Firmware: "
-        f"{report.firmware}"
-    )
-
-    lines.append(
-        f"- Resource: "
-        f"{report.resource}"
-    )
-
-    lines.append("")
-
-    lines.append(
-        "## Summary"
-    )
-    lines.append("")
-
-    lines.append(
-        f"- Total: {len(report.checks)}"
-    )
-
-    lines.append(
-        f"- PASS: {report.passed()}"
-    )
-
-    lines.append(
-        f"- FAIL: {report.failed()}"
-    )
-
-    lines.append(
-        f"- SKIPPED: {report.skipped()}"
-    )
-
-    lines.append(
-        "- Mandatory failures: "
-        f"{len(report.mandatory_failures())}"
-    )
-
-    lines.append(
-        "- Eligible for qualified: "
-        f"{report.eligible_for_qualified()}"
-    )
-
-    lines.append("")
-
-    lines.append(
-        "## Checks"
-    )
-    lines.append("")
+    lines = [
+        "# 仪表 Driver 实机资格验证报告",
+        "",
+        "## 仪表信息",
+        "",
+        f"- Driver 家族：{report.driver_family}",
+        f"- 目标型号：{report.target_model}",
+        f"- Driver 版本：{report.driver_version}",
+        f"- 序列号：{report.serial_number}",
+        f"- Firmware：{report.firmware}",
+        f"- Resource：{report.resource}",
+        "",
+        "## 汇总",
+        "",
+        f"- 总检查项：{len(report.checks)}",
+        f"- PASS：{report.passed()}",
+        f"- FAIL：{report.failed()}",
+        f"- SKIPPED：{report.skipped()}",
+        f"- 强制项失败/跳过：{len(report.mandatory_failures())}",
+        f"- 是否满足 qualified 条件：{report.eligible_for_qualified()}",
+        "",
+        "## 检查项",
+        "",
+    ]
 
     for result in report.checks:
-
         if result.status == CheckStatus.PASS:
             marker = "PASS"
         elif result.status == CheckStatus.FAIL:
@@ -111,59 +48,23 @@ def generate_report_markdown(
         else:
             marker = "SKIPPED"
 
-        required = (
-            "mandatory"
-            if result.mandatory
-            else "optional"
-        )
+        required = "强制" if result.mandatory else "可选"
 
-        lines.append(
-            f"### [{marker}] "
-            f"{result.name}"
-        )
+        lines.append(f"### [{marker}] {result.name}")
         lines.append("")
-
-        lines.append(
-            f"- ID: {result.id}"
-        )
-
-        lines.append(
-            f"- Category: "
-            f"{result.category}"
-        )
-
-        lines.append(
-            f"- Requirement: "
-            f"{required}"
-        )
+        lines.append(f"- ID：{result.id}")
+        lines.append(f"- 分类：{result.category}")
+        lines.append(f"- 要求：{required}")
 
         if result.elapsed_ms is not None:
-            lines.append(
-                f"- Elapsed: "
-                f"{result.elapsed_ms} ms"
-            )
-
+            lines.append(f"- 耗时：{result.elapsed_ms} ms")
         if result.message:
-            lines.append(
-                f"- Message: "
-                f"{result.message}"
-            )
-
+            lines.append(f"- 信息：{result.message}")
         if result.evidence:
-            lines.append(
-                "- Evidence:"
-            )
-
-            for key, value in (
-                result.evidence.items()
-            ):
-                lines.append(
-                    f"  - {key}: {value}"
-                )
+            lines.append("- 证据：")
+            for key, value in result.evidence.items():
+                lines.append(f"  - {key}: {value}")
 
         lines.append("")
 
-    path.write_text(
-        "\n".join(lines),
-        encoding="utf-8",
-    )
+    path.write_text("\n".join(lines), encoding="utf-8")

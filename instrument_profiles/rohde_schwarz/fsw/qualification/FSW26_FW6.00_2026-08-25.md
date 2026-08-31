@@ -1,368 +1,337 @@
-# R&S FSW-26 Hardware Qualification
+# R&S FSW-26 实机 Qualification
 
-Date: 2026-08-25
+Date：2026-08-25
 
-## Device
+## 仪表
 
-- Model: FSW-26
-- Firmware: 6.00
-- Serial number: intentionally omitted from public repository
-- Network address: intentionally omitted from public repository
+- Model：FSW-26
+- Firmware：6.00
+- Serial Number：公开仓库中刻意省略
+- Network Address：公开仓库中刻意省略
 
-## Environment
+## 环境
 
-Real R&S FSW-26 hardware was exercised through:
+真实 R&S FSW-26 通过以下链路验证：
 
+```text
 VisaTransport
--> SCPIClient
--> RohdeSchwarzFSWDriver
--> instrument-capture-studio FSWAdapter
+  -> SCPIClient
+  -> RohdeSchwarzFSWDriver
+  -> instrument-capture-studio FSWAdapter
+```
 
-## Basic connection
+## 基础连接
 
-PASS
+**PASS**。
 
-Verified:
+已验证：
 
-- network reachable
-- VISA connection
-- *IDN?
-- model identification
-- firmware identification
-- clean disconnect
-- front panel remained manually operable after disconnect
+- Network Reachable
+- VISA Connection
+- `*IDN?`
+- Model Identification
+- Firmware Identification
+- Clean Disconnect
+- Disconnect 后 Front Panel 仍可人工操作
 
-## Parameter queries
+## 参数 Query
 
-PASS
+**PASS**。
 
-Observed initial instrument state:
+观察到的初始状态：
 
-- center frequency: 600 MHz
-- span: 0 Hz (Zero Span)
-- RBW: 10 MHz
-- VBW: 10 MHz
-- sweep time: 20 us
-- trigger source: EXT
-- continuous mode: ON
-- trace format: ASCII
+- Center Frequency：600 MHz
+- Span：0 Hz（Zero Span）
+- RBW：10 MHz
+- VBW：10 MHz
+- Sweep Time：20 us
+- Trigger Source：EXT
+- Continuous Mode：ON
+- Trace Format：ASCII
 
-## Zero Span trace
+## Zero Span Trace
 
-PASS
+**PASS**。
 
-Observed:
+观察：
 
-- points: 1001
-- start frequency: 600 MHz
-- stop frequency: 600 MHz
-- trace returned valid amplitude values
-- no SCPI errors
-- original instrument configuration restored after test
+- Points：1001
+- Start Frequency：600 MHz
+- Stop Frequency：600 MHz
+- Trace 返回有效 Amplitude
+- SCPI Error Queue 为空
+- 测试后恢复原仪表配置
 
-## Swept spectrum trace
+## Swept Spectrum Trace
 
-PASS
+**PASS**。
 
-Test configuration:
+测试配置：
 
-- center: 600 MHz
-- span: 200 MHz
-- expected start: 500 MHz
-- expected stop: 700 MHz
+- Center：600 MHz
+- Span：200 MHz
+- Expected Start：500 MHz
+- Expected Stop：700 MHz
 
-Observed:
+观察：
 
-- points: 1001
-- first frequency: 500 MHz
-- last frequency: 700 MHz
-- frequency step: 200 kHz
-- trace amplitude data returned successfully
-- SCPI error queue empty
-- original instrument configuration restored
+- Points：1001
+- First Frequency：500 MHz
+- Last Frequency：700 MHz
+- Frequency Step：200 kHz
+- Trace Amplitude Data 成功返回
+- SCPI Error Queue 为空
+- 测试后恢复原配置
 
-## Reliability
+## 连续可靠性
 
-PASS
+**PASS**。
 
-Ten consecutive spectrum acquisitions completed successfully.
+连续 10 次 Spectrum Acquisition 全部完成。
 
-Observed:
+观察：
 
-- passed: 10 / 10
-- timeout count: 0
-- SCPI error count: 0
-- first acquisition: approximately 0.192 s
-- subsequent acquisitions: approximately 0.013 to 0.015 s
-- original instrument configuration restored
+- Passed：10 / 10
+- Timeout Count：0
+- SCPI Error Count：0
+- First Acquisition：约 0.192 s
+- Subsequent Acquisition：约 0.013～0.015 s
+- 测试后恢复原配置
 
-## Disconnect and reconnect
+## Disconnect / Reconnect
 
-PASS with engineering observation.
+**PASS，但记录了工程现象。**
 
-A live VISA session was interrupted by physically disconnecting
-the network connection.
+在 Live VISA Session 中物理断开网络。
 
-Observed:
+观察：
 
-- exception type: TransportError
-- application detected the loss approximately 5.023 s after the
-  last successful query
-- application did not hang
-- automatic reconnect succeeded
-- reconnect succeeded after several attempts
-- reconnect wait: approximately 6.365 s
+- Exception Type：`TransportError`
+- 从最后一次成功 Query 到发现连接丢失：约 5.023 s
+- Application 未 Hang
+- Automatic Reconnect 成功
+- 多次尝试后恢复连接
+- Reconnect Wait：约 6.365 s
 
-## Disconnect while waiting for acquisition
+## 等待 Acquisition 时断网
 
-RECOVERY PASS, LATENCY ISSUE FOUND.
+**RECOVERY PASS，但发现 Latency 问题。**
 
-The FSW was waiting for an EXT trigger while a measurement was active.
-The network connection was physically interrupted.
+FSW 使用 EXT Trigger，Measurement 正在等待 Trigger 时物理断开网络。
 
-Observed:
+观察：
 
-- exception type: TransportError
-- failure surfaced after approximately 121.124 s
-- reconnect succeeded after network restoration
-- reconnect wait: approximately 0.822 s
-- SCPI error queue after reconnect: empty
-- trigger restored to EXT
-- continuous mode restored to ON
+- Exception Type：`TransportError`
+- Failure 约 121.124 s 后才暴露
+- 网络恢复后 Reconnect 成功
+- Reconnect Wait：约 0.822 s
+- Reconnect 后 SCPI Error Queue 为空
+- Trigger 恢复 EXT
+- Continuous Mode 恢复 ON
 
-Engineering conclusion:
+工程结论：
 
-The long failure latency is caused by the current blocking *OPC?
-measurement completion wait combined with the VISA timeout.
+长延迟来自原先 Blocking `*OPC?` Completion Wait 与较长 VISA Timeout 的组合。
 
-Commercial acquisition code must not rely on a long blocking *OPC?
-call for cancellable or recoverable measurements.
+商业采集代码不能把一个长时间 Blocking `*OPC?` 当作可取消/可恢复 Measurement 的唯一等待机制。
 
-Future measurement lifecycle should support:
+后续 Measurement Lifecycle 必须支持：
 
-- bounded polling / completion checks
+- bounded polling / completion check
 - cancellation
-- ABORt on cancellation or job timeout
-- independent communication-loss detection
-- configurable overall measurement timeout
+- Job Timeout 时 `ABORt`
+- 独立 Communication Loss Detection
+- 可配置 Overall Measurement Timeout
 
 ## ABORT
 
-PASS
+**PASS**。
 
-Test sequence:
+测试流程：
 
-1. Configure trigger source EXT.
-2. Disable continuous measurement.
-3. INITiate measurement.
-4. Wait 3 seconds.
-5. Send ABORt.
-6. Query *OPC?.
-7. Read SCPI error queue.
-8. Restore original instrument state.
+1. Trigger Source 设置为 EXT。
+2. 关闭 Continuous Measurement。
+3. `INITiate` Measurement。
+4. 等待 3 s。
+5. 发送 `ABORt`。
+6. Query `*OPC?`。
+7. 读取 SCPI Error Queue。
+8. 恢复原状态。
 
-Observed:
+观察：
 
-- INIT command time: 0.000884 s
-- ABORt command time: 0.000769 s
-- *OPC? after ABORt: True
-- *OPC? response time: 0.001719 s
-- SCPI error queue: empty
-- trigger restored to EXT
-- continuous mode restored to ON
+- INIT Command Time：0.000884 s
+- ABORt Command Time：0.000769 s
+- `*OPC?` after ABORt：True
+- `*OPC?` Response Time：0.001719 s
+- SCPI Error Queue：Empty
+- Trigger 恢复 EXT
+- Continuous Mode 恢复 ON
 
-Conclusion:
+结论：`ABORt` 适合作为 FSW Cancellation Primitive。
 
-ABORt is suitable as the FSW cancellation primitive.
+## Bounded Measurement Completion
 
-## Bounded measurement completion
+**PASS - HARDWARE VERIFIED**。
 
-PASS - HARDWARE VERIFIED
+原 Acquisition Path 使用 Blocking `*OPC?`。EXT Trigger 等待叠加较长 VISA Timeout 时，Communication Failure 曾需要约 121.124 s 才暴露。
 
-The original acquisition path used a blocking `*OPC?` query.
-During an EXT-trigger wait combined with a long VISA timeout,
-a communication failure previously surfaced only after
-approximately 121.124 s.
-
-A bounded completion path was implemented using:
+新的 Bounded Completion Path 使用：
 
 - `*OPC`
-- periodic `*ESR?` polling
-- configurable overall timeout
-- `ABORt` on timeout
+- 周期性 `*ESR?` Polling
+- 可配置 Overall Timeout
+- Timeout 时 `ABORt`
 
-### Timeout verification
+### Timeout Verification
 
-Test condition:
+测试条件：
 
-- trigger source: EXT
-- configured measurement timeout: 3.0 s
+- Trigger Source：EXT
+- Measurement Timeout：3.0 s
 
-Observed:
+观察：
 
-- timeout surfaced after: 3.017329 s
-- ESR poll count: 31
-- maximum ESR query time: 0.005012 s
-- average ESR query time: 0.002678 s
-- exception: TriggerTimeoutError
-- SCPI error queue: empty
-- original trigger state restored
-- continuous mode restored to ON
+- Timeout Surfaced：3.017329 s
+- ESR Poll Count：31
+- Maximum ESR Query Time：0.005012 s
+- Average ESR Query Time：0.002678 s
+- Exception：`TriggerTimeoutError`
+- SCPI Error Queue：Empty
+- Original Trigger State：Restored
+- Continuous Mode：Restored ON
 
-Result:
+结果：
 
+```text
 BOUNDED TIMEOUT PASS
+```
 
-The ESR query itself remained fast and did not become
-a replacement blocking point.
+`*ESR?` Query 本身保持快速，没有变成新的 Blocking Point。
 
-### Normal acquisition comparison
+### Normal Acquisition 对比
 
-The legacy blocking path and the new bounded path were
-compared under the same instrument configuration.
+Legacy Blocking Path 与新 Bounded Path 在相同配置下比较。
 
-Legacy `*OPC?` path:
+Legacy `*OPC?`：
 
 - 2.994684 s
 - 2.984877 s
 - 2.967219 s
 
-Bounded `*OPC` + `*ESR?` path:
+Bounded `*OPC` + `*ESR?`：
 
 - 2.999942 s
 - 2.987340 s
 - 2.990177 s
 
-Observed:
+观察：
 
-- 1001 trace points
-- SCPI error queue empty
-- bounded path introduced no meaningful acquisition latency
+- 1001 Trace Points
+- SCPI Error Queue Empty
+- Bounded Path 没有引入有意义的 Acquisition Latency
 
-Conclusion:
+结论：商业采集中的长 Blocking Completion 问题已通过 Bounded Polling 路径解决。
 
-The long blocking measurement-completion problem is resolved
-for bounded commercial acquisition.
+## Runtime Cancellation
 
-## Runtime cancellation
+**PASS - HARDWARE VERIFIED**。
 
-PASS - HARDWARE VERIFIED
+Bounded Acquisition Path 增加 Cooperative Caller Cancellation Callback。
 
-The bounded acquisition path was extended with a cooperative
-caller cancellation callback.
+测试条件：
 
-Test condition:
+- Trigger Source：EXT
+- Measurement 正在等待 Trigger
+- Acquisition 开始 1.0 s 后请求取消
 
-- trigger source: EXT
-- measurement actively waiting for trigger
-- cancellation requested 1.0 s after acquisition start
+观察：
 
-Observed:
+- Exception：`OperationCanceledError`
+- Total Acquisition Time：1.049991 s
+- Cancellation Request -> Exception：0.049610 s
+- 使用 `ABORt` 停止 Active Measurement
+- SCPI Error Queue：Empty
+- Trigger 恢复 IMM
+- Continuous Mode 恢复 ON
 
-- exception: OperationCanceledError
-- total acquisition time: 1.049991 s
-- cancellation request to exception: 0.049610 s
-- `ABORt` used to stop the active measurement
-- SCPI error queue: empty
-- trigger restored to IMM
-- continuous mode restored to ON
+结果：
 
-Result:
-
+```text
 RUNTIME CANCEL PASS
+```
 
-Conclusion:
-
-An active FSW measurement can be canceled while waiting for
-a trigger. Cancellation is detected within approximately one
-polling interval and the measurement is terminated using
-`ABORt`.
+结论：Active FSW Measurement 在等待 Trigger 时可以被取消，取消通常在一个 Polling Interval 内发现，并通过 `ABORt` 终止。
 
 ## Record / Replay
 
-PASS
+**PASS**。
 
-A real FSW session was captured using RecordingTransport and then
-replayed completely offline using ReplayTransport.
+真实 FSW Session 先通过 `RecordingTransport` 记录，再通过 `ReplayTransport` 完全离线重放。
 
-The recorded session included:
+记录包含：
 
-- VISA connection
-- instrument identification
-- frequency and bandwidth queries
-- trigger and continuous-mode queries
-- one real ASCII spectrum trace acquisition
-- SCPI error queue query
-- restoration of the original instrument state
-- clean disconnect
+- VISA Connection
+- Instrument Identification
+- Frequency / Bandwidth Query
+- Trigger / Continuous Mode Query
+- 一次真实 ASCII Spectrum Trace Acquisition
+- SCPI Error Queue Query
+- 恢复原仪表状态
+- Clean Disconnect
 
-Observed:
+观察：
 
-- real hardware recording: PASS
-- offline replay: PASS
-- replay result matched the real hardware result exactly
-- remaining replay events: 0
-- trigger state restored after the hardware session
-- continuous mode restored after the hardware session
+- Real Hardware Recording：PASS
+- Offline Replay：PASS
+- Replay Result 与真实硬件结果完全一致
+- Remaining Replay Events：0
+- Hardware Session 后 Trigger / Continuous 状态均恢复
 
-Conclusion:
+结论：FSW Driver 可以依赖真实硬件 Recording 做确定性的 Offline Regression Test，无需每次占用仪表。
 
-The FSW driver can use recorded real-hardware sessions for deterministic
-offline regression testing without requiring access to the instrument.
+## Qualification 汇总
 
-## Qualification summary
+Hardware Verified：
 
-Hardware verified:
+- `connection.open`：PASS
+- `identity.idn`：PASS
+- `identity.firmware`：PASS
+- `frequency.basic`：PASS
+- `bandwidth.basic`：PASS
+- `trigger.basic`：PASS
+- `sweep.single`：PASS
+- `trace.ascii`：PASS
+- `trace.integrity`：PASS
+- `error.queue`：PASS
+- `control.abort`：PASS
+- `control.bounded_wait`：PASS
+- `control.runtime_cancel`：PASS
+- `connection.disconnect`：PASS
+- `connection.reconnect`：PASS
+- `record_replay`：PASS
 
-- connection.open: PASS
-- identity.idn: PASS
-- identity.firmware: PASS
-- frequency.basic: PASS
-- bandwidth.basic: PASS
-- trigger.basic: PASS
-- sweep.single: PASS
-- trace.ascii: PASS
-- trace.integrity: PASS
-- error.queue: PASS
-- control.abort: PASS
-- control.bounded_wait: PASS
-- control.runtime_cancel: PASS
-- connection.disconnect: PASS
-- connection.reconnect: PASS
-- record_replay: PASS
+所有 Mandatory Qualification Check 均已通过实机验证。
 
-All mandatory qualification checks are hardware-verified.
+Optional / 未评估：
 
-Optional / not evaluated:
+- `marker.peak`
 
-- marker.peak
+## Overall Status
 
-## Overall status
+FSW-26 Firmware 6.00 对当前核心 Spectrum Acquisition Feature Set 已达到 `qualified` 条件。
 
-FSW-26 firmware 6.00 is qualified for the current core spectrum
-acquisition feature set.
+已经解决的关键工程问题：Commercial Bounded Acquisition 不再依赖长 Blocking `*OPC?`，而是采用 `*OPC` + `*ESR?` Polling、Overall Timeout 和 Cooperative Cancellation，并在 Timeout / Cancel 时执行 `ABORt`。
 
-All mandatory qualification requirements have passed on real hardware
-or, for Record/Replay, using a session recorded from that real hardware.
-
-Resolved engineering issue:
-
-The commercial bounded acquisition path no longer relies on a long
-blocking `*OPC?` wait. It uses `*OPC` + `*ESR?` polling with an
-overall timeout and cooperative cancellation, and issues `ABORt`
-when the operation times out or is canceled.
-
-Hardware verification confirmed:
+已验证：
 
 - bounded timeout behavior
 - fast ESR polling
 - normal trace acquisition
 - runtime cancellation
 - clean SCPI error queue
-- restoration of instrument state
+- instrument state restoration
 
-Remaining Phase 7 / Phase 8 verification:
+仍建议补充的后续验证：
 
-Physical network loss while the new bounded polling path is active
-should be re-tested to quantify communication-loss detection latency
-with the new implementation.
+- 在新 Bounded Polling Path 正在运行时再次进行 Physical Network Loss Test，量化新的 Communication-Loss Detection Latency。

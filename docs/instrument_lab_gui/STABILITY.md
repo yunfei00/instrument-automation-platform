@@ -1,72 +1,65 @@
-# Instrument Lab GUI Stability Notes
+# Instrument Lab GUI 稳定性记录
 
-## 2026-08-27 - Native Segmentation Fault During Repeated Commands
+## 2026-08-27：重复执行命令时 Native Segmentation Fault
 
-### Field observation
+### 现场现象
 
-On a company lab machine, Instrument Lab GUI could connect and execute several
-instrument commands successfully, then the Python process terminated with:
+公司实验室电脑上，Instrument Lab GUI 能正常连接并执行若干命令，但随后 Python 进程出现：
 
 ```text
 Segmentation Fault (core dumped)
 ```
 
-This is a native-process crash rather than a normal Python exception. It can
-originate in Qt/PySide6, a vendor VISA implementation, or unsafe lifetime/thread
-interaction around a native VISA session.
+这属于 Native Process Crash，不是普通 Python Exception。潜在来源包括 Qt/PySide6、Vendor VISA Runtime，或 Native VISA Session 在线程/生命周期管理上的不安全使用。
 
-### Risk found in the original GUI
+### 原实现风险
 
-The first GUI implementation used a `QThreadPool` with transient `QRunnable`
-objects. A `VisaTransport` was created in one worker invocation and then reused
-by later worker invocations. Although the thread pool was limited to one
-concurrent task, a pool does not provide a strict ownership contract saying a
-native VISA session is created, used and destroyed by one persistent thread.
+第一版 GUI 使用 `QThreadPool` + 临时 `QRunnable`。`VisaTransport` 在一次 Worker 调用中创建，之后被其他 Worker 调用复用。
 
-The original `closeEvent` also called `transport.close()` directly from the GUI
-thread while normal VISA I/O was performed by worker tasks. A close operation
-that overlaps native I/O is particularly unsafe for vendor libraries.
+即使 Thread Pool 被限制为单并发，也不能保证某个 Native VISA Session 始终由同一个长期存在的 Thread 创建、使用和销毁。
 
-### Stability rule
+此外，原 `closeEvent` 会在 GUI Thread 直接调用 `transport.close()`，而普通 VISA I/O 在 Worker 中执行。一旦 Close 与 Native I/O 重叠，Vendor Library 更容易进入不安全状态。
 
-Instrument Lab now applies the following invariant:
+### 稳定性规则
 
-> One connected instrument session has exactly one owning I/O thread.
+Instrument Lab 现在遵循：
 
-The dedicated worker thread exclusively performs:
+> 一个已连接 Instrument Session，只能有一个拥有它的 I/O Thread。
 
-1. `VisaTransport` creation
-2. VISA resource open
+专用 Worker Thread 独占执行：
+
+1. 创建 `VisaTransport`
+2. Open VISA Resource
 3. `*IDN?`
-4. all query operations
-5. all write operations
-6. VISA resource close
-7. application-shutdown cleanup
+4. 所有 Query
+5. 所有 Write
+6. Close VISA Resource
+7. Application Shutdown Cleanup
 
-The GUI thread never directly calls methods on the native VISA session.
+GUI Thread 不直接调用 Native VISA Session 方法。
 
-### Implementation
+### 实现
 
 - `instrument_lab.gui_io.InstrumentIOWorker`
-  - owns the `VisaTransport`
-  - lives on one persistent `QThread`
-  - exposes queued Qt slots for connect/query/write/disconnect/shutdown
+  - 持有 `VisaTransport`
+  - 常驻单一 `QThread`
+  - 通过 Qt Queued Slot 接受 connect/query/write/disconnect/shutdown
 
 - `instrument_lab.gui_stable.StableInstrumentLabWindow`
-  - sends requests to the worker with Qt signals
-  - receives only plain Python/Qt values such as strings and elapsed time
-  - never receives the `VisaTransport` object
-  - performs shutdown using a blocking queued call so an in-flight command
-    finishes before native session teardown
+  - 通过 Signal 向 Worker 发送请求
+  - 只接收 string、elapsed time 等普通值
+  - 不接收 `VisaTransport` 对象
+  - Shutdown 使用 Blocking Queued Call，确保正在执行的命令结束后再释放 Native Session
 
 - `tools/instrument_lab_gui.py`
-  - launches the stable window
-  - enables Python `faulthandler` for native fatal-signal diagnostics
+  - 启动稳定版窗口
+  - 开启 Python `faulthandler`，便于 Native Fatal Signal 诊断
 
-### Field retest
+### 现场复测建议
 
-After pulling this fix, repeat a simple safe command many times before testing
-state-changing commands. Suggested DSO-X 3034A sequence:
+拉取修复后，先在同一 Connection Session 内重复安全查询，再执行状态改变命令。
+
+建议 DSO-X 3034A：
 
 ```text
 *IDN?
@@ -75,96 +68,75 @@ state-changing commands. Suggested DSO-X 3034A sequence:
 :SYSTem:ERRor?
 ```
 
-Run at least 30-50 query operations in one connection session.
+至少连续执行 30～50 次 Query。
 
-If a native crash still occurs, run the launcher from a terminal and preserve
-all text printed before `Segmentation Fault (core dumped)`. `faulthandler` is
-enabled specifically so Python thread stacks may be printed even when the
-process dies in native code.
+如果仍出现 Native Crash，应从 Terminal 启动并保存 `Segmentation Fault (core dumped)` 前的全部输出。`faulthandler` 的目的就是在 Native 崩溃时尽可能打印 Python Thread Stack。
 
-### Backend isolation test
+### Backend 隔离测试
 
-For TCP/IP instruments, if the machine has both a vendor VISA library and
-PyVISA-py available, compare these two modes separately:
+对于 TCP/IP 仪表，如果电脑同时有 Vendor VISA 和 PyVISA-py，可以分别比较：
 
 ```text
 VISA backend: <empty>
 ```
 
-and:
+和：
 
 ```text
 VISA backend: @py
 ```
 
-A crash that happens only with the vendor backend strongly points toward the
-native VISA layer. A crash that occurs with both backends points more strongly
-toward Qt/PySide6 or another shared native dependency.
+如果只在 Vendor Backend 崩溃，优先怀疑 Native VISA Layer；如果两种 Backend 都崩溃，则更需要排查 Qt/PySide6 或共同 Native 依赖。
 
-## 2026-08-27 - DSO-X `WAVeform:DATA?` Timeout Polluted Later Commands
+## 2026-08-27：DSO-X `WAVeform:DATA?` Timeout 污染后续命令
 
-### Field observation
+### 现场现象
 
-On a DSO-X 3034A, normal catalog commands worked, but querying:
+在 DSO-X 3034A 上，普通 Catalog 命令正常，但：
 
 ```text
 :WAVeform:DATA?
 ```
 
-timed out. After that failure, later ordinary commands also timed out until the
-session was restarted.
+发生 Timeout。此后普通命令也继续 Timeout，直到重建 Session。
 
-### Root cause in Instrument Lab
+### 根因
 
-The command catalog already correctly identifies `waveform.data` as:
+Catalog 已正确标记：
 
 ```text
 response_type = binary
 ```
 
-and documents that binary waveform format returns an IEEE 488.2
-definite-length block. The GUI nevertheless sent every catalog query through
-the text `transport.query()` path.
+并说明 Binary Waveform 会返回 IEEE 488.2 Definite-Length Block，但 GUI 当时仍把所有 Query 都走 `transport.query()` 文本路径。
 
-A timed-out waveform transfer can leave unread bytes associated with the active
-VISA session. Reusing that session for later text SCPI creates an invalid I/O
-state in which subsequent commands may also time out.
+不完整的 Binary Transfer 可能在 VISA Session 内残留未读取字节。继续把该 Session 当成同步的 Text SCPI Stream 使用，会导致后续命令也异常。
 
-### Fix
+### 修复
 
-Instrument Lab now uses response metadata to select the I/O path:
+Instrument Lab 现在按 `response_type` 选择 I/O Path：
 
 ```text
 text/integer/float/csv/etc. -> transport.query()
 binary                     -> transport.query_raw()
 ```
 
-Binary catalog queries temporarily use at least a 30000 ms VISA timeout. The
-normal configured timeout is restored after a successful binary transfer. This
-matches the existing DSO-X waveform-capture tooling, which also uses a 30000 ms
-default timeout.
+Binary Catalog Query 临时使用至少 30000 ms VISA Timeout；成功后恢复原 Timeout。这与现有 DSO-X Waveform Capture Tool 的默认 30000 ms 保持一致。
 
-The GUI does not place the complete binary payload in a text widget. It shows a
-compact summary containing:
+GUI 不把完整 Binary Payload 塞进文本框，而显示精简摘要：
 
-- total transfer bytes
-- whether an IEEE 488.2 definite-length block was recognized
-- header length
-- payload length
-- trailing-byte length
-- a short hexadecimal preview
-- elapsed time
+- Total Transfer Bytes
+- 是否识别 IEEE 488.2 Definite-Length Block
+- Header Length
+- Payload Length
+- Trailing Bytes Length
+- 短 Hex Preview
+- Elapsed Time
 
-### Timeout recovery rule
+### Timeout Recovery Rule
 
-Any text query, binary query or write operation that raises an
-`InstrumentTimeoutError` invalidates the current VISA session immediately.
-The worker closes the session on its owning I/O thread and the GUI changes to
-`Disconnected`.
+Text Query、Binary Query 或 Write 一旦抛出 `InstrumentTimeoutError`，当前 VISA Session 立即视为失效。
 
-This is deliberate: after an incomplete response, the platform does not assume
-the stream is synchronized enough to continue issuing unrelated SCPI.
+Worker 会在所属 I/O Thread 中关闭 Session，GUI 状态切回 `Disconnected`。
 
-The operator reconnects before continuing. The remembered instrument address
-remains available, so recovery requires only the Connect action rather than
-re-entering the resource address.
+这是有意设计：发生不完整 Response 后，平台不假设 Stream 仍然同步，也不继续发送无关 SCPI。操作者 Reconnect 后再继续；本地记忆地址仍保留，因此无需重新输入 Resource。

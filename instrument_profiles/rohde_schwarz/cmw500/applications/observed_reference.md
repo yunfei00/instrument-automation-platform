@@ -1,15 +1,14 @@
-# CMW500 Sanitized Reference Configuration
+# CMW500 脱敏参考配置
 
-A real CMW500 was used to validate the platform architecture.
+真实 CMW500 已用于平台架构验证。
 
-No serial number, device identifier, IP address, VISA resource or
-customer-specific option inventory is stored here.
+本文件不保存 Serial Number、Device ID、IP、完整 VISA Resource 或 Customer-Specific Option Inventory。
 
-## Observed Base Software
+## 观察到的 Base Software
 
 - BASE 3.5.120
 
-## Observed Firmware Applications
+## 观察到的 Firmware Application
 
 - LTE 3.5.50
 - WCDMA 3.5.40
@@ -19,21 +18,21 @@ customer-specific option inventory is stored here.
 
 ## Sub-Instrument Topology
 
-Observed configuration:
+观察配置：
 
-- sub-instrument count: 1
-- addressed sub-instrument: 1
+- sub-instrument count：1
+- addressed sub-instrument：1
 
-## Remote Interfaces
+## Remote Interface
 
-The reference unit exposed usable remote-control access through:
+参考设备上确认存在可用远控机制：
 
 - HiSLIP
 - VXI-11
 - USB
 
-## Architecture Result
+## 架构结论
 
-No change to the generic Transport abstraction was required.
+通用 `Transport` 无需针对 CMW500 修改。
 
-Application lifecycle remains local to the CMW500 driver family.
+Firmware Application / Measurement Lifecycle 继续保留在 CMW500 Driver Family 内部。

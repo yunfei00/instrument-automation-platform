@@ -1,28 +1,25 @@
-# Manual Index
+# 手册索引
 
-Official vendor manuals will be indexed here.
+本目录对应的官方资料应通过 Manual Registry 管理。
 
-Required document types:
+建议至少覆盖：
 
 1. Programmer's Guide / Remote Control Manual
 2. User's Guide
 3. Datasheet
-4. Option manuals when applicable
+4. 需要时的 Option Manual
 
-For every manual record:
+每份手册记录：
 
 - title
 - vendor
 - document number
 - revision
-- publication date if available
+- publication date（可获得时）
 - supported model family
-- local archive filename if used
+- local archive filename
 - official source
+- SHA256
 - notes
 
-Large PDF files should not automatically be committed to this Git
-repository unless there is a deliberate reason to version them.
-
-The repository should preserve the manual index and verified knowledge
-derived from those manuals.
+大型 PDF 默认不直接提交 Git。仓库应长期保存的是 Manual Index，以及从手册与实机中提炼出的结构化命令、返回格式、Parser、Scenario 和 Qualification 结论。

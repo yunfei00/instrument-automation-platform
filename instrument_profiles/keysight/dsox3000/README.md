@@ -1,30 +1,40 @@
 # Keysight DSO-X 3000 Series
 
-Status: bootstrap / experimental
+状态：`experimental`，实机 Qualification 持续进行中。
 
-Initial target:
+首个目标型号：
 
 - DSO-X 3034A
 
-This directory will become the long-term engineering knowledge base for
-the Keysight DSO-X 3000 family.
+本目录用于长期沉淀 Keysight DSO-X 3000 家族的工程知识。
 
-Expected assets:
+主要资产：
 
-- official manual index
-- command catalog
-- real hardware probe results
-- parsed response samples
-- firmware compatibility records
-- engineering notes
-- scenario tests
-- qualification reports
-- generated documentation
-- record/replay sessions
+- 原厂 Manual Index
+- Command Catalog
+- 实机 Probe / Qualification Result
+- 真实 Response Sample
+- Firmware Compatibility
+- Engineering Notes
+- Scenario Test
+- Generated Documentation
+- Record / Replay Session / Fixture
 
-Important rule:
+## 当前重点
 
-Do not add model-specific SCPI commands from memory.
+- Channel / Timebase / Trigger
+- `DIGitize`
+- Binary Waveform Transfer
+- 前面板控制与 SCPI 映射
+- Trigger / Single Acquisition 稳定性
 
-Commands should be added only after verification against an official
-programming manual or real instrument behavior.
+## 规则
+
+不要凭记忆把型号特有 SCPI 写入基线。
+
+命令至少应满足以下之一：
+
+1. 已在官方 Programmer Manual 中确认；
+2. 已在真实仪表行为中验证，并记录工程证据。
+
+验证状态使用 `candidate -> manual_verified -> hardware_verified` 表达。

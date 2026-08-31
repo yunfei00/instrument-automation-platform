@@ -1,57 +1,57 @@
 # Instrument Lab
 
-Instrument Lab is a first-class component of the platform.
-
-For every supported instrument it should provide:
+Instrument Lab 是平台的一等工程组件，用于把原厂命令和实机行为转化为可长期复用的结构化知识。
 
 ## Command Catalog
 
-Structured command definitions containing:
+每条命令可记录：
 
-- command
-- query
-- parameters
+- command / query / set syntax
+- 参数占位符
 - response type
 - unit
 - safety level
 - supported models
-- notes
+- verification status
+- source / manual page
+- description / notes
 
 ## Probe
 
-Run commands against a real instrument and record:
+在真实仪表上执行命令并记录：
 
-- TX command
-- raw RX response
-- parsed value
-- data type
-- unit
-- elapsed time
-- error information
-- PASS / FAIL
+- TX 命令
+- 原始 RX 响应
+- 解析值
+- 数据类型
+- 工程单位
+- 耗时
+- 错误信息
+- PASS / FAIL / SKIPPED
 
 ## Qualification
 
-Verify important driver capabilities against real hardware.
+按型号和 Firmware 验证 Driver 的关键能力，并保存可复查证据。
 
 ## Scenario Test
 
-Validate complete workflows such as:
+验证完整流程，而不是孤立命令。例如：
 
-- connect
-- configure
-- arm
-- trigger
-- acquire
-- read
-- validate
-- save
-- disconnect
+```text
+connect
+  -> configure
+  -> arm / trigger
+  -> acquire
+  -> read
+  -> validate
+  -> save
+  -> disconnect
+```
 
 ## Record / Replay
 
-Record real communication sessions and replay them during development without hardware.
+记录真实仪表通信会话，在没有硬件时重放，用于复现现场问题和 Driver 回归。
 
 ## Documentation
 
-Generate instrument documentation from command definitions and real hardware test results.
+同一套 Command Catalog、Probe 和 Qualification 结果用于自动生成 Markdown 文档，避免“文档写的是一套、真实仪表行为是另一套”。

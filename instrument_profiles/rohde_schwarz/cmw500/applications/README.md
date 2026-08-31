@@ -1,12 +1,10 @@
-# CMW500 Firmware Applications
+# CMW500 Firmware Application
 
-CMW500 is a modular radio communication tester.
+CMW500 是模块化 Radio Communication Tester。
 
-The base driver owns only device-wide behavior.
+Base Driver 只拥有 Device-Wide 行为；技术制式相关行为放在 Application Module 中。
 
-Technology-specific behavior belongs to application modules.
-
-Planned structure:
+当前结构方向：
 
 - base
 - LTE
@@ -15,34 +13,29 @@ Planned structure:
 - WLAN
 - Bluetooth
 
-## Important Architecture Rule
+## 重要架构规则
 
-CMW500 Application is currently a driver-family concept.
+`CMW500 Application` 当前只属于 CMW500 Driver Family，不属于 `instrument_core`。
 
-It is NOT part of instrument_core.
+只有后续其他互不相关的仪表家族也表现出同样抽象需求时，才考虑把它提升为 Platform Core 概念。
 
-The abstraction should only be promoted into the platform core if
-additional unrelated instrument families demonstrate the same need.
-
-## Application Module Responsibility
-
-A technology application may own:
+## Application Module 可以负责
 
 - signaling
 - measurement configuration
-- INITiate
-- FETCh
-- READ
-- STOP
-- ABORt
+- `INITiate`
+- `FETCh`
+- `READ`
+- `STOP`
+- `ABORt`
 - application-specific routing
 - result parsing
 
-It must not own:
+## Application Module 不负责
 
-- VISA transport
-- SCPI transport
+- VISA Transport
+- SCPI Transport
 - Record / Replay
-- generic qualification infrastructure
+- Generic Qualification Infrastructure
 
-Those remain reusable platform capabilities.
+这些继续由通用平台层提供。

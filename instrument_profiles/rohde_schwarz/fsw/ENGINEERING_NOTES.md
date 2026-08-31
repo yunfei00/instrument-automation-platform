@@ -1,11 +1,10 @@
-# R&S FSW Engineering Notes
+# R&S FSW 工程记录
 
-## Knowledge status
+## 知识状态
 
-FSW Command Catalog v0.1 has been established from the archived
-FSW User Manual revision 57.
+FSW Command Catalog v0.1 由归档的 FSW User Manual Revision 57 建立。
 
-Manual-verified groups currently include:
+Manual-Verified 的核心命令组包括：
 
 - center/span/start/stop frequency
 - RBW
@@ -20,51 +19,49 @@ Manual-verified groups currently include:
 - marker Y value
 - system error
 
-## Candidate commands
+## Candidate Command
 
-Some commands are known from official R&S FSW-family documentation
-but the exact location in the archived base FSW manual has not yet
-been located.
+部分命令已在官方 FSW Family 文档中发现，但在当前归档 Base Manual 中还未完成精确位置确认，因此继续保持 `candidate`，不能直接冒充 `manual_verified`。
 
-They remain `candidate`, not `manual_verified`:
+典型包括：
 
 - reference level
 - sweep points
 - marker state
 - marker X value
 
-They must not be promoted until either:
+只有满足以下之一才能提升：
 
-1. verified against the archived FSW base manual, or
-2. verified on real FSW hardware with an engineering note.
+1. 在归档 Base Manual 中完成准确确认；
+2. 在真实 FSW 上验证并留下 Engineering Note。
 
-## Trace acquisition
+## Trace Acquisition
 
-The first implementation should use ASCII trace transfer because it
-is easy to inspect and validate.
+第一版优先使用 ASCII Trace Transfer，因为更容易人工检查和验证。
 
-After hardware qualification succeeds, add REAL,32 binary transfer
-using IEEE 488.2 definite-length blocks for higher performance.
+Hardware Qualification 成功后，可进一步增加 `REAL,32` Binary Transfer，并使用 IEEE 488.2 Definite-Length Block 提升性能。
 
-## Measurement lifecycle
+## Measurement Lifecycle
 
-Recommended initial sequence:
+推荐基础流程：
 
-1. Configure frequency.
-2. Configure RBW/VBW.
-3. Configure reference level.
-4. Configure trigger.
-5. Disable continuous sweep.
-6. Initiate one measurement.
-7. Wait for completion.
-8. Read TRACE1.
-9. Validate point count.
-10. Save trace and metadata.
-11. Read the instrument error queue.
+1. 配置 Frequency。
+2. 配置 RBW/VBW。
+3. 配置 Reference Level。
+4. 配置 Trigger。
+5. 关闭 Continuous Sweep。
+6. 启动一次 Measurement。
+7. 使用有界 Completion Wait，避免长时间阻塞。
+8. 读取 TRACE1。
+9. 验证 Point Count。
+10. 保存 Trace + Metadata。
+11. 读取 Instrument Error Queue。
+12. 恢复原仪表状态。
 
 ## Safety
 
-INITiate is not part of the generic safe command probe.
+`INITiate` 不属于 Generic Safe Probe。
 
-It belongs to a scenario test because it starts a real measurement and
-can block while waiting for a trigger.
+它会真正启动 Measurement，并可能在等待 Trigger 时阻塞，因此必须放在 Scenario / Qualification 中执行。
+
+真实 FSW Qualification 已进一步验证：长时间阻塞式 `*OPC?` 不适合需要取消和恢复的商业采集流程，应使用 `*OPC` + `*ESR?` Bounded Polling，并在 Timeout / Cancel 时发送 `ABORt`。

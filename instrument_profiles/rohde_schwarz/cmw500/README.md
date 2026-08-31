@@ -1,31 +1,26 @@
 # Rohde & Schwarz CMW500
 
-## Role
+## 在平台中的作用
 
-CMW500 is the third reference instrument used to validate the
-instrument-automation-platform baseline.
+CMW500 是第三类 Reference Instrument，用来检验 `instrument-automation-platform` 是否能自然支持复杂模块化仪表。
 
-The initial goal is not to implement a specific cellular test
-application.
+初始目标不是实现某一种蜂窝测试业务，而是验证 Base System、Firmware Application、Sub-Instrument 和 Measurement Lifecycle 能否保持在单仪表 Driver 家族内部。
 
-The goal is to validate whether the platform can represent a more
-complex modular instrument.
+## 初始范围
 
-## Initial Scope
-
-Initial analysis focuses on:
+重点验证：
 
 - connection
 - identity
 - firmware
 - installed options
-- sub-instruments
+- sub-instrument
 - application structure
-- system errors
+- system error
 - measurement lifecycle
 - generic remote-control behavior
 
-Technology-specific applications such as:
+技术 Application 包括：
 
 - GSM
 - WCDMA
@@ -33,21 +28,28 @@ Technology-specific applications such as:
 - WLAN
 - Bluetooth
 
-will only be added after the actual hardware configuration and
-installed applications are identified.
+这些能力按真实硬件和项目需求逐步加入，而不是一次性实现全部命令。
 
-## Knowledge Sources
+## Knowledge Source
 
-Primary:
+Primary：
 
 - CMW500 User Manual
 
-Shared:
+Shared：
 
 - R&S Remote Control via SCPI Getting Started
 
-## Verification Lifecycle
+LTE：
 
+- CMW-KM5xx/-KS5xx LTE UE Firmware Applications User Manual
+
+## 验证生命周期
+
+```text
 candidate
--> manual_verified
--> hardware_verified
+  -> manual_verified
+  -> hardware_verified
+```
+
+CMW500 架构验证结论见 `ARCHITECTURE_VALIDATION.md` 和 `docs/baselines/CMW500_PLATFORM_VALIDATION.md`。

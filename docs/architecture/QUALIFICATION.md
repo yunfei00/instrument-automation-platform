@@ -1,112 +1,99 @@
-# Instrument Driver Qualification
+# 仪表 Driver 实机资格验证（Qualification）
 
-## Why Qualification Exists
+## 为什么需要 Qualification
 
-A driver compiling successfully does not mean that an instrument is
-supported.
+Driver 能编译、Mock Test 能通过，并不代表这台仪表已经“受支持”。真实仪表还受到以下因素影响：
 
-Instrument software interacts with:
+- 不同硬件型号
+- Firmware Revision
+- Installed Options
+- Transport 差异
+- 时序与触发等待
+- 二进制协议
+- Error Queue
+- 断线和恢复行为
 
-- real hardware
-- different firmware revisions
-- installed options
-- transport differences
-- timing behavior
-- binary protocols
-- device error queues
+因此平台明确区分“实现完成”和“实机资格验证完成”。
 
-Therefore the platform distinguishes implementation from qualification.
+## Driver 生命周期
 
-## Driver Lifecycle
+### `experimental`
 
-### experimental
+通常已经具备：
 
-The driver exists and normally has:
+- Unit Test
+- MockTransport Test
+- Command Catalog
 
-- unit tests
-- MockTransport tests
-- command catalogs
+但真实硬件 Qualification 尚未完成。
 
-Real hardware qualification is not complete.
+### `qualified`
 
-### qualified
+某个明确的“型号 + Firmware + Driver Version”组合通过了全部强制检查。
 
-A specific model and firmware combination has passed all mandatory
-qualification checks.
-
-Qualification evidence must record:
+证据应尽量记录：
 
 - manufacturer
 - model
-- serial number
 - firmware
-- installed options when relevant
-- resource / transport
 - driver version
+- transport/resource 类型
+- installed options（需要时）
 - qualification timestamp
-- individual check results
+- 每项 check 的结果和证据
 
-### supported
+公开仓库中的结果必须先脱敏，不能提交序列号、公司 IP/VISA 地址等敏感信息。
 
-A qualified driver may later be promoted manually to supported after
-stable engineering or project usage.
+### `supported`
 
-This transition is intentionally not automatic.
+`qualified` Driver 在稳定工程或项目中持续使用后，可以由工程人员人工提升为 `supported`。这一过程不能自动完成。
 
-### deprecated
+### `deprecated`
 
-The driver remains available for compatibility but should not be used
-for new development.
+保留用于兼容，但不推荐新项目使用。
 
-## Mandatory vs Optional Checks
+## 强制检查与可选检查
 
-Mandatory checks must PASS.
+Mandatory Check 必须 `PASS`。
 
-A mandatory result of:
+如果 Mandatory Check 为：
 
-- FAIL
-- SKIPPED
+- `FAIL`
+- `SKIPPED`
 
-means the qualification is incomplete.
+则 Qualification 尚未完成。
 
-Optional checks may be skipped without blocking qualification.
+Optional Check 可以跳过而不阻塞 Qualification。例如示波器某些测量需要有效输入信号，可以先设为 optional；但二进制波形采集是示波器 Driver 的核心能力，应设为 mandatory。
 
-Example:
+## Qualification 必须绑定型号和 Firmware
 
-An oscilloscope frequency measurement may require a valid test signal,
-so it may initially be optional.
+不要只写：
 
-Binary waveform acquisition is fundamental to an oscilloscope driver
-and therefore should be mandatory.
+```text
+DSOX3000 is qualified
+```
 
-## Qualification Is Model and Firmware Specific
+应写成类似：
 
-Do not write:
+```text
+DSO-X 3034A
+Firmware 02.50
+Driver 0.1.0
+Qualification PASS
+```
 
-    DSOX3000 is qualified
+另一 Firmware 应产生独立 Qualification 证据。
 
-Prefer:
+## 报告格式
 
-    DSO-X 3034A
-    firmware 02.50
-    driver 0.1.0
-    qualification PASS
+Qualification 报告建议同时存在：
 
-Another firmware version should produce another qualification report.
+- JSON：供自动化和程序读取
+- Markdown：供工程人员阅读
 
-## Qualification Reports
+大型、客户敏感或包含唯一设备信息的原始结果默认只保存在本地。必要时只提交脱敏后的工程总结。
 
-Reports should exist in two forms:
-
-- JSON for machines and automation
-- Markdown for engineers
-
-Large or customer-sensitive qualification artifacts should remain local
-by default.
-
-A small sanitized qualification fixture may be committed when useful.
-
-## Suggested Categories
+## 建议检查分类
 
 - connection
 - identity
@@ -121,17 +108,18 @@ A small sanitized qualification fixture may be committed when useful.
 - performance
 - record/replay
 
-## Promotion Rule
+## 状态提升规则
 
-Automatic qualification may only promote:
+自动化最多只允许：
 
-    experimental -> qualified
+```text
+experimental -> qualified
+```
 
-Promotion:
+而：
 
-    qualified -> supported
+```text
+qualified -> supported
+```
 
-requires explicit engineering approval.
-
-This prevents a one-time automated test from silently declaring a
-driver production-supported.
+必须经过人工工程确认，避免一次偶然通过的自动测试被误认为生产级支持。

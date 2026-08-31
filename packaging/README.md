@@ -1,102 +1,93 @@
-# Instrument Port Bridge Windows Packaging
+# Instrument Port Bridge Windows 打包说明
 
-This directory contains the reproducible Windows packaging configuration for
-Instrument Port Bridge.
+本目录保存 Instrument Port Bridge 的可复现 Windows Packaging 配置。
 
-## Release policy
+## 发布产物
 
-Two Windows x64 deliverables are produced:
+Windows x64 生成两种交付物：
 
-- `InstrumentPortBridge-<version>-win64.zip` — recommended stable distribution.
-  It contains the PyInstaller `onedir` build and should be preferred for lab
-  deployment because Qt/VISA runtime files remain visible and diagnosable.
-- `InstrumentPortBridge-<version>-win64-onefile.exe` — portable single-file
-  build for convenient transfer and evaluation.
+- `InstrumentPortBridge-<version>-win64.zip`：推荐的稳定版本，包含 PyInstaller `onedir` Build。实验室部署优先使用这一版本，因为 Qt/VISA Runtime 文件可见，更容易诊断。
+- `InstrumentPortBridge-<version>-win64-onefile.exe`：便于传输和快速评估的单文件 Portable Build。
 
-Both builds execute the same application code and both must pass frozen runtime
-diagnostics before they are published.
+两种 Build 使用同一套 Application Code，并且发布前都必须通过 Frozen Runtime Diagnostics。
 
-## Reproducible Qt baseline
+## 可复现 Qt 基线
 
-Windows release builds use `packaging/requirements-windows-build.txt` instead
-of whichever Qt packages happen to be installed in the developer environment.
-The release baseline intentionally pins PySide6 6.9.3. Qt 6.10+ Windows builds
-added dependencies on system ICU DLLs such as `icuuc.dll`; those dependencies
-can make an otherwise valid packaged application fail with:
+Windows Release Build 使用 `packaging/requirements-windows-build.txt`，不依赖开发电脑上碰巧安装了什么 Qt Version。
+
+Release Baseline 固定 PySide6 6.9.3。Qt 6.10+ 的部分 Windows Build 会依赖系统 ICU DLL，例如 `icuuc.dll`，在旧版或受严格管理的实验室 Windows 电脑上可能出现：
 
 ```text
 ImportError: DLL load failed while importing QtCore
 ```
 
-on older or tightly-managed Windows lab PCs. The build therefore also inspects
-the packaged `Qt6Core.dll` and rejects release output that imports the blocked
-ICU system DLLs.
+因此 Build 流程还会检查打包后的 `Qt6Core.dll`，拒绝依赖受限制 ICU System DLL 的 Release Output。
 
-## Local Windows build
+## 本地 Windows Build
 
-From PowerShell at the repository root:
+在仓库根目录 PowerShell 执行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1
 ```
 
-The default local build deletes and recreates `.venv-port-bridge-build`,
-installs the pinned Windows build toolchain, clears Qt/Conda/Python environment
-variables that can contaminate DLL discovery, builds both formats, and launches
-both frozen executables in diagnostics mode.
+默认流程会：
 
-To build only one format:
+- 删除并重建 `.venv-port-bridge-build`
+- 安装固定版本的 Windows Build Toolchain
+- 清理可能污染 DLL Discovery 的 Qt/Conda/Python 环境变量
+- 同时生成 Onedir 和 Onefile
+- 启动两种 Frozen Executable 的 Diagnostics Mode
+
+只构建单一格式：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1 -Mode Onedir
 powershell -ExecutionPolicy Bypass -File packaging\build_windows.ps1 -Mode Onefile
 ```
 
-Use `-SkipInstall` only in a controlled CI environment that has already
-installed `packaging/requirements-windows-build.txt`. It is not recommended for
-normal developer builds.
+`-SkipInstall` 只建议在已经预装 `packaging/requirements-windows-build.txt` 的受控 CI 环境中使用，不推荐普通开发电脑使用。
 
-## Frozen diagnostics
+## Frozen Diagnostics
 
-Source and packaged builds support a non-interactive runtime check:
+Source Build 和 Packaged Build 都支持非交互 Runtime Check：
 
 ```powershell
 python tools\instrument_port_bridge.py --diagnostics --diagnostics-file diagnostics.txt
 InstrumentPortBridge.exe --diagnostics-file diagnostics.txt
 ```
 
-A valid build writes `status=ok` after importing PySide6, PyVISA,
-PyVISA-py, the baseline bridge core, SCPI package, and GUI module. This catches
-missing hidden imports before a release reaches a lab PC.
+合法 Build 会在成功 Import PySide6、PyVISA、PyVISA-py、Bridge Core、SCPI Package 和 GUI Module 后写入：
 
-## VISA runtime requirement
+```text
+status=ok
+```
 
-PyVISA and the pure-Python `@py` backend are packaged. Vendor VISA runtimes are
-not bundled into the application and should remain installed system components.
-For USBTMC instruments such as Keysight oscilloscopes, install the appropriate
-vendor VISA runtime/IO Libraries on the Windows host when using the vendor
-backend.
+这样可以在 Release 到达实验室电脑前发现 Missing Hidden Import 等问题。
 
-Network TCP -> TCP forwarding does not require a vendor VISA runtime.
+## VISA Runtime 要求
 
-## GitHub release
+PyVISA 和纯 Python `@py` Backend 会随应用打包；Vendor VISA Runtime 不打包，应继续作为系统组件安装。
 
-The workflow `.github/workflows/instrument-port-bridge-release.yml` builds on
-`windows-latest` using the same pinned Windows dependency set. Pull requests
-touching the bridge packaging path perform a full Windows packaging check. A
-pushed tag matching `v*` additionally creates or updates the GitHub Release and
-uploads:
+对于 Keysight Oscilloscope 等 USBTMC Instrument，如果使用 Vendor Backend，应在 Windows Host 安装对应 Vendor VISA Runtime / IO Libraries。
+
+Network TCP -> TCP Forwarding 不需要 Vendor VISA Runtime。
+
+## GitHub Release
+
+Workflow `.github/workflows/instrument-port-bridge-release.yml` 在 `windows-latest` 上使用相同固定依赖构建。
+
+涉及 Bridge Packaging 的 Pull Request 会运行完整 Windows Packaging Check；匹配 `v*` 的 Tag Push 还会创建/更新 GitHub Release 并上传：
 
 - stable onedir ZIP
 - portable onefile EXE
 - `SHA256SUMS.txt`
 
-Typical release command:
+典型发布命令：
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
 
-Do not create a stable release tag until USB/VISA and network/TCP forwarding
-have both passed the intended real-instrument validation.
+在 USB/VISA 和 Network/TCP 两条 Forwarding Path 都完成目标实机验证前，不应创建 Stable Release Tag。

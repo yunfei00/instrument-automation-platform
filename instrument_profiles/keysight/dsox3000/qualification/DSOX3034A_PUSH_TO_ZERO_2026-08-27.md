@@ -1,67 +1,69 @@
-# DSO-X 3034A Push to Zero Hardware Verification
+# DSO-X 3034A Push to Zero 实机验证
 
-## Verification Summary
+## 验证摘要
 
-- Date: 2026-08-27
-- Instrument: Keysight DSO-X 3034A
-- Scope: Horizontal position/delay knob `Push to Zero`
-- Result: PASS
-- Baseline status: `hardware_verified`
+- Date：2026-08-27
+- Instrument：Keysight DSO-X 3034A
+- Scope：Horizontal Position/Delay Knob `Push to Zero`
+- Result：PASS
+- Baseline Status：`hardware_verified`
 
-## Verified Mapping
+## 已验证映射
 
-Front-panel operation:
+前面板操作：
 
 ```text
 Horizontal Position / Delay knob -> Push to Zero
 ```
 
-Remote SCPI equivalent:
+远程 SCPI 等效命令：
 
 ```text
 :TIMebase:POSition 0
 ```
 
-Verification query:
+验证 Query：
 
 ```text
 :TIMebase:POSition?
 ```
 
-Driver helper:
+Driver Helper：
 
 ```python
 driver.zero_timebase_position()
 ```
 
-## Hardware Observation
+## 实机观察
 
-The operator tested the target DSO-X 3034A on real hardware and confirmed that the result matched the expected behavior:
+在真实 DSO-X 3034A 上确认：
 
-1. A non-zero horizontal position was established.
-2. Pressing the front-panel Horizontal `Push to Zero` returned the horizontal position to zero.
-3. A non-zero horizontal position was established again.
-4. Sending `:TIMebase:POSition 0` returned the horizontal position to zero.
-5. The front-panel operation and SCPI operation were confirmed to be operationally equivalent.
+1. 先建立非零 Horizontal Position。
+2. 按下前面板 Horizontal `Push to Zero`，位置回到零。
+3. 再次建立非零 Horizontal Position。
+4. 发送 `:TIMebase:POSition 0`，位置回到零。
+5. 前面板操作与 SCPI 操作在功能上等效。
 
-## Evidence Notes
+## 证据说明
 
-This verification records direct operator confirmation from real hardware. The following details were not captured in the verification exchange and are intentionally left unspecified rather than inferred:
+本记录保存的是操作者对真实硬件行为的直接确认。
 
-- serial number
-- firmware revision
-- VISA/resource string
-- exact raw numeric responses
-- command elapsed time
+以下信息当时没有完整采集，因此不做推断：
 
-These fields can be appended during a later full qualification session without invalidating this functional verification.
+- Serial Number
+- Firmware Revision
+- VISA / Resource String
+- 精确 Raw Numeric Response
+- Command Elapsed Time
 
-## Related Baseline Entries
+这些字段可以在以后完整 Qualification Session 中补充，不影响本次功能验证结论。公开仓库仍应对唯一设备和网络信息脱敏。
 
-- Command catalog: `commands/timebase.json` -> `timebase.position`
-- Driver API: `zero_timebase_position()`
-- Qualification check: `timebase.push_to_zero`
+## 关联基线
 
-## Not Covered
+- Command Catalog：`commands/timebase.json` -> `timebase.position`
+- Driver API：`zero_timebase_position()`
+- Qualification Check：`timebase.push_to_zero`
 
-The Vertical channel `Push to Zero` mapping (`:CHANnel<n>:OFFSet 0`) was not part of this hardware confirmation and remains `manual_verified` pending explicit real-hardware verification.
+## 未覆盖
+
+Vertical Channel `Push to Zero` 映射（`:CHANnel<n>:OFFSet 0`）不在本次实机确认范围内，继续保持 `manual_verified`，等待明确实机验证。

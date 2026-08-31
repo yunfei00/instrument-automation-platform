@@ -1,97 +1,99 @@
 # Instrument Port Bridge
 
-`Instrument Port Bridge` is the repository's reusable instrument-port forwarding tool. It keeps forwarding infrastructure in the baseline repository while leaving product-specific acquisition workflows outside the baseline.
+`Instrument Port Bridge` 是仓库中的通用仪表端口转发工具。转发基础设施可以作为仪表基线的一部分复用，但具体联合采集 Workflow 仍然留在外部业务仓库。
 
-## Supported modes
+## 支持模式
 
 ### Network / TCP
 
-A raw, bidirectional TCP proxy:
+原始双向 TCP Proxy：
 
 ```text
 remote client -> bridge listen port -> instrument TCP port
 ```
 
-Typical SCPI socket example:
+典型 SCPI Socket：
 
 ```text
 0.0.0.0:15025 -> 192.168.1.100:5025
 ```
 
-TCP mode does not interpret SCPI payloads and therefore forwards text and binary data transparently.
+TCP 模式不解析 SCPI Payload，因此文本和二进制数据都会透明转发。
 
 ### USB / VISA
 
-A VISA/USBTMC SCPI message bridge:
+VISA / USBTMC SCPI Message Bridge：
 
 ```text
 remote TCP client -> bridge listen port -> PyVISA -> USBTMC instrument
 ```
 
-Typical example:
+典型形式：
 
 ```text
 0.0.0.0:15026 -> USB0::0x0957::...::INSTR
 ```
 
-USB mode is intentionally **not USB-over-IP**. The remote side sees a TCP SCPI endpoint, not a virtual USB device. Requests must be newline terminated. Query responses are read with `read_raw()`, so binary IEEE 488.2 response blocks such as oscilloscope waveform data are preserved.
+USB 模式**不是 USB-over-IP**。远端看到的是 TCP SCPI Endpoint，而不是虚拟 USB Device。
 
-## Exclusive access
+普通 Request 以换行结束；Query Response 使用 `read_raw()`，因此示波器 Waveform 等 IEEE 488.2 Binary Block 可以保持原始字节。
 
-Both bridge engines use single-client exclusive access. A second client is rejected while the first session is active. This prevents SCPI command and response streams from multiple applications becoming interleaved.
+## 独占访问
+
+两种 Bridge Engine 都使用单 Client 独占模式。当已有 Client 占用 Session 时，第二个 Client 会被拒绝，避免多个应用的 SCPI Command / Response Stream 相互穿插。
 
 ## GUI
 
-Install GUI dependencies:
+安装依赖：
 
 ```bash
 python -m pip install -r requirements-gui.txt
 ```
 
-Start the application from the repository root:
+仓库根目录启动：
 
 ```bash
 python tools/instrument_port_bridge.py
 ```
 
-The GUI provides:
+GUI 支持：
 
-- Network/TCP and USB/VISA modes in one window
-- editable local listen address and port
-- remote instrument host/port configuration
-- VISA resource discovery
-- optional VISA backend selection
-- `*IDN?` connection test
-- start/stop controls
-- single-client status
-- RX/TX byte counters
-- connection duration
-- runtime event log
-- persistent local GUI settings through Qt `QSettings`
+- Network/TCP 与 USB/VISA 同窗口切换
+- Local Listen Address / Port
+- Remote Instrument Host / Port
+- VISA Resource Discovery
+- 可选 VISA Backend
+- `*IDN?` Connection Test
+- Start / Stop
+- Single Client Status
+- RX/TX Byte Counter
+- Connection Duration
+- Runtime Event Log
+- 通过 Qt `QSettings` 保存本地 GUI 设置
 
-## Recommended first validation
+## 推荐首次验证
 
-For a network instrument such as FSW:
+### 网络仪表，例如 FSW
 
-1. Select `Network / TCP`.
-2. Enter the instrument IP and SCPI socket port (commonly 5025 when enabled on the instrument).
-3. Click `连接测试 (*IDN?)`.
-4. Start forwarding on local port 15025.
-5. From another machine, connect a TCP socket to the bridge PC and send `*IDN?\n`.
+1. 选择 `Network / TCP`。
+2. 输入仪表 IP 和 SCPI Socket Port（启用时常见为 5025）。
+3. 点击 `连接测试 (*IDN?)`。
+4. 在本地端口 15025 启动 Forwarding。
+5. 另一台电脑连接 Bridge PC 的 TCP Port，发送 `*IDN?\n`。
 
-For a USB instrument such as DSO-X 3034A:
+### USB 仪表，例如 DSO-X 3034A
 
-1. Connect the scope by USB and ensure vendor VISA or PyVISA can see it.
-2. Select `USB / VISA` and click `扫描 VISA`.
-3. Choose the scope's `USB...::INSTR` resource.
-4. Click `连接测试 (*IDN?)`.
-5. Start forwarding on local port 15026.
-6. From another machine, connect a TCP socket to the bridge PC and send newline-terminated SCPI commands.
+1. USB 连接示波器，并确认 Vendor VISA / PyVISA 能识别。
+2. 选择 `USB / VISA` 并点击 `扫描 VISA`。
+3. 选择 `USB...::INSTR` Resource。
+4. 点击 `连接测试 (*IDN?)`。
+5. 在本地端口 15026 启动 Forwarding。
+6. 另一台电脑连接 Bridge TCP Port，发送以换行结束的 SCPI。
 
-## v0.1 limitations
+## v0.1 限制
 
-- USB/VISA input framing currently uses the normal SCPI newline terminator.
-- Arbitrary binary uploads from TCP to VISA that contain embedded newlines are not yet framed as IEEE block messages; this should be added before using the bridge for waveform/file upload workflows.
-- The first release intentionally uses one remote client per instrument session.
+- USB/VISA 输入 Framing 当前使用普通 SCPI Newline Terminator。
+- 如果 TCP -> VISA 的二进制 Upload 自身包含换行，当前实现还没有完整按 IEEE Block Message 做 Framing；在支持 Waveform/File Upload 前需要增强。
+- 第一版刻意只允许一个 Remote Client 占用一个 Instrument Session。
 
-These limitations do not affect common remote-control requests such as `*IDN?`, configuration commands, measurements, or binary waveform **reads** from the instrument.
+这些限制不影响常见 `*IDN?`、配置、Measurement Query，以及从仪表**读取** Binary Waveform 等场景。

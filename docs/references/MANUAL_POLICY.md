@@ -1,22 +1,22 @@
-# Vendor Manual Management Policy
+# 原厂手册管理策略
 
-Vendor manuals are an important part of the Instrument Automation
-Platform knowledge system.
+原厂手册是 Instrument Automation Platform 知识体系的重要来源，但原始 Vendor PDF 默认只作为**本地参考资料**，不直接提交 Git。
 
-However, original vendor PDF files are treated as local reference
-material and are not committed to Git by default.
+本地建议目录：
 
-Repository structure:
-
+```text
 vendor_manuals/
   keysight/
     dsox3000/
   rohde_schwarz/
+    common/
     fsw/
+    cmw500/
+```
 
-The vendor_manuals directory is ignored by Git.
+`vendor_manuals/` 应由 `.gitignore` 忽略。
 
-The Git repository stores only structured metadata about manuals:
+Git 仓库保存的是可追踪的结构化手册元数据，例如：
 
 - manufacturer
 - instrument family
@@ -30,19 +30,18 @@ The Git repository stores only structured metadata about manuals:
 - official source
 - notes
 
-Knowledge flow:
+推荐知识链：
 
+```text
 Vendor Manual
--> Manual Registry
--> Command Catalog
--> Hardware Probe
--> Raw Response
--> Parser
--> Scenario Test
--> Qualification
--> Generated Documentation
+  -> Manual Registry
+  -> Command Catalog
+  -> Hardware Probe
+  -> Raw Response
+  -> Parser
+  -> Scenario Test
+  -> Qualification
+  -> Generated Documentation
+```
 
-The vendor manual remains the original vendor reference.
-
-The verified command catalog and hardware results are the long-term
-engineering knowledge assets of this repository.
+原厂手册始终保留为原始依据；真正的长期工程资产，是从手册和实机中提炼出的“已验证命令、真实返回格式、Parser、兼容信息和 Qualification 证据”。

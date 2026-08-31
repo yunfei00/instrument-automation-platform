@@ -1,82 +1,71 @@
-# Driver Registry and Capability Model
+# Driver Registry 与 Capability 模型
 
-## Goal
+## 目标
 
-Product code must not depend directly on a specific instrument model.
+上层代码不应直接依赖某一个具体型号。
 
-Bad design:
+不推荐：
 
-    if model == "DSO-X 3034A":
-        use_special_code()
+```python
+if model == "DSO-X 3034A":
+    use_special_code()
+```
 
-Preferred design:
+推荐流程：
 
-    identify instrument
-    -> search Driver Registry
-    -> load family driver
-    -> inspect capabilities
+```text
+发现仪表
+  -> *IDN?
+  -> Manufacturer + Model
+  -> Driver Registry
+  -> 匹配仪表家族 Driver
+  -> 查询 Capability
+```
 
-## Discovery Flow
+示例：
 
-    Instrument discovery
-           |
-           v
-         *IDN?
-           |
-           v
-    Manufacturer + Model
-           |
-           v
-     Driver Registry
-           |
-           v
-       Matching Driver
-           |
-           v
-    Capability Profile
-
-Example:
-
-    KEYSIGHT TECHNOLOGIES
-    DSO-X 3034A
-           |
-           v
-    DriverRegistry
-           |
-           v
-    Keysight DSOX3000 Driver
+```text
+KEYSIGHT TECHNOLOGIES, DSO-X 3034A
+        |
+        v
+DriverRegistry
+        |
+        v
+Keysight DSOX3000 Driver
+```
 
 ## Driver Family
 
-Drivers should preferably support an instrument family instead of
-only one individual model.
+Driver 应优先覆盖一个仪表家族，而不是只支持单个型号。
 
-Example:
+例如：
 
-    Keysight DSOX3000 Driver
-      - DSO-X 3014A
-      - DSO-X 3024A
-      - DSO-X 3034A
-      - DSO-X 3054A
+```text
+Keysight DSOX3000 Driver
+  - DSO-X 3014A
+  - DSO-X 3024A
+  - DSO-X 3034A
+  - DSO-X 3054A
+```
 
-Differences between models should be represented by instrument
-profiles and capabilities.
+型号差异应尽量通过 Instrument Profile、Capability 和 Qualification 表达。
 
-## Driver Status
+## Driver 状态
 
-Recommended lifecycle:
+平台使用以下生命周期：
 
-- experimental
-- supported
-- deprecated
+- `experimental`：代码和 Mock 基础测试已存在，实机验证未完成。
+- `qualified`：指定型号 + Firmware 已通过全部强制 Qualification。
+- `supported`：在稳定工程/项目使用后，由工程人员人工提升。
+- `deprecated`：保留兼容，但不推荐新项目继续采用。
 
-A driver becomes supported only after real hardware qualification.
+不能仅凭一次 `*IDN?` 成功就认为 Driver 已支持。
 
-## Capabilities
+## Capability
 
-Products should query capabilities instead of checking model names.
+上层应查询 Capability，而不是不断增加型号判断。
 
-Examples:
+典型 Capability：
 
 - waveform
 - spectrum
@@ -86,3 +75,6 @@ Examples:
 - marker
 - IQ capture
 - segmented memory
+- remote/local
+
+只有当多个互不相关的仪表家族都出现同一种抽象需求时，才考虑把新的 Capability 提升到 `instrument_core`。

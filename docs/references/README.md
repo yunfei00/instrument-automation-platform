@@ -1,20 +1,17 @@
-# Reference Documents
+# 参考资料说明
 
-This directory stores policies and metadata related to official vendor
-documentation.
+本目录用于保存与原厂文档管理相关的策略和元数据规范。
 
-Original vendor PDFs are stored locally under vendor_manuals and are
-not committed to Git by default.
+原厂 PDF 默认保存在本地 `vendor_manuals/`，不直接提交 Git。
 
-Instrument-specific manual registries are located with instrument
-profiles.
+仪表专用 Manual Registry 放在对应 Profile 目录，例如：
 
-Examples:
-
+```text
 instrument_profiles/keysight/dsox3000/manuals.json
-
 instrument_profiles/rohde_schwarz/fsw/manuals.json
+instrument_profiles/rohde_schwarz/cmw500/manuals.json
+```
 
-The SHA256 value should be recorded after a local PDF is archived so
-that the exact manual used for driver development can always be
-identified later.
+本地归档 PDF 后应记录 SHA256，以确保以后能够准确确认 Driver 开发时使用的是哪一版手册。
+
+详细规则见 `MANUAL_POLICY.md`。

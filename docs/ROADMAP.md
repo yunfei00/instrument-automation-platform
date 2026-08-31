@@ -1,120 +1,157 @@
-# Roadmap
+# 路线图
 
-## Phase 1 - Platform Foundation
+## Phase 1：平台基础能力
 
-Establish reusable infrastructure:
+目标：建立后续所有仪表都可复用的基础设施。
 
-- Transport abstraction
-- VISA transport
-- SCPI client
-- IEEE 488.2 helpers
-- exception model
-- InstrumentDriver contract
-- capability model
-- driver registry
-- Mock transport
+主要内容：
+
+- Transport 抽象
+- VISA Transport
+- SCPI Client
+- IEEE 488.2 工具
+- 通用异常模型
+- `InstrumentDriver` 契约
+- Capability 模型
+- Driver Registry
+- Mock Transport
 - Instrument Lab
-- command catalog
-- manual registry
-- command probe
-- generated documentation
+- Command Catalog
+- Manual Registry
+- Command Probe
+- 自动文档生成
 
-## Phase 2 - Reference Instrument Drivers
+状态：**已形成第一版稳定基线**。
 
-Use real instruments to validate the architecture.
+## Phase 2：参考仪表 Driver
 
-Initial reference drivers:
+使用真实仪表验证架构，而不是只依赖 Mock。
 
 ### Keysight DSO-X 3000 X-Series
 
-Initial qualification model:
+首个实机型号：`DSO-X 3034A`。
 
-- DSO-X 3034A
+重点资产：
 
-Target assets:
+- Command Catalog
+- 波形采集
+- 测量查询
+- Trigger 控制
+- 前面板控制映射
+- Hardware Probe
+- Qualification
+- 固件兼容记录
 
-- command catalog
-- waveform acquisition
-- measurement queries
-- trigger control
-- hardware probe
-- qualification report
-- firmware compatibility notes
+状态：**持续实机验证中**。
 
 ### Rohde & Schwarz FSW
 
-Target assets:
+重点资产：
 
-- frequency control
-- bandwidth control
-- trigger control
-- sweep control
-- trace acquisition
-- marker support
-- hardware probe
-- qualification report
-- firmware and option compatibility notes
+- Frequency / Bandwidth
+- Trigger / Sweep
+- Trace 采集
+- Marker
+- 有界等待与取消
+- 断线恢复
+- Record / Replay
+- Qualification
 
-## Phase 3 - Record / Replay
+状态：**核心频谱采集链已完成实机 Qualification**。
 
-Create a reusable recording layer for instrument communication.
+### Rohde & Schwarz CMW500
 
-Goals:
+用于验证复杂模块化仪表架构：
 
-- record real TX/RX sessions
-- preserve binary responses
-- replay without hardware
-- reproduce customer failures
-- regression-test drivers
+- Base System
+- Firmware Application
+- Sub-Instrument
+- LTE Multi Evaluation 状态机
+- 结果解析
 
-## Phase 4 - Qualification Framework
+状态：**架构验证已通过；后续功能按真实项目需求扩展**。
 
-Standardize when an instrument driver can be considered supported.
+## Phase 3：Record / Replay
 
-Qualification should include:
+目标：把真实仪表通信会话保存下来，在没有硬件时重放。
 
-- identity verification
-- command compatibility
-- response type validation
-- timeout behavior
-- disconnect behavior
-- reconnect behavior
-- error queue behavior
-- acquisition scenarios
-- firmware information
-- installed options
+已具备：
 
-Driver lifecycle:
+- TX/RX 会话记录
+- 文本与二进制响应保存
+- Strict Replay
+- Driver 回归测试基础
 
-- experimental
-- qualified
-- supported
-- deprecated
+后续增强：
 
-## Phase 5 - Instrument Library Expansion
+- 异常/Timeout/断线回放
+- Session Diff
+- Session 脱敏
+- 大型二进制 Payload 外置
 
-Gradually migrate previously developed instruments.
+## Phase 4：Qualification Framework
 
-Possible future families:
+目标：统一定义“Driver 写出来”和“Driver 已支持”之间的区别。
+
+Qualification 应覆盖：
+
+- Identity
+- 命令兼容性
+- 返回类型
+- Timeout
+- Disconnect / Reconnect
+- Error Queue
+- Acquisition Scenario
+- Firmware
+- Installed Options
+- Record / Replay
+
+Driver 生命周期：
+
+```text
+experimental
+  -> qualified
+  -> supported
+  -> deprecated
+```
+
+状态：**框架已完成，继续按仪表补充实机证据**。
+
+## Phase 5：仪表知识库扩展
+
+后续按需求逐步迁移已经开发过的仪表，例如：
 
 - Keysight N9020A
 - Siglent SDS3000X HD
-- Rohde & Schwarz CMW500
-- additional spectrum analyzers
-- signal generators
-- power supplies
-- other SCPI/VISA instruments
+- R&S CMW500 的其他 Application
+- Signal Generator
+- Power Supply
+- 其他 SCPI/VISA 仪表
 
-## Phase 6 - Repository Separation
+每台新仪表尽量遵循统一路径：
 
-When a single instrument family becomes mature and independently
-versioned, it may be extracted into its own repository.
+```text
+官方手册
+  -> Manual Registry
+  -> Command Catalog
+  -> Driver
+  -> Mock Test
+  -> Probe
+  -> Scenario Test
+  -> 实机 Qualification
+  -> Record / Replay Fixture
+  -> qualified
+```
 
-Example:
+## Phase 6：按仪表家族拆仓
 
+当某个 Driver 家族成熟、版本独立且需要单独发布时，可从当前 Monorepo 拆出独立仓库，例如：
+
+```text
 instrument-core
 instrument-keysight-dsox3000
 instrument-rohde-schwarz-fsw
 instrument-keysight-n9020a
+```
 
-The interface contract must remain compatible with the platform.
+拆分后仍需保持接口契约兼容，不能让业务项目重新依赖具体底层实现。

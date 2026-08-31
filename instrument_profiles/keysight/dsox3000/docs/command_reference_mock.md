@@ -1,78 +1,78 @@
-# DSO-X 3034A Command Reference
+# DSO-X 3034A 命令参考（Mock）
 
-## Instrument Information
+## 仪表信息
 
-- Manufacturer: Keysight Technologies
-- Model: DSO-X 3034A
-- Test source: MockTransport
-- Status: Framework validation only
+- Manufacturer：Keysight Technologies
+- Model：DSO-X 3034A
+- Test Source：MockTransport
+- Status：仅用于 Framework Validation
 
-## Command Summary
+## 命令汇总
 
-- Commands defined: 3
-- Tested: 3
-- PASS: 3
-- FAIL: 0
-- SKIPPED: 0
+- 已定义：3
+- 已测试：3
+- PASS：3
+- FAIL：0
+- SKIPPED：0
 
-## Commands
+## 命令
 
 ### Instrument Identification
 
-- ID: common.idn
-- Category: common
-- Command: *IDN?
-- Kind: query
-- Safety: safe
-- Response type: string
-- Source: IEEE 488.2 / SCPI common command
+- ID：`common.idn`
+- Category：common
+- Command：`*IDN?`
+- Kind：query
+- Safety：safe
+- Response Type：string
+- Source：IEEE 488.2 / SCPI Common Command
 
-Query manufacturer, model, serial number and firmware identification.
+用途：查询 Manufacturer、Model、Serial Number 和 Firmware Identification。
 
 #### Hardware Probe
 
-- Status: PASS
-- Raw response: 'KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW'
-- Parsed value: 'KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW'
-- Parsed type: str
-- Elapsed: 0.022 ms
+- Status：PASS
+- Raw Response：`'KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW'`
+- Parsed Value：`'KEYSIGHT TECHNOLOGIES,DSO-X 3034A,MOCK123456,MOCK-FW'`
+- Parsed Type：str
+- Elapsed：0.022 ms
 
 ### Operation Complete Query
 
-- ID: common.opc
-- Category: common
-- Command: *OPC?
-- Kind: query
-- Safety: safe
-- Response type: integer
-- Source: IEEE 488.2 common command
+- ID：`common.opc`
+- Category：common
+- Command：`*OPC?`
+- Kind：query
+- Safety：safe
+- Response Type：integer
+- Source：IEEE 488.2 Common Command
 
-Wait for pending operations to complete and return completion state.
+用途：等待 Pending Operation 完成并返回 Completion State。
 
 #### Hardware Probe
 
-- Status: PASS
-- Raw response: '1'
-- Parsed value: 1
-- Parsed type: int
-- Elapsed: 0.007 ms
+- Status：PASS
+- Raw Response：`'1'`
+- Parsed Value：1
+- Parsed Type：int
+- Elapsed：0.007 ms
 
 ### System Error Query
 
-- ID: system.error
-- Category: system
-- Command: SYST:ERR?
-- Kind: query
-- Safety: safe
-- Response type: string
-- Source: SCPI common system error pattern
+- ID：`system.error`
+- Category：system
+- Command：`SYST:ERR?`
+- Kind：query
+- Safety：safe
+- Response Type：string
+- Source：SCPI Common System Error Pattern
 
-Read one entry from the instrument error queue.
+用途：读取 Instrument Error Queue 中的一条记录。
 
 #### Hardware Probe
 
-- Status: PASS
-- Raw response: '+0,"No error"'
-- Parsed value: '+0,"No error"'
-- Parsed type: str
-- Elapsed: 0.003 ms
+- Status：PASS
+- Raw Response：`'+0,"No error"'`
+- Parsed Value：`'+0,"No error"'`
+- Parsed Type：str
+- Elapsed：0.003 ms
