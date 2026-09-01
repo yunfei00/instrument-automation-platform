@@ -113,7 +113,7 @@ def main():
         == "ASC,0"
     )
 
-    # Preamp: target hardware has verified Off / 15 dB / 30 dB.
+    # Preamplifier: target hardware verified Off / 15 dB / 30 dB.
     transport.queue_response("1\n")
     assert driver.get_preamp_enabled() is True
 
@@ -124,6 +124,9 @@ def main():
     transport.queue_response("30\n")
     assert driver.get_preamp_db() == 30
 
+    transport.queue_response("0\n")
+    assert driver.get_preamp_db() == 0
+
     driver.set_preamp_db(0)
     assert transport.writes[-1] == "INPut:GAIN:STATe OFF"
 
@@ -133,6 +136,19 @@ def main():
         "INPut:GAIN:VALue 15",
     ]
 
+    driver.set_preamp_db(30)
+    assert transport.writes[-2:] == [
+        "INPut:GAIN:STATe ON",
+        "INPut:GAIN:VALue 30",
+    ]
+
+    try:
+        driver.set_preamp_db(10)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid FSW preamp gain was accepted")
+
     # RF Atten Manual: target hardware accepted 2 dB and returned 2.
     transport.queue_response("0\n")
     assert driver.get_rf_attenuation_auto() is False
@@ -141,11 +157,27 @@ def main():
     assert driver.get_rf_attenuation_db() == 2.0
 
     driver.set_rf_attenuation_manual_db(2)
-    assert transport.writes[-1] == "INPut:ATTenuation 2 DB"
+    assert transport.writes[-2:] == [
+        "INPut:ATTenuation:AUTO OFF",
+        "INPut:ATTenuation 2 DB",
+    ]
+
+    driver.set_rf_attenuation_auto(True)
+    assert transport.writes[-1] == "INPut:ATTenuation:AUTO ON"
 
     driver.set_rf_attenuation_auto(False)
     assert transport.writes[-1] == "INPut:ATTenuation:AUTO OFF"
 
+    try:
+        driver.set_rf_attenuation_manual_db(-1)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("negative RF attenuation was accepted")
+
+    # Optional commands remain callable but are not generic safe probes.
+    # Reference hardware showed AUTO:MODE may time out in some modes and
+    # Electronic Attenuator SET reported "Option not available".
     driver.disconnect()
 
     print(
