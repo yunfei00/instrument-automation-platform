@@ -107,13 +107,13 @@
       "kind": "query",
       "safety": "safe",
       "response_type": "boolean",
-      "description": "设置或读取可选电子衰减器是否进入 RF 信号通路。",
+      "description": "设置或读取可选 Electronic Attenuator 是否进入 RF 信号通路。",
       "source": "Official R&S FSW manuals: INPut:EATT:STATe",
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "response_notes": "目标 FSW 实机查询 INP:EATT:STAT? 返回 0，说明当前电子衰减器未进入信号通路。",
-      "notes": "Query 语法已在目标 FSW 实机观察成功；SET ON/OFF 尚未完成确认。官方资料说明该功能依赖 Electronic Attenuator 硬件选件。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT:STAT? 返回 0；执行 INP:EATT:STAT ON 后，SYST:ERR? 返回 -200, Execution error, Option not available，随后 STAT? 仍为 0。",
+      "notes": "当前参考 FSW 配置不具备可用的 Electronic Attenuator Option。注意：即使 Option 不可用，Query 仍可能返回 0，因此不能用 STAT?=0 单独判断硬件能力。保持 candidate、probe_enabled=false，不应加入常规自动参数读取。"
     },
     {
       "id": "input.electronic_attenuation_auto",
@@ -125,13 +125,13 @@
       "kind": "query",
       "safety": "safe",
       "response_type": "boolean",
-      "description": "设置或读取电子衰减是否自动选择。",
+      "description": "设置或读取可选 Electronic Attenuator 的自动衰减状态。",
       "source": "Official R&S FSW manuals: INPut:EATT:AUTO",
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "response_notes": "目标 FSW 实机查询 INP:EATT:AUTO? 返回 0。随后执行 INP:EATT:AUTO 0 未观察到异常，但这不足以证明完整 SET 能力。",
-      "notes": "Query 已验证；SET 尚未通过状态变化验证，因此继续保持 candidate。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT:AUTO? 返回 0，但后续启用 Electronic Attenuator 时明确返回 Option not available。",
+      "notes": "当前参考 FSW 配置没有可用的 Electronic Attenuator Option。Query 返回 0 只表示当前返回值，不代表该 Option 存在。该命令仅保留给安装相应硬件选件的其他 FSW。"
     },
     {
       "id": "input.electronic_attenuation",
@@ -144,13 +144,13 @@
       "safety": "safe",
       "response_type": "float",
       "unit": "dB",
-      "description": "设置或读取电子衰减值；手动设置前应关闭 INPut:EATT:AUTO。",
+      "description": "设置或读取可选 Electronic Attenuator 的衰减值。",
       "source": "Official R&S FSW manuals: INPut:EATT",
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "response_notes": "目标 FSW 实机初始查询 INP:EATT? 返回 0 dB；随后在 STAT=0、AUTO=0 状态下执行 INP:EATT 1DB，继续查询仍返回 0 dB。",
-      "notes": "此次 1 dB 设置没有实际生效，因此不能升级为 hardware_verified。可能原因包括 Electronic Attenuator 仍处于 STATe OFF、当前模式/选件限制或未安装对应硬件选件。下一步必须结合 INP:EATT:STAT ON 与 SYST:ERR? 判断。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT? 返回 0 dB；在 AUTO=0 状态写入 INP:EATT 1DB 后仍返回 0 dB；进一步执行 INP:EATT:STAT ON 后错误队列确认 Option not available。",
+      "notes": "当前参考 FSW 没有可用 Electronic Attenuator Option，因此 1 dB 设置未生效是符合当前硬件能力的结果。该接口只应在确认目标仪表安装对应 Option 后使用。"
     }
   ]
 }
