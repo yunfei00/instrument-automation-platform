@@ -60,9 +60,26 @@ INPut:ATTenuation:AUTO:MODE?
 INPut:ATTenuation:AUTO:MODE LNOise|LDIStortion
 ```
 
-`INPut:ATTenuation:AUTO?` 用于判断当前是 Auto 还是 Manual；`INPut:ATTenuation?` 用于读取当前 RF 输入衰减值。手动写入 `INPut:ATTenuation <dB>` 会解除 Attenuation 与 Reference Level 的自动耦合，对应前面板的 RF Atten Manual 设置。
+`INPut:ATTenuation:AUTO?` 用于判断当前是 Auto 还是 Manual；`INPut:ATTenuation?` 用于读取当前 RF 输入衰减值。手动写入 `INPut:ATTenuation <dB>` 会解除 Attenuation 与 Reference Level 的自动衰减耦合，对应前面板的 RF Atten Manual 设置。
 
-这些 RF Attenuation 命令已加入基线，但在目标 FSW 上完成返回值确认前继续保持 `candidate`。
+目标 FSW 实机已完成以下验证：
+
+```text
+INP:ATT 2DB
+INP:ATT:AUTO 0
+INP:ATT:AUTO? -> 0
+INP:ATT?      -> 2
+SYST:ERR?     -> 0, No error
+```
+
+结论：
+
+- `INPut:ATTenuation:AUTO`：`hardware_verified`
+- `INPut:ATTenuation`：`hardware_verified`
+- 目标实机明确接受 `2 dB` RF Attenuation，因此 Driver 和 Catalog 不能写死为 5 dB 步进。
+- 实际可用范围和分辨率应由具体 FSW 型号、频段、硬件选件和当前配置决定。
+
+`INPut:ATTenuation:AUTO:MODE` 尚未在目标 FSW 上完成实机确认，因此继续保持 `candidate`。
 
 ### Electronic Attenuator
 
@@ -89,7 +106,8 @@ INPut:EATT <dB>
 - sweep points
 - marker state
 - marker X value
-- RF attenuation / electronic attenuation（新增后等待目标实机确认）
+- RF attenuation auto mode
+- electronic attenuation
 
 只有满足以下之一才能提升：
 
