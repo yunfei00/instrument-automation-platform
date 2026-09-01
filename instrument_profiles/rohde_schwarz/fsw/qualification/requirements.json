@@ -4,7 +4,7 @@
     "driver_family": "FSW",
     "target_model": "FSW",
     "minimum_status": "qualified",
-    "version": "2"
+    "version": "3"
   },
   "checks": [
     {
@@ -36,6 +36,12 @@
       "name": "RBW and VBW Queries",
       "category": "bandwidth",
       "mandatory": true
+    },
+    {
+      "id": "input.reference_level",
+      "name": "Reference Level Query / Set",
+      "category": "input",
+      "mandatory": false
     },
     {
       "id": "input.preamp",
