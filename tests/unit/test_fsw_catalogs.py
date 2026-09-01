@@ -33,6 +33,7 @@ FILES = [
     "frequency.json",
     "bandwidth.json",
     "amplitude.json",
+    "input.json",
     "sweep.json",
     "trigger.json",
     "initiate.json",
@@ -87,6 +88,11 @@ def main():
             f"{status}: {count}"
         )
 
+    assert "input.preamp_state" in ids
+    assert "input.preamp_gain" in ids
+    assert "input.rf_attenuation" in ids
+    assert "input.rf_attenuation_auto" in ids
+    assert statuses["hardware_verified"] >= 2
     assert statuses["manual_verified"] >= 15
     assert statuses["candidate"] >= 1
 
