@@ -92,7 +92,7 @@ def main():
     assert "input.preamp_gain" in ids
     assert "input.rf_attenuation" in ids
     assert "input.rf_attenuation_auto" in ids
-    assert statuses["hardware_verified"] >= 2
+    assert statuses["hardware_verified"] >= 4
     assert statuses["manual_verified"] >= 15
     assert statuses["candidate"] >= 1
 
