@@ -86,21 +86,13 @@ INPut:ATTenuation:AUTO:MODE LNOise|LDIStortion
 INPut:ATTenuation:AUTO:MODE?
 ```
 
-但目标 FSW 当前实机环境执行：
+但目标 FSW 当前实机环境执行 `INP:ATT:AUTO:MODE?` 发生超时，随后连接被关闭并需要重新连接。
 
-```text
-INP:ATT:AUTO:MODE?
-```
-
-发生超时，随后连接被关闭并需要重新连接。
-
-因此当前结论不是“命令一定错误”，而是：该命令不能作为当前目标 FSW/当前测量模式下稳定可用的通用 Query。它继续保持 `candidate`、`probe_enabled=false`，不得进入自动常用参数读取流程。
-
-如果该超时发生在 Instrument Lab GUI 中，GUI 在 I/O Timeout 后主动关闭 VISA Session 是设计行为，用来避免一次未完整响应污染后续 SCPI 流，因此重新连接属于预期恢复路径。
+因此该命令不能作为当前目标 FSW/当前测量模式下稳定可用的通用 Query。继续保持 `candidate`、`probe_enabled=false`，不得进入自动常用参数读取流程。
 
 ### Electronic Attenuator
 
-官方 FSW Application Manual 中常见电子衰减器命令：
+官方 FSW Application Manual 中常见命令：
 
 ```text
 INPut:EATT:STATe?
@@ -111,7 +103,7 @@ INPut:EATT?
 INPut:EATT <dB>
 ```
 
-目标 FSW 实机已完成只读验证：
+目标 FSW 初始只读验证：
 
 ```text
 INP:EATT:STAT? -> 0
@@ -119,29 +111,33 @@ INP:EATT:AUTO? -> 0
 INP:EATT?      -> 0
 ```
 
-当前可解释为：
-
-- Electronic Attenuator 当前未进入信号通路；
-- Electronic Attenuation Auto 当前关闭；
-- Electronic Attenuation 当前为 0 dB。
-
-这三条 Query 已在目标实机观察成功，但对应 SET 命令尚未验证。因此 Catalog 里的合并 Query/Set 定义暂时继续保持 `candidate`，避免把“只验证了查询”错误扩大成“设置和查询都已 hardware_verified”。
-
-后续只有在确实需要控制 Electronic Attenuator 时，再单独验证：
+随后执行：
 
 ```text
-INP:EATT:STAT ON|OFF
-INP:EATT:AUTO ON|OFF
-INP:EATT <dB>
+INP:EATT:AUTO 0
+INP:EATT 1DB
+INP:EATT?      -> 0
+INP:EATT:STAT? -> 0
 ```
 
-并在设置前确认当前输入功率、Reference Level 和硬件能力满足安全要求。
+结论：此次 `1 dB` 设置没有实际生效。由于 Electronic Attenuator 仍处于 `STATe=0`，目前不能判断是“需要先启用 `STATe ON`”，还是当前模式/硬件选件并不支持实际电子衰减。官方资料说明 `INPut:EATT` 依赖 Electronic Attenuator 硬件能力，并且手动设置前应关闭 `AUTO`。
+
+因此 EATT 的 Query 语法已在目标实机观察成功，但 SET 能力仍保持 `candidate`，不得标记为 `hardware_verified`。
+
+下一步如果继续验证，应先清空错误队列，再单独检查 `STATe ON` 是否被仪表接受：
+
+```text
+*CLS
+INP:EATT:STAT ON
+SYST:ERR?
+INP:EATT:STAT?
+```
+
+只有 `STAT? -> 1` 且错误队列为空，才继续测试 `INP:EATT 1DB`。
 
 ## Candidate Command
 
-部分命令已在官方 FSW Family 文档中发现，但在当前目标仪表/测量模式下还未完成完整实机确认，因此继续保持 `candidate`。
-
-典型包括：
+当前仍待进一步确认的典型项目包括：
 
 - reference level
 - sweep points
@@ -149,11 +145,6 @@ INP:EATT <dB>
 - marker X value
 - RF attenuation auto mode
 - electronic attenuation SET 操作
-
-只有满足以下之一才能提升：
-
-1. 在归档 Base Manual 中完成准确确认；
-2. 在真实 FSW 上完成对应操作并留下 Engineering Note。
 
 ## Trace Acquisition
 
