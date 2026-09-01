@@ -91,11 +91,11 @@
       "safety": "safe",
       "response_type": "string",
       "description": "设置或读取自动 RF 衰减的优化策略。LNOise 偏向高灵敏度/低噪声，LDIStortion 偏向低失真。",
-      "source": "Official R&S FSW manuals: INPut:ATTenuation:AUTO:MODE",
+      "source": "Official R&S FSW application manuals: INPut:ATTenuation:AUTO:MODE",
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "常用设置为 LNOise 或 LDIStortion；尚未完成目标 FSW 实机确认。"
+      "notes": "官方多个 FSW Application Manual 中存在该命令，但目标 FSW 当前测量环境下查询 INP:ATT:AUTO:MODE? 发生超时，随后会话按超时恢复策略断开。因此不能把它当作所有 FSW 模式都可安全读取的通用基线命令，继续保持 candidate 且禁止自动 Probe。"
     },
     {
       "id": "input.electronic_attenuator_state",
@@ -112,7 +112,8 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "仅在安装对应 Electronic Attenuator 硬件选件时可用。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT:STAT? 返回 0，说明当前电子衰减器未进入信号通路。",
+      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。仅在安装/支持对应 Electronic Attenuator 硬件能力时使用。"
     },
     {
       "id": "input.electronic_attenuation_auto",
@@ -129,7 +130,8 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "仅在安装对应 Electronic Attenuator 硬件选件时可用。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT:AUTO? 返回 0，说明当前处于手动/非自动电子衰减状态。",
+      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。"
     },
     {
       "id": "input.electronic_attenuation",
@@ -147,7 +149,8 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "仅在安装对应 Electronic Attenuator 硬件选件时可用，实际范围和步进由硬件选件决定。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT? 返回 0 dB。",
+      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。官方 FSW Application Manual 通常定义 Electronic Attenuation 为 1 dB 步进，但实际范围由硬件选件决定。"
     }
   ]
 }
