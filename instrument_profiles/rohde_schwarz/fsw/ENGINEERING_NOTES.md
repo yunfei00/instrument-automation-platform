@@ -56,8 +56,6 @@ INPut:ATTenuation:AUTO?
 INPut:ATTenuation:AUTO ON|OFF
 INPut:ATTenuation?
 INPut:ATTenuation <dB>
-INPut:ATTenuation:AUTO:MODE?
-INPut:ATTenuation:AUTO:MODE LNOise|LDIStortion
 ```
 
 `INPut:ATTenuation:AUTO?` 用于判断当前是 Auto 还是 Manual；`INPut:ATTenuation?` 用于读取当前 RF 输入衰减值。手动写入 `INPut:ATTenuation <dB>` 会解除 Attenuation 与 Reference Level 的自动衰减耦合，对应前面板的 RF Atten Manual 设置。
@@ -79,11 +77,30 @@ SYST:ERR?     -> 0, No error
 - 目标实机明确接受 `2 dB` RF Attenuation，因此 Driver 和 Catalog 不能写死为 5 dB 步进。
 - 实际可用范围和分辨率应由具体 FSW 型号、频段、硬件选件和当前配置决定。
 
-`INPut:ATTenuation:AUTO:MODE` 尚未在目标 FSW 上完成实机确认，因此继续保持 `candidate`。
+### RF Attenuation Auto Mode
+
+官方多个 FSW Application Manual 中存在：
+
+```text
+INPut:ATTenuation:AUTO:MODE LNOise|LDIStortion
+INPut:ATTenuation:AUTO:MODE?
+```
+
+但目标 FSW 当前实机环境执行：
+
+```text
+INP:ATT:AUTO:MODE?
+```
+
+发生超时，随后连接被关闭并需要重新连接。
+
+因此当前结论不是“命令一定错误”，而是：该命令不能作为当前目标 FSW/当前测量模式下稳定可用的通用 Query。它继续保持 `candidate`、`probe_enabled=false`，不得进入自动常用参数读取流程。
+
+如果该超时发生在 Instrument Lab GUI 中，GUI 在 I/O Timeout 后主动关闭 VISA Session 是设计行为，用来避免一次未完整响应污染后续 SCPI 流，因此重新连接属于预期恢复路径。
 
 ### Electronic Attenuator
 
-可选电子衰减器常用命令也已加入目录：
+官方 FSW Application Manual 中常见电子衰减器命令：
 
 ```text
 INPut:EATT:STATe?
@@ -94,11 +111,35 @@ INPut:EATT?
 INPut:EATT <dB>
 ```
 
-这些命令仅在仪表安装对应 Electronic Attenuator 硬件选件时可用，因此默认不启用 Generic Safe Probe，等待具体目标仪表验证。
+目标 FSW 实机已完成只读验证：
+
+```text
+INP:EATT:STAT? -> 0
+INP:EATT:AUTO? -> 0
+INP:EATT?      -> 0
+```
+
+当前可解释为：
+
+- Electronic Attenuator 当前未进入信号通路；
+- Electronic Attenuation Auto 当前关闭；
+- Electronic Attenuation 当前为 0 dB。
+
+这三条 Query 已在目标实机观察成功，但对应 SET 命令尚未验证。因此 Catalog 里的合并 Query/Set 定义暂时继续保持 `candidate`，避免把“只验证了查询”错误扩大成“设置和查询都已 hardware_verified”。
+
+后续只有在确实需要控制 Electronic Attenuator 时，再单独验证：
+
+```text
+INP:EATT:STAT ON|OFF
+INP:EATT:AUTO ON|OFF
+INP:EATT <dB>
+```
+
+并在设置前确认当前输入功率、Reference Level 和硬件能力满足安全要求。
 
 ## Candidate Command
 
-部分命令已在官方 FSW Family 文档中发现，但在当前归档 Base Manual 中还未完成精确位置确认，因此继续保持 `candidate`，不能直接冒充 `manual_verified`。
+部分命令已在官方 FSW Family 文档中发现，但在当前目标仪表/测量模式下还未完成完整实机确认，因此继续保持 `candidate`。
 
 典型包括：
 
@@ -107,12 +148,12 @@ INPut:EATT <dB>
 - marker state
 - marker X value
 - RF attenuation auto mode
-- electronic attenuation
+- electronic attenuation SET 操作
 
 只有满足以下之一才能提升：
 
 1. 在归档 Base Manual 中完成准确确认；
-2. 在真实 FSW 上验证并留下 Engineering Note。
+2. 在真实 FSW 上完成对应操作并留下 Engineering Note。
 
 ## Trace Acquisition
 
