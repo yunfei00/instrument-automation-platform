@@ -113,6 +113,21 @@ def main():
         == "ASC,0"
     )
 
+    # Reference Level is a common RF front-end setting. The command remains
+    # candidate until it is explicitly confirmed on the target FSW hardware.
+    transport.queue_response("-10\n")
+    assert driver.get_reference_level_dbm() == -10.0
+    assert (
+        transport.writes[-1]
+        == "DISPlay:WINDow1:TRACe1:Y:SCALe:RLEVel?"
+    )
+
+    driver.set_reference_level_dbm(-5)
+    assert (
+        transport.writes[-1]
+        == "DISPlay:WINDow1:TRACe1:Y:SCALe:RLEVel -5"
+    )
+
     # Preamplifier: target hardware verified Off / 15 dB / 30 dB.
     transport.queue_response("1\n")
     assert driver.get_preamp_enabled() is True
