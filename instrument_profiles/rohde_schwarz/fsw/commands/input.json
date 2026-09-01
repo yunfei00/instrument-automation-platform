@@ -55,10 +55,11 @@
       "response_type": "boolean",
       "description": "读取或设置 RF 输入衰减是否自动与 Reference Level 联动。0 表示 Manual，1 表示 Auto。",
       "source": "Official R&S FSW manuals: INPut:ATTenuation:AUTO",
-      "verification_status": "candidate",
-      "probe_enabled": false,
+      "verification_status": "hardware_verified",
+      "probe_enabled": true,
       "supported_models": ["FSW"],
-      "notes": "已由官方 FSW 文档确认命令语义，等待目标 FSW 实机确认返回格式后升级为 hardware_verified。"
+      "response_notes": "目标 FSW 实机已验证 Manual 状态返回 0。",
+      "notes": "实机流程：设置 INP:ATT 2DB，再发送 INP:ATT:AUTO 0，查询 INP:ATT:AUTO? 返回 0，SYST:ERR? 返回 No error。"
     },
     {
       "id": "input.rf_attenuation",
@@ -73,10 +74,11 @@
       "unit": "dB",
       "description": "读取 RF 输入总衰减；手动设置该值时会解除与 Reference Level 的自动衰减耦合，因此对应前面板 RF Atten Manual。",
       "source": "Official R&S FSW manuals: INPut:ATTenuation",
-      "verification_status": "candidate",
-      "probe_enabled": false,
+      "verification_status": "hardware_verified",
+      "probe_enabled": true,
       "supported_models": ["FSW"],
-      "notes": "机械衰减通常以 5 dB 为步进；安装电子衰减器时总衰减可具有更细步进，实际范围由型号/选件决定。"
+      "response_notes": "目标 FSW 实机已验证设置 2 dB 后查询返回 2，且错误队列为 0 / No error。",
+      "notes": "目标实机已接受 2 dB 设置，因此平台不得假定 RF Attenuation 只能按 5 dB 步进；具体范围和分辨率应以型号、频段、硬件选件及当前配置为准。"
     },
     {
       "id": "input.rf_attenuation_auto_mode",
@@ -93,7 +95,7 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "常用设置为 LNOise 或 LDIStortion。"
+      "notes": "常用设置为 LNOise 或 LDIStortion；尚未完成目标 FSW 实机确认。"
     },
     {
       "id": "input.electronic_attenuator_state",
@@ -145,7 +147,7 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "仅在安装对应 Electronic Attenuator 硬件选件时可用，典型步进为 1 dB。"
+      "notes": "仅在安装对应 Electronic Attenuator 硬件选件时可用，实际范围和步进由硬件选件决定。"
     }
   ]
 }
