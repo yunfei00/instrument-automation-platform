@@ -92,7 +92,7 @@ INPut:ATTenuation:AUTO:MODE?
 
 ### Electronic Attenuator
 
-官方 FSW Application Manual 中常见命令：
+官方 FSW Application Manual 中存在以下命令族：
 
 ```text
 INPut:EATT:STATe?
@@ -103,7 +103,7 @@ INPut:EATT?
 INPut:EATT <dB>
 ```
 
-目标 FSW 初始只读验证：
+目标 FSW 初始查询返回：
 
 ```text
 INP:EATT:STAT? -> 0
@@ -111,7 +111,7 @@ INP:EATT:AUTO? -> 0
 INP:EATT?      -> 0
 ```
 
-随后执行：
+随后尝试设置：
 
 ```text
 INP:EATT:AUTO 0
@@ -120,20 +120,24 @@ INP:EATT?      -> 0
 INP:EATT:STAT? -> 0
 ```
 
-结论：此次 `1 dB` 设置没有实际生效。由于 Electronic Attenuator 仍处于 `STATe=0`，目前不能判断是“需要先启用 `STATe ON`”，还是当前模式/硬件选件并不支持实际电子衰减。官方资料说明 `INPut:EATT` 依赖 Electronic Attenuator 硬件能力，并且手动设置前应关闭 `AUTO`。
-
-因此 EATT 的 Query 语法已在目标实机观察成功，但 SET 能力仍保持 `candidate`，不得标记为 `hardware_verified`。
-
-下一步如果继续验证，应先清空错误队列，再单独检查 `STATe ON` 是否被仪表接受：
+进一步清空错误队列并尝试真正启用 Electronic Attenuator：
 
 ```text
 *CLS
 INP:EATT:STAT ON
-SYST:ERR?
-INP:EATT:STAT?
+SYST:ERR?      -> -200, Execution error, Option not available
+INP:EATT:STAT? -> 0
 ```
 
-只有 `STAT? -> 1` 且错误队列为空，才继续测试 `INP:EATT 1DB`。
+结论已经明确：
+
+- 当前参考 FSW 配置没有可用的 Electronic Attenuator Option；
+- `INP:EATT 1DB` 未生效不是 Driver 问题，而是当前硬件能力不支持；
+- 即使 Option 不可用，`INP:EATT:STAT?`、`INP:EATT:AUTO?`、`INP:EATT?` 仍可能返回 `0`，因此不能仅依赖这些 Query 的零值判断 Option 是否存在；
+- EATT 命令继续保留在 FSW Family Catalog 中，供安装对应硬件选件的其他 FSW 使用；
+- 当前参考 FSW 上 `probe_enabled=false`，不得加入常规自动参数读取和自动配置流程。
+
+因此当前项目不再继续验证 EATT 设置。
 
 ## Candidate Command
 
@@ -144,7 +148,7 @@ INP:EATT:STAT?
 - marker state
 - marker X value
 - RF attenuation auto mode
-- electronic attenuation SET 操作
+- electronic attenuation（仅适用于具备对应 Option 的 FSW）
 
 ## Trace Acquisition
 
