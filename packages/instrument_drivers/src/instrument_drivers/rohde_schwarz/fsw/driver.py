@@ -76,6 +76,117 @@ class RohdeSchwarzFSWDriver(InstrumentDriver):
     def write(self, command: str) -> None:
         self.scpi.write(command)
 
+    @staticmethod
+    def _parse_on_off(value: str) -> bool:
+        return value.strip().upper() in {"1", "ON", "TRUE"}
+
+    # ------------------------------------------------------------------
+    # RF input / amplitude front-end
+    # ------------------------------------------------------------------
+
+    def get_preamp_enabled(self) -> bool:
+        """Return whether the internal RF preamplifier is enabled."""
+        return self._parse_on_off(
+            self.scpi.query("INPut:GAIN:STATe?")
+        )
+
+    def get_preamp_gain_db(self) -> int:
+        """Return the configured internal preamplifier gain in dB."""
+        return int(round(float(self.scpi.query("INPut:GAIN:VALue?"))))
+
+    def get_preamp_db(self) -> int:
+        """Return user-facing preamp mode: 0 (off), 15 dB or 30 dB."""
+        if not self.get_preamp_enabled():
+            return 0
+        return self.get_preamp_gain_db()
+
+    def set_preamp_db(self, gain_db: int) -> None:
+        """Set internal preamp to Off/15 dB/30 dB."""
+        if gain_db == 0:
+            self.scpi.write("INPut:GAIN:STATe OFF")
+            return
+
+        if gain_db not in {15, 30}:
+            raise ValueError("FSW preamp gain must be 0, 15 or 30 dB")
+
+        self.scpi.write("INPut:GAIN:STATe ON")
+        self.scpi.write(f"INPut:GAIN:VALue {gain_db}")
+
+    def get_rf_attenuation_auto(self) -> bool:
+        """Return True when RF attenuation is coupled automatically."""
+        return self._parse_on_off(
+            self.scpi.query("INPut:ATTenuation:AUTO?")
+        )
+
+    def set_rf_attenuation_auto(self, enabled: bool) -> None:
+        """Enable or disable automatic RF attenuation."""
+        state = "ON" if enabled else "OFF"
+        self.scpi.write(f"INPut:ATTenuation:AUTO {state}")
+
+    def get_rf_attenuation_db(self) -> float:
+        """Return the currently applied RF attenuation in dB."""
+        return float(self.scpi.query("INPut:ATTenuation?"))
+
+    def set_rf_attenuation_manual_db(self, value_db: float) -> None:
+        """Set RF Atten Manual; setting the value selects manual coupling."""
+        if value_db < 0:
+            raise ValueError("RF attenuation must be non-negative")
+        self.scpi.write(f"INPut:ATTenuation {value_db} DB")
+
+    def get_rf_attenuation_auto_mode(self) -> str:
+        """Return RF attenuation optimization mode."""
+        return self.scpi.query("INPut:ATTenuation:AUTO:MODE?").strip()
+
+    def set_rf_attenuation_auto_mode(self, mode: str) -> None:
+        """Set automatic attenuation optimization to LNOise/LDIStortion."""
+        normalized = mode.strip().upper()
+        aliases = {
+            "LNO": "LNOise",
+            "LNOISE": "LNOise",
+            "LDIS": "LDIStortion",
+            "LDISTORTION": "LDIStortion",
+        }
+        try:
+            value = aliases[normalized]
+        except KeyError as exc:
+            raise ValueError(
+                "RF attenuation auto mode must be LNOise or LDIStortion"
+            ) from exc
+        self.scpi.write(f"INPut:ATTenuation:AUTO:MODE {value}")
+
+    def get_electronic_attenuator_enabled(self) -> bool:
+        """Return whether the optional electronic attenuator is in-path."""
+        return self._parse_on_off(
+            self.scpi.query("INPut:EATT:STATe?")
+        )
+
+    def set_electronic_attenuator_enabled(self, enabled: bool) -> None:
+        """Enable or disable the optional electronic attenuator."""
+        state = "ON" if enabled else "OFF"
+        self.scpi.write(f"INPut:EATT:STATe {state}")
+
+    def get_electronic_attenuation_auto(self) -> bool:
+        """Return whether electronic attenuation is selected automatically."""
+        return self._parse_on_off(
+            self.scpi.query("INPut:EATT:AUTO?")
+        )
+
+    def set_electronic_attenuation_auto(self, enabled: bool) -> None:
+        """Enable or disable automatic electronic attenuation."""
+        state = "ON" if enabled else "OFF"
+        self.scpi.write(f"INPut:EATT:AUTO {state}")
+
+    def get_electronic_attenuation_db(self) -> float:
+        """Return optional electronic attenuation in dB."""
+        return float(self.scpi.query("INPut:EATT?"))
+
+    def set_electronic_attenuation_manual_db(self, value_db: float) -> None:
+        """Set electronic attenuation manually in dB."""
+        if value_db < 0:
+            raise ValueError("Electronic attenuation must be non-negative")
+        self.set_electronic_attenuation_auto(False)
+        self.scpi.write(f"INPut:EATT {value_db} DB")
+
     def get_center_frequency(self) -> float:
         return float(self.scpi.query("SENSe:FREQuency:CENTer?"))
 
