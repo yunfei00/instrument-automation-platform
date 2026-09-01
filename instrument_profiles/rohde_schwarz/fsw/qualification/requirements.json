@@ -4,7 +4,7 @@
     "driver_family": "FSW",
     "target_model": "FSW",
     "minimum_status": "qualified",
-    "version": "1"
+    "version": "2"
   },
   "checks": [
     {
@@ -36,6 +36,18 @@
       "name": "RBW and VBW Queries",
       "category": "bandwidth",
       "mandatory": true
+    },
+    {
+      "id": "input.preamp",
+      "name": "Preamplifier Off / 15 dB / 30 dB",
+      "category": "input",
+      "mandatory": false
+    },
+    {
+      "id": "input.rf_attenuation",
+      "name": "RF Attenuation Auto / Manual and Value",
+      "category": "input",
+      "mandatory": false
     },
     {
       "id": "trigger.basic",
