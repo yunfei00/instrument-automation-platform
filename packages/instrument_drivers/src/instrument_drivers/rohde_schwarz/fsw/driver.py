@@ -84,6 +84,36 @@ class RohdeSchwarzFSWDriver(InstrumentDriver):
     # RF input / amplitude front-end
     # ------------------------------------------------------------------
 
+    def get_reference_level_dbm(
+        self,
+        *,
+        window: int = 1,
+        trace: int = 1,
+    ) -> float:
+        """Return display reference level in dBm.
+
+        The SCPI command is present in the FSW command catalog. The current
+        reference FSW still needs explicit real-hardware qualification before
+        this command can be promoted from candidate to hardware_verified.
+        """
+        return float(
+            self.scpi.query(
+                f"DISPlay:WINDow{window}:TRACe{trace}:Y:SCALe:RLEVel?"
+            )
+        )
+
+    def set_reference_level_dbm(
+        self,
+        value_dbm: float,
+        *,
+        window: int = 1,
+        trace: int = 1,
+    ) -> None:
+        """Set display reference level in dBm."""
+        self.scpi.write(
+            f"DISPlay:WINDow{window}:TRACe{trace}:Y:SCALe:RLEVel {value_dbm:g}"
+        )
+
     def get_preamp_enabled(self) -> bool:
         """Return whether the internal RF preamplifier is enabled."""
         return self._parse_on_off(
