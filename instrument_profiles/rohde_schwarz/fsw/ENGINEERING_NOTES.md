@@ -19,6 +19,66 @@ Manual-Verified 的核心命令组包括：
 - marker Y value
 - system error
 
+## RF 输入前端设置
+
+已新增常用 RF Input Front-End 命令目录 `commands/input.json`，覆盖内部 Preamplifier、RF Attenuation 和可选 Electronic Attenuator。
+
+### 内部 Preamplifier
+
+目标 FSW 实机已经完成以下返回值验证：
+
+```text
+15 dB：
+INP:GAIN:STAT? -> 1
+INP:GAIN:VAL?  -> 15
+
+30 dB：
+INP:GAIN:STAT? -> 1
+INP:GAIN:VAL?  -> 30
+
+Off：
+INP:GAIN:STAT? -> 0
+```
+
+因此：
+
+- `INPut:GAIN:STATe`：`hardware_verified`
+- `INPut:GAIN:VALue`：`hardware_verified`
+
+上层 Driver 将 Preamplifier 简化为三个用户档位：`0 / 15 / 30 dB`。关闭状态必须以 `INPut:GAIN:STATe?` 为准，不能只读取 Gain Value 判断是否启用。
+
+### RF Attenuation / RF Atten Manual
+
+官方 FSW 文档确认：
+
+```text
+INPut:ATTenuation:AUTO?
+INPut:ATTenuation:AUTO ON|OFF
+INPut:ATTenuation?
+INPut:ATTenuation <dB>
+INPut:ATTenuation:AUTO:MODE?
+INPut:ATTenuation:AUTO:MODE LNOise|LDIStortion
+```
+
+`INPut:ATTenuation:AUTO?` 用于判断当前是 Auto 还是 Manual；`INPut:ATTenuation?` 用于读取当前 RF 输入衰减值。手动写入 `INPut:ATTenuation <dB>` 会解除 Attenuation 与 Reference Level 的自动耦合，对应前面板的 RF Atten Manual 设置。
+
+这些 RF Attenuation 命令已加入基线，但在目标 FSW 上完成返回值确认前继续保持 `candidate`。
+
+### Electronic Attenuator
+
+可选电子衰减器常用命令也已加入目录：
+
+```text
+INPut:EATT:STATe?
+INPut:EATT:STATe ON|OFF
+INPut:EATT:AUTO?
+INPut:EATT:AUTO ON|OFF
+INPut:EATT?
+INPut:EATT <dB>
+```
+
+这些命令仅在仪表安装对应 Electronic Attenuator 硬件选件时可用，因此默认不启用 Generic Safe Probe，等待具体目标仪表验证。
+
 ## Candidate Command
 
 部分命令已在官方 FSW Family 文档中发现，但在当前归档 Base Manual 中还未完成精确位置确认，因此继续保持 `candidate`，不能直接冒充 `manual_verified`。
@@ -29,6 +89,7 @@ Manual-Verified 的核心命令组包括：
 - sweep points
 - marker state
 - marker X value
+- RF attenuation / electronic attenuation（新增后等待目标实机确认）
 
 只有满足以下之一才能提升：
 
