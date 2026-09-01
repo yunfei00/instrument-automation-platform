@@ -113,7 +113,7 @@
       "probe_enabled": false,
       "supported_models": ["FSW"],
       "response_notes": "目标 FSW 实机查询 INP:EATT:STAT? 返回 0，说明当前电子衰减器未进入信号通路。",
-      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。仅在安装/支持对应 Electronic Attenuator 硬件能力时使用。"
+      "notes": "Query 语法已在目标 FSW 实机观察成功；SET ON/OFF 尚未完成确认。官方资料说明该功能依赖 Electronic Attenuator 硬件选件。"
     },
     {
       "id": "input.electronic_attenuation_auto",
@@ -130,8 +130,8 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "response_notes": "目标 FSW 实机查询 INP:EATT:AUTO? 返回 0，说明当前处于手动/非自动电子衰减状态。",
-      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。"
+      "response_notes": "目标 FSW 实机查询 INP:EATT:AUTO? 返回 0。随后执行 INP:EATT:AUTO 0 未观察到异常，但这不足以证明完整 SET 能力。",
+      "notes": "Query 已验证；SET 尚未通过状态变化验证，因此继续保持 candidate。"
     },
     {
       "id": "input.electronic_attenuation",
@@ -149,8 +149,8 @@
       "verification_status": "candidate",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "response_notes": "目标 FSW 实机查询 INP:EATT? 返回 0 dB。",
-      "notes": "Query 语法已在目标 FSW 实机观察成功；SET 命令尚未验证，因此该合并定义暂不整体升级为 hardware_verified。官方 FSW Application Manual 通常定义 Electronic Attenuation 为 1 dB 步进，但实际范围由硬件选件决定。"
+      "response_notes": "目标 FSW 实机初始查询 INP:EATT? 返回 0 dB；随后在 STAT=0、AUTO=0 状态下执行 INP:EATT 1DB，继续查询仍返回 0 dB。",
+      "notes": "此次 1 dB 设置没有实际生效，因此不能升级为 hardware_verified。可能原因包括 Electronic Attenuator 仍处于 STATe OFF、当前模式/选件限制或未安装对应硬件选件。下一步必须结合 INP:EATT:STAT ON 与 SYST:ERR? 判断。"
     }
   ]
 }
