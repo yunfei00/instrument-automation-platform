@@ -128,17 +128,29 @@ class RohdeSchwarzFSWDriver(InstrumentDriver):
         return float(self.scpi.query("INPut:ATTenuation?"))
 
     def set_rf_attenuation_manual_db(self, value_db: float) -> None:
-        """Set RF Atten Manual; setting the value selects manual coupling."""
+        """Select Manual RF Atten and set the attenuation value in dB.
+
+        The explicit AUTO OFF write makes the driver follow the exact
+        hardware-verified sequence instead of relying on implicit coupling
+        behavior that may differ between applications or firmware revisions.
+        """
         if value_db < 0:
             raise ValueError("RF attenuation must be non-negative")
-        self.scpi.write(f"INPut:ATTenuation {value_db} DB")
+
+        self.set_rf_attenuation_auto(False)
+        self.scpi.write(f"INPut:ATTenuation {value_db:g} DB")
 
     def get_rf_attenuation_auto_mode(self) -> str:
-        """Return RF attenuation optimization mode."""
+        """Return optional RF attenuation optimization mode.
+
+        This command is application/mode dependent on FSW. It must not be
+        used by generic automatic parameter discovery because the reference
+        FSW timed out on the query in one measurement environment.
+        """
         return self.scpi.query("INPut:ATTenuation:AUTO:MODE?").strip()
 
     def set_rf_attenuation_auto_mode(self, mode: str) -> None:
-        """Set automatic attenuation optimization to LNOise/LDIStortion."""
+        """Set optional automatic attenuation optimization mode."""
         normalized = mode.strip().upper()
         aliases = {
             "LNO": "LNOise",
@@ -155,7 +167,12 @@ class RohdeSchwarzFSWDriver(InstrumentDriver):
         self.scpi.write(f"INPut:ATTenuation:AUTO:MODE {value}")
 
     def get_electronic_attenuator_enabled(self) -> bool:
-        """Return whether the optional electronic attenuator is in-path."""
+        """Return whether the optional electronic attenuator is in-path.
+
+        A False result does not prove that the Electronic Attenuator option is
+        installed. Some FSW configurations return 0 for the query even when a
+        later SET command reports 'Option not available'.
+        """
         return self._parse_on_off(
             self.scpi.query("INPut:EATT:STATe?")
         )
@@ -181,11 +198,11 @@ class RohdeSchwarzFSWDriver(InstrumentDriver):
         return float(self.scpi.query("INPut:EATT?"))
 
     def set_electronic_attenuation_manual_db(self, value_db: float) -> None:
-        """Set electronic attenuation manually in dB."""
+        """Set optional electronic attenuation manually in dB."""
         if value_db < 0:
             raise ValueError("Electronic attenuation must be non-negative")
         self.set_electronic_attenuation_auto(False)
-        self.scpi.write(f"INPut:EATT {value_db} DB")
+        self.scpi.write(f"INPut:EATT {value_db:g} DB")
 
     def get_center_frequency(self) -> float:
         return float(self.scpi.query("SENSe:FREQuency:CENTer?"))
