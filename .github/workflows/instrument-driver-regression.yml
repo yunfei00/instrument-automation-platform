@@ -11,6 +11,7 @@ on:
       - "tests/unit/test_dsox3000_*.py"
       - "tests/unit/test_fsw_*.py"
       - "tools/verify_dsox3034a_snapshot_all.py"
+      - "tools/verify_fsw_video_trigger.py"
       - ".github/workflows/instrument-driver-regression.yml"
   pull_request:
     paths:
@@ -22,6 +23,7 @@ on:
       - "tests/unit/test_dsox3000_*.py"
       - "tests/unit/test_fsw_*.py"
       - "tools/verify_dsox3034a_snapshot_all.py"
+      - "tools/verify_fsw_video_trigger.py"
       - ".github/workflows/instrument-driver-regression.yml"
   workflow_dispatch:
 
@@ -47,7 +49,9 @@ jobs:
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/single_capture.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/snapshot.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
+          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
           python -m py_compile tools/verify_dsox3034a_snapshot_all.py
+          python -m py_compile tools/verify_fsw_video_trigger.py
 
       - name: Run DSO-X regression
         run: |
@@ -66,4 +70,8 @@ jobs:
             tests/unit/test_fsw_input.py \
             tests/unit/test_fsw_arm_read.py \
             tests/unit/test_fsw_bounded_wait.py \
-            tests/unit/test_fsw_trace.py
+            tests/unit/test_fsw_trace.py \
+            tests/unit/test_fsw_video_trigger.py
+
+      - name: Validate FSW command catalog
+        run: python tests/unit/test_fsw_catalogs.py
