@@ -30,7 +30,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .gui_panels import DSOX3000Panel
+from .gui_dsox_controls import DSOX3000ControlPanel
 from .gui_stable import StableInstrumentLabWindow
 from .models import SafetyLevel
 from .operations import DEFAULT_OPERATION_REGISTRY, InstrumentOperation
@@ -133,7 +133,7 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             return
 
         if definition.panel_type == "dsox3000":
-            panel = DSOX3000Panel(self.panel_container)
+            panel = DSOX3000ControlPanel(self.panel_container)
             panel.operation_requested.connect(self._run_panel_operation)
             self.panel_layout.addWidget(panel)
             self._active_panel = panel
