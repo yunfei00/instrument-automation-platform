@@ -94,6 +94,7 @@ keysight.dsox3000.set_channel
 keysight.dsox3000.set_timebase
 keysight.dsox3000.single
 keysight.dsox3000.stop
+keysight.dsox3000.screenshot
 keysight.dsox3000.snapshot_all
 ```
 
@@ -101,22 +102,13 @@ keysight.dsox3000.snapshot_all
 
 ### Instrument Panel Registry
 
-新增无 Qt 依赖的：
+无 Qt 依赖的：
 
 ```text
 instrument_lab.panels
 ```
 
-它只描述：
-
-```text
-Panel ID
-Panel Type
-支持的 Instrument Profile
-标题和说明
-```
-
-Qt、未来 Web 或其他前端可以根据同一个 Panel Definition 选择自己的渲染器。
+只描述 Panel ID、Panel Type、支持的 Instrument Profile、标题和说明。Qt、未来 Web 或其他前端可以根据同一个 Panel Definition 选择自己的渲染器。
 
 当前第一项：
 
@@ -126,9 +118,9 @@ panel_type = dsox3000
 profile = keysight/dsox3000
 ```
 
-### DSOX3000Panel 第一版
+### DSOX3000Panel
 
-GUI 已加入真正的 DSO-X 专用控制面板，目前包括：
+GUI 已加入 DSO-X 专用控制面板，目前包括：
 
 ```text
 Channel 1~4 选择
@@ -139,11 +131,12 @@ Channel Scale / Offset 设置
 Timebase Scale / Position 设置
 Trigger 状态读取
 Acquisition 状态读取
+Instrument Screenshot
 Snapshot All
 Snapshot 31 项表格
 ```
 
-Trigger 设置、Waveform Preview、Screenshot 等还没有在这一阶段硬接入。
+Trigger 设置和本地 Waveform Data View 仍在后续阶段。
 
 界面不直接持有 VISA Session，也不直接执行 SCPI；按钮只发出 Operation 请求。
 
@@ -156,6 +149,47 @@ Measurement | Value | Unit | Status | Command
 ```
 
 无效测量仍保留原始 `raw` 值，并显示 `INVALID`，不会伪装为真实数值。
+
+## Instrument Screenshot
+
+DSO-X Screenshot 已按照 Programmer's Guide 建立 `display` Command Catalog，并实现为 Instrument Operation。
+
+使用的核心命令为：
+
+```text
+:HARDcopy:INKSaver?
+:HARDcopy:INKSaver OFF
+:DISPlay:DATA? PNG,COLor
+```
+
+`:DISPlay:DATA?` 返回 IEEE 488.2 definite-length binary block。Operation 通过 Transport 的长度感知 Binary Query 读取图像 payload，而不是用普通文本 `query()`。
+
+为尽量保持真实屏幕配色，若原始 `INKSaver` 为 ON，Operation 会暂时切为 OFF；截图成功后再恢复原状态。若 Binary Query Timeout，则不再继续发送恢复命令，由 VISA Owner Thread 直接判定 Session 不可信并关闭，防止未读二进制数据污染后续 SCPI。
+
+GUI 默认请求：
+
+```text
+PNG + COLor
+```
+
+收到图像字节后直接在 `Instrument Screen` 区域显示，并允许用户另存为图片。
+
+通用 Raw JSON 视图不会展开二进制 payload，而只显示类似：
+
+```text
+<data>: <123456 bytes>
+```
+
+避免大图片字节转成文本后拖慢界面。
+
+当前验证状态：
+
+```text
+Command / Operation: manual_verified
+Real DSO-X 3034A screenshot: hardware_pending
+```
+
+在真实 DSO-X 3034A 完成截图显示、错误队列和状态恢复验证之前，不升级为 `hardware_verified`。
 
 ## Instrument Panel 设计原则
 
@@ -192,7 +226,7 @@ Data View
 
 两者不能互相替代。
 
-当前 DSO-X Panel 已预留 `Screen / Data View` 区域，但在截图命令完成官方手册核对和实机验证前，不会在 GUI 中猜测 SCPI。
+DSO-X 现在已经具备第一版 `Instrument Screen`；下一步将把现有 Single Waveform Capture 接入本地 `Data View`。
 
 ## 通用 Shell 与仪表 Panel 的边界
 
@@ -248,7 +282,7 @@ FSW + DSO-X 同步联合采集
 
 ## 下一阶段
 
-1. 核对并实机验证 DSO-X Instrument Screenshot 命令，再接入 Screen View；
+1. 在真实 DSO-X 3034A 上验证 Instrument Screenshot，确认 PNG 显示、错误队列和 INKSaver 恢复；
 2. 把已有 Single Waveform Capture 接入 DSO-X Data View；
 3. 增加 Trigger 常用设置和 Channel Display 开关；
 4. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
