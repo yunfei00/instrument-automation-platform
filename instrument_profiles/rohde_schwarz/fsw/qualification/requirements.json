@@ -4,7 +4,7 @@
     "driver_family": "FSW",
     "target_model": "FSW",
     "minimum_status": "qualified",
-    "version": "3"
+    "version": "4"
   },
   "checks": [
     {
@@ -60,6 +60,13 @@
       "name": "Trigger Query",
       "category": "trigger",
       "mandatory": true
+    },
+    {
+      "id": "trigger.video",
+      "name": "Video Trigger Level / Offset / Single Sweep",
+      "category": "trigger",
+      "mandatory": false,
+      "description": "Verify VID trigger source, 0..100 PCT video level, negative pre-trigger offset and bounded one-shot trace acquisition without changing the operator's measurement mode."
     },
     {
       "id": "sweep.single",
