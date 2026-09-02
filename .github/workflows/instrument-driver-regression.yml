@@ -43,6 +43,7 @@ jobs:
       - name: Compile reusable driver modules
         run: |
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/driver.py
+          python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/controls.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/single_capture.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/snapshot.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
@@ -52,6 +53,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/unit/test_dsox3000_driver.py \
+            tests/unit/test_dsox3000_controls.py \
             tests/unit/test_dsox3000_single_capture.py \
             tests/unit/test_dsox3000_waveform.py \
             tests/unit/test_dsox3000_trigger_sweep.py \
