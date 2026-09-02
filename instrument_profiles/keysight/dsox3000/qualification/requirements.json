@@ -4,7 +4,7 @@
     "driver_family": "DSOX3000",
     "target_model": "DSO-X 3034A",
     "minimum_status": "qualified",
-    "version": "1"
+    "version": "2"
   },
   "checks": [
     {
@@ -70,6 +70,13 @@
       "category": "measurement",
       "mandatory": false,
       "description": "Requires valid input signal."
+    },
+    {
+      "id": "measurement.snapshot_all",
+      "name": "Snapshot All 31-Measurement Readback",
+      "category": "measurement",
+      "mandatory": false,
+      "description": "After a completed acquisition, install :MEASure:ALL for the selected analog channel and verify the reusable read_snapshot_all helper returns 31 measurement records, preserves invalid sentinels, and leaves the SCPI error queue clean. Hardware verification is pending."
     },
     {
       "id": "waveform.preamble",
