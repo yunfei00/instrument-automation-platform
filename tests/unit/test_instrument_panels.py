@@ -2,7 +2,13 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "packages" / "instrument_lab" / "src"))
+for package in [
+    "instrument_core",
+    "instrument_scpi",
+    "instrument_lab",
+    "instrument_drivers",
+]:
+    sys.path.insert(0, str(ROOT / "packages" / package / "src"))
 
 from instrument_lab.panels import DEFAULT_PANEL_REGISTRY
 
