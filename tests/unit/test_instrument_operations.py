@@ -16,6 +16,26 @@ from instrument_core.transport import MockTransport
 from instrument_lab.operations import DEFAULT_OPERATION_REGISTRY
 
 
+class BinaryMockTransport(MockTransport):
+    def __init__(self, payload: bytes):
+        super().__init__()
+        self.payload = payload
+        self.binary_commands: list[tuple[str, bool]] = []
+
+    def set_timeout_ms(self, timeout_ms: int) -> None:
+        self.config.timeout_ms = timeout_ms
+
+    def query_ieee_block_bytes(
+        self,
+        command: str,
+        *,
+        expect_termination: bool = False,
+    ) -> bytes:
+        self.writes.append(command)
+        self.binary_commands.append((command, expect_termination))
+        return self.payload
+
+
 def test_dsox_operations_are_profile_scoped():
     dsox = DEFAULT_OPERATION_REGISTRY.list_for_profile("keysight/dsox3000")
     fsw = DEFAULT_OPERATION_REGISTRY.list_for_profile("rohde_schwarz/fsw")
@@ -26,6 +46,7 @@ def test_dsox_operations_are_profile_scoped():
         "keysight.dsox3000.set_timebase",
         "keysight.dsox3000.single",
         "keysight.dsox3000.stop",
+        "keysight.dsox3000.screenshot",
         "keysight.dsox3000.snapshot_all",
     ]
     assert fsw == ()
@@ -138,6 +159,53 @@ def test_dsox_single_and_stop_operations():
     assert single["action"] == "single"
     assert stop["action"] == "stop"
     assert transport.writes == [":SINGle", ":STOP"]
+
+
+def test_dsox_screenshot_operation_reads_binary_and_restores_inksaver():
+    payload = b"\x89PNG\r\n\x1a\nexample"
+    transport = BinaryMockTransport(payload)
+    transport.queue_response("1\n")
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "keysight.dsox3000.screenshot",
+        transport,
+        {"format": "PNG", "palette": "COLor"},
+    )
+
+    assert result["kind"] == "instrument_screenshot"
+    assert result["mime_type"] == "image/png"
+    assert result["byte_count"] == len(payload)
+    assert result["data"] == payload
+    assert result["inksaver_restore_error"] is None
+    assert transport.config.timeout_ms == 5000
+    assert transport.writes == [
+        ":HARDcopy:INKSaver?",
+        ":HARDcopy:INKSaver OFF",
+        ":DISPlay:DATA? PNG,COLor",
+        ":HARDcopy:INKSaver ON",
+    ]
+    assert transport.binary_commands == [
+        (":DISPlay:DATA? PNG,COLor", False),
+    ]
+
+
+def test_dsox_screenshot_keeps_inksaver_off_when_already_off():
+    payload = b"BMexample"
+    transport = BinaryMockTransport(payload)
+    transport.queue_response("0\n")
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "keysight.dsox3000.screenshot",
+        transport,
+        {"format": "BMP", "palette": "GRAYscale"},
+    )
+
+    assert result["format"] == "BMP"
+    assert result["palette"] == "GRAYscale"
+    assert transport.writes == [
+        ":HARDcopy:INKSaver?",
+        ":DISPlay:DATA? BMP,GRAYscale",
+    ]
 
 
 def test_dsox_snapshot_operation_runs_composite_sequence():
