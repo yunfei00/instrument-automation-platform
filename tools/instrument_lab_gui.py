@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Launch Instrument Lab GUI from a repository checkout."""
+"""Launch Instrument Automation Studio from a repository checkout."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ import platform
 import sys
 
 
-# Native Qt/VISA faults do not become normal Python exceptions.  Keep Python
+# Native Qt/VISA faults do not become normal Python exceptions. Keep Python
 # fatal-signal diagnostics enabled so a terminal run can still provide useful
 # thread stacks when a vendor library crashes the process.
 faulthandler.enable(all_threads=True)
@@ -41,7 +41,7 @@ def _package_version(name: str) -> str:
 def print_diagnostics() -> None:
     """Print environment details without opening an instrument session."""
 
-    print("Instrument Lab diagnostics")
+    print("Instrument Automation Studio diagnostics")
     print(f"Python       : {sys.version.split()[0]}")
     print(f"Executable   : {sys.executable}")
     print(f"Platform     : {platform.platform()}")
@@ -54,7 +54,7 @@ def print_diagnostics() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Instrument Automation Platform engineering GUI"
+        description="Instrument Automation Platform control and engineering GUI"
     )
     parser.add_argument(
         "--repo-root",
@@ -73,11 +73,11 @@ def main() -> int:
         return 0
 
     try:
-        from instrument_lab.gui_stable import run_gui
+        from instrument_lab.gui_control import run_gui
     except ModuleNotFoundError as exc:
         if exc.name == "PySide6":
             print(
-                "PySide6 is required for Instrument Lab GUI.\n"
+                "PySide6 is required for Instrument Automation Studio.\n"
                 "Install GUI dependencies with:\n\n"
                 "    python -m pip install -r requirements-gui.txt\n",
                 file=sys.stderr,
