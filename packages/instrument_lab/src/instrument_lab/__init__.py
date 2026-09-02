@@ -19,6 +19,13 @@ from .models import (
     SafetyLevel,
     VerificationStatus,
 )
+from .operations import (
+    DEFAULT_OPERATION_REGISTRY,
+    InstrumentOperation,
+    InstrumentOperationRegistry,
+    OperationParameter,
+    build_default_operation_registry,
+)
 from .parser import parse_response
 from .probe import ProbeRunner
 from .storage import save_probe_results
@@ -27,13 +34,18 @@ __all__ = [
     "CommandCatalog",
     "CommandDefinition",
     "CommandKind",
+    "DEFAULT_OPERATION_REGISTRY",
     "InstrumentCommandEntry",
+    "InstrumentOperation",
+    "InstrumentOperationRegistry",
     "InstrumentProfile",
+    "OperationParameter",
     "ProbeResult",
     "ProbeRunner",
     "ResponseType",
     "SafetyLevel",
     "VerificationStatus",
+    "build_default_operation_registry",
     "discover_instrument_profiles",
     "extract_placeholders",
     "find_repo_root",
