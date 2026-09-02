@@ -96,6 +96,8 @@ def _dsox_driver(transport: object):
 def _query_ieee_block_bytes(
     transport: object,
     command: str,
+    *,
+    expect_termination: bool = False,
 ) -> bytes:
     """Run a bounded IEEE 488.2 binary query on a transport that supports it."""
 
@@ -119,7 +121,12 @@ def _query_ieee_block_bytes(
         set_timeout(BINARY_OPERATION_MIN_TIMEOUT_MS)
 
     try:
-        return bytes(query(command, expect_termination=False))
+        return bytes(
+            query(
+                command,
+                expect_termination=expect_termination,
+            )
+        )
     finally:
         if changed_timeout:
             try:
@@ -196,7 +203,16 @@ def _run_dsox_screenshot(
     command = f":DISPlay:DATA? {format_scpi},{palette_scpi}"
 
     try:
-        payload = _query_ieee_block_bytes(transport, command)
+        # Real DSO-X 3034A hardware appends the configured text terminator after
+        # the IEEE 488.2 screenshot block. It must be consumed here; otherwise
+        # the next :HARDcopy:INKSaver? can read only the leftover newline and
+        # leave its actual "0\n" response in the buffer, causing the following
+        # binary query to fail before the expected '#'-prefixed block header.
+        payload = _query_ieee_block_bytes(
+            transport,
+            command,
+            expect_termination=True,
+        )
     except InstrumentTimeoutError:
         # Do not send more SCPI after a binary timeout. The owning I/O worker
         # will invalidate the VISA session before any later operation.
