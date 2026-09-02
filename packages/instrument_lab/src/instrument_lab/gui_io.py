@@ -8,6 +8,10 @@ progress.
 Binary catalog queries use the VISA IEEE 488.2 block reader instead of a raw
 read-until-end operation. Any I/O timeout invalidates the current VISA session
 so unread data cannot poison subsequent SCPI commands.
+
+Higher-level instrument operations are executed on this same owner thread. This
+lets an operation safely combine multiple SCPI writes/queries without moving the
+native VISA session between threads.
 """
 
 from __future__ import annotations
@@ -18,6 +22,8 @@ from PySide6.QtCore import QObject, Signal, Slot
 
 from instrument_core.errors import InstrumentTimeoutError
 from instrument_core.transport import TransportConfig, VisaTransport
+
+from .operations import DEFAULT_OPERATION_REGISTRY
 
 
 BINARY_QUERY_MIN_TIMEOUT_MS = 30000
@@ -46,6 +52,7 @@ class InstrumentIOWorker(QObject):
     query_finished = Signal(str, str, float)
     binary_query_finished = Signal(str, str, float)
     write_finished = Signal(str, float)
+    instrument_operation_finished = Signal(str, object, float)
     operation_error = Signal(str, str)
     connection_lost = Signal(str, str)
     shutdown_finished = Signal()
@@ -241,6 +248,69 @@ class InstrumentIOWorker(QObject):
             return
 
         self.write_finished.emit(command, elapsed_ms)
+
+    @Slot(str, object)
+    def run_instrument_operation(
+        self,
+        operation_id: str,
+        parameters: object,
+    ) -> None:
+        """Execute one registered multi-command operation on this VISA thread."""
+
+        transport = self._transport
+        if transport is None:
+            self.operation_error.emit(
+                "instrument operation",
+                "Instrument is not connected.",
+            )
+            return
+
+        parameter_map = parameters if isinstance(parameters, dict) else {}
+
+        try:
+            started = time.perf_counter()
+            result = DEFAULT_OPERATION_REGISTRY.run(
+                operation_id,
+                transport,
+                parameter_map,
+            )
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+        except InstrumentTimeoutError as exc:
+            self._invalidate_after_timeout(
+                f"operation:{operation_id}",
+                exc,
+            )
+            return
+        except Exception as exc:
+            self.operation_error.emit(
+                f"operation:{operation_id}",
+                str(exc),
+            )
+            return
+
+        self.instrument_operation_finished.emit(
+            operation_id,
+            result,
+            elapsed_ms,
+        )
+
+        # Some composite helpers preserve partial results instead of re-raising
+        # a transport exception. If they report a transport stop, invalidate the
+        # session here so stale unread bytes cannot affect the next command.
+        if isinstance(result, dict) and result.get("stop_reason") == "transport_error":
+            resource = self._resource
+            try:
+                self._close_transport()
+            except Exception:
+                pass
+            self.connection_lost.emit(
+                f"operation:{operation_id}",
+                (
+                    "The operation reported a transport error. "
+                    f"Session {resource or '<unknown>'} was closed; reconnect "
+                    "before continuing."
+                ),
+            )
 
     @Slot()
     def shutdown(self) -> None:
