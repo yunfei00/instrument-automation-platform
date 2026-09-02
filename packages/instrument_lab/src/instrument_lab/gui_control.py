@@ -41,6 +41,27 @@ class InstrumentOperationRequests(QObject):
     run_requested = Signal(str, object)
 
 
+def json_safe_operation_result(value: object) -> object:
+    """Convert an operation result to compact JSON-safe diagnostic metadata.
+
+    Binary waveform/screenshot payloads must stay available to the owning panel,
+    but dumping hundreds of kilobytes of ``bytes`` into the Raw JSON widget is
+    both slow and unreadable. Replace binary values with a size-only marker while
+    preserving the original result object for the actual renderer.
+    """
+
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        return f"<{len(value)} bytes>"
+    if isinstance(value, dict):
+        return {
+            str(key): json_safe_operation_result(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [json_safe_operation_result(item) for item in value]
+    return value
+
+
 class InstrumentControlWindow(StableInstrumentLabWindow):
     """Stable Instrument Lab plus reusable operations and control panels."""
 
@@ -434,15 +455,16 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         result: object,
         elapsed_ms: float,
     ) -> None:
+        safe_result = json_safe_operation_result(result)
         try:
             rendered = json.dumps(
-                result,
+                safe_result,
                 ensure_ascii=False,
                 indent=2,
                 default=str,
             )
         except TypeError:
-            rendered = str(result)
+            rendered = str(safe_result)
 
         self.operation_result.setPlainText(rendered)
         if isinstance(result, dict):
