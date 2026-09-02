@@ -4,7 +4,7 @@
     "family": "DSO-X 3000 X-Series",
     "target_model": "DSO-X 3034A",
     "category": "display",
-    "status": "manual_verified",
+    "status": "hardware_verified",
     "manual_id": "dsox3000_programmers_guide"
   },
   "commands": [
@@ -18,14 +18,14 @@
       "safety": "safe",
       "response_type": "binary",
       "description": "Read the oscilloscope screen image as an IEEE 488.2 definite-length binary block.",
-      "response_notes": "Programmer's Guide supports BMP, BMP8bit and PNG with COLor or GRAYscale palette. The returned payload is image-file bytes after removing the IEEE block header.",
+      "response_notes": "Programmer's Guide supports BMP, BMP8bit and PNG with COLor or GRAYscale palette. Real DSO-X 3034A hardware appends the configured termination after the block; screenshot readers must consume that terminator before the next text query.",
       "manual_id": "dsox3000_programmers_guide",
       "manual_page": 320,
       "manual_section": "DISPlay Commands - :DISPlay:DATA",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["DSO-X 3034A"],
-      "notes": "Large binary transfer; do not execute in generic safe probe. Use the screenshot Instrument Operation so binary framing and INKSaver handling remain consistent."
+      "notes": "Hardware verified 2026-09-02 with PNG,COLor in the Instrument Screenshot operation. After fixing binary termination handling, 5 consecutive screenshots completed successfully in one VISA session and SYSTem:ERRor? remained clean. Large binary transfer; do not execute in generic safe probe."
     },
     {
       "id": "hardcopy.inksaver",
@@ -42,9 +42,10 @@
       "manual_id": "dsox3000_programmers_guide",
       "manual_page": 383,
       "manual_section": "HARDcopy Commands - :HARDcopy:INKSaver",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": true,
-      "supported_models": ["DSO-X 3034A"]
+      "supported_models": ["DSO-X 3034A"],
+      "notes": "Hardware verified 2026-09-02 on the reference DSO-X 3034A. After 5 consecutive screenshots, :HARDcopy:INKSaver? returned 0 and SYSTem:ERRor? returned 0,No error."
     }
   ]
 }
