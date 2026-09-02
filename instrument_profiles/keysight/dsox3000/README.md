@@ -27,6 +27,29 @@
 - Binary Waveform Transfer
 - 前面板控制与 SCPI 映射
 - Trigger / Single Acquisition 稳定性
+- Snapshot All 31 项测量读取
+
+## Snapshot All
+
+基线已提供可复用接口：
+
+```python
+from instrument_drivers.keysight.dsox3000 import read_snapshot_all
+
+snapshot = read_snapshot_all(driver, channel=1)
+```
+
+该接口负责安装 `:MEASure:ALL`、读取 31 项标量测量、保留无效哨兵值、支持协作取消，并在通信故障时停止后续查询，避免连续等待大量超时。
+
+当前状态：
+
+- `:MEASure:ALL`：`manual_verified`
+- 31 项读取实现：单元测试覆盖
+- DSO-X 3034A 实机 Snapshot All：`hardware_pending`
+
+实机验证计划见：
+
+- `qualification/DSOX3034A_SNAPSHOT_ALL_PENDING_2026-09-02.md`
 
 ## 规则
 
