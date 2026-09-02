@@ -11,7 +11,7 @@ CI and reused by future desktop, CLI or web front ends.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Callable, Mapping
 
 from .models import SafetyLevel
 
@@ -86,24 +86,258 @@ class InstrumentOperationRegistry:
         return operation.runner(transport, parameters or {})
 
 
+def _dsox_driver(transport: object):
+    from instrument_drivers.keysight.dsox3000 import KeysightDSOX3000Driver
+
+    return KeysightDSOX3000Driver(transport)
+
+
 def _run_dsox_snapshot_all(
     transport: object,
     parameters: Mapping[str, object],
 ) -> object:
     """Run the DSO-X Snapshot All helper on an already-open transport."""
 
-    from instrument_drivers.keysight.dsox3000 import (
-        KeysightDSOX3000Driver,
-        read_snapshot_all,
-    )
+    from instrument_drivers.keysight.dsox3000 import read_snapshot_all
 
     channel = int(parameters.get("channel", 1))
-    driver = KeysightDSOX3000Driver(transport)
+    driver = _dsox_driver(transport)
     return read_snapshot_all(driver, channel=channel)
+
+
+def _run_dsox_read_control_state(
+    transport: object,
+    parameters: Mapping[str, object],
+) -> object:
+    """Read the main settings needed by the first DSO-X control panel."""
+
+    channel = int(parameters.get("channel", 1))
+    driver = _dsox_driver(transport)
+
+    return {
+        "kind": "keysight_dsox3000_control_state",
+        "channel": channel,
+        "channel_display": driver.get_channel_display(channel),
+        "channel_scale_v_div": driver.get_channel_scale(channel),
+        "channel_offset_v": driver.get_channel_offset(channel),
+        "timebase_scale_s_div": driver.get_timebase_scale(),
+        "timebase_position_s": driver.get_timebase_position(),
+        "trigger_mode": driver.get_trigger_mode().strip(),
+        "trigger_sweep": driver.get_trigger_sweep().strip(),
+        "trigger_source": driver.get_trigger_source().strip(),
+        "trigger_level_v": driver.get_trigger_level(),
+        "acquisition_type": driver.get_acquisition_type().strip(),
+        "acquisition_points": driver.get_acquisition_points(),
+        "sample_rate_sps": driver.get_sample_rate(),
+    }
+
+
+def _optional_float(
+    parameters: Mapping[str, object],
+    name: str,
+) -> float | None:
+    raw = parameters.get(name)
+    if raw is None:
+        return None
+    text = str(raw).strip()
+    if not text:
+        return None
+    return float(text)
+
+
+def _run_dsox_set_channel(
+    transport: object,
+    parameters: Mapping[str, object],
+) -> object:
+    channel = int(parameters.get("channel", 1))
+    scale = _optional_float(parameters, "scale_v_div")
+    offset = _optional_float(parameters, "offset_v")
+    driver = _dsox_driver(transport)
+
+    applied: dict[str, object] = {"channel": channel}
+    if scale is not None:
+        if scale <= 0:
+            raise ValueError("Channel scale must be greater than 0 V/div")
+        driver.set_channel_scale(channel, scale)
+        applied["scale_v_div"] = scale
+    if offset is not None:
+        driver.set_channel_offset(channel, offset)
+        applied["offset_v"] = offset
+
+    if len(applied) == 1:
+        raise ValueError("Enter channel scale and/or offset before applying")
+
+    return {
+        "kind": "keysight_dsox3000_setting_applied",
+        "setting": "channel",
+        "applied": applied,
+    }
+
+
+def _run_dsox_set_timebase(
+    transport: object,
+    parameters: Mapping[str, object],
+) -> object:
+    scale = _optional_float(parameters, "scale_s_div")
+    position = _optional_float(parameters, "position_s")
+    driver = _dsox_driver(transport)
+
+    applied: dict[str, object] = {}
+    if scale is not None:
+        if scale <= 0:
+            raise ValueError("Timebase scale must be greater than 0 s/div")
+        driver.set_timebase_scale(scale)
+        applied["scale_s_div"] = scale
+    if position is not None:
+        driver.set_timebase_position(position)
+        applied["position_s"] = position
+
+    if not applied:
+        raise ValueError("Enter timebase scale and/or position before applying")
+
+    return {
+        "kind": "keysight_dsox3000_setting_applied",
+        "setting": "timebase",
+        "applied": applied,
+    }
+
+
+def _run_dsox_single(
+    transport: object,
+    _parameters: Mapping[str, object],
+) -> object:
+    """Press the programming equivalent of the front-panel Single key."""
+
+    driver = _dsox_driver(transport)
+    driver.write(":SINGle")
+    return {
+        "kind": "keysight_dsox3000_action",
+        "action": "single",
+        "status": "started",
+    }
+
+
+def _run_dsox_stop(
+    transport: object,
+    _parameters: Mapping[str, object],
+) -> object:
+    driver = _dsox_driver(transport)
+    driver.abort()
+    return {
+        "kind": "keysight_dsox3000_action",
+        "action": "stop",
+        "status": "sent",
+    }
 
 
 def build_default_operation_registry() -> InstrumentOperationRegistry:
     registry = InstrumentOperationRegistry()
+
+    dsox_profiles = ("keysight/dsox3000",)
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.read_control_state",
+            title="读取控制状态",
+            description=(
+                "读取当前 Channel、Timebase、Trigger 与 Acquisition 的常用状态，"
+                "用于刷新 DSO-X 虚拟控制面板。"
+            ),
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.SAFE,
+            parameters=(
+                OperationParameter(
+                    name="channel",
+                    label="Channel",
+                    kind="choice",
+                    default="1",
+                    choices=("1", "2", "3", "4"),
+                ),
+            ),
+            runner=_run_dsox_read_control_state,
+        )
+    )
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.set_channel",
+            title="设置 Channel",
+            description="设置指定模拟通道的 Scale 和/或 Offset。空值保持不变。",
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.SAFE,
+            parameters=(
+                OperationParameter(
+                    name="channel",
+                    label="Channel",
+                    kind="choice",
+                    default="1",
+                    choices=("1", "2", "3", "4"),
+                ),
+                OperationParameter(
+                    name="scale_v_div",
+                    label="Scale (V/div)",
+                    kind="float",
+                    description="Leave empty to keep current scale.",
+                ),
+                OperationParameter(
+                    name="offset_v",
+                    label="Offset (V)",
+                    kind="float",
+                    description="Leave empty to keep current offset.",
+                ),
+            ),
+            runner=_run_dsox_set_channel,
+        )
+    )
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.set_timebase",
+            title="设置 Timebase",
+            description="设置水平 Scale 和/或 Position。空值保持不变。",
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.SAFE,
+            parameters=(
+                OperationParameter(
+                    name="scale_s_div",
+                    label="Scale (s/div)",
+                    kind="float",
+                    description="Leave empty to keep current scale.",
+                ),
+                OperationParameter(
+                    name="position_s",
+                    label="Position (s)",
+                    kind="float",
+                    description="Leave empty to keep current position.",
+                ),
+            ),
+            runner=_run_dsox_set_timebase,
+        )
+    )
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.single",
+            title="Single",
+            description="执行前面板 Single 键等效动作。",
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.DISRUPTIVE,
+            parameters=(),
+            runner=_run_dsox_single,
+        )
+    )
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.stop",
+            title="Stop",
+            description="停止当前 DSO-X acquisition。",
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.DISRUPTIVE,
+            parameters=(),
+            runner=_run_dsox_stop,
+        )
+    )
 
     registry.register(
         InstrumentOperation(
@@ -113,7 +347,7 @@ def build_default_operation_registry() -> InstrumentOperationRegistry:
                 "安装 DSO-X Snapshot All，并逐项读取 31 个测量结果。"
                 "该操作不是单条 SCPI Query，而是由多条命令组成的仪表级操作。"
             ),
-            profile_keys=("keysight/dsox3000",),
+            profile_keys=dsox_profiles,
             safety=SafetyLevel.DISRUPTIVE,
             parameters=(
                 OperationParameter(
