@@ -93,7 +93,7 @@ Snapshot All
 Snapshot 31 项表格
 ```
 
-Trigger 设置等控制能力仍可继续补充。
+Trigger 设置和 Channel Display 写控制仍可继续补充。
 
 ## Snapshot All
 
@@ -141,11 +141,11 @@ Data View
 
 `Instrument Screen` 读取真实仪表屏幕截图；`Data View` 读取 Waveform / Trace 数据后本地绘制。两者不能互相替代。
 
-DSO-X 现在已经具备：
+DSO-X 当前状态：
 
 ```text
 Instrument Screen    hardware_verified
-Data View            software-integrated / hardware_pending
+Data View            hardware_verified
 ```
 
 ### DSO-X Data View 第一版
@@ -184,7 +184,19 @@ CSV 导出 time_s, voltage_v
 
 Operation Result 仍是 `dict` 兼容对象，但大规模 time/voltage 数组不进入 Raw JSON 的 `items()`，防止 10k/1M 点波形把诊断文本框展开到不可用。Panel 仍可通过普通 `result.get("time_seconds")` 与 `result.get("voltage_volts")` 访问完整数组。
 
-真实 DSO-X 3034A 的 Data View 仍需按 Qualification Plan 完成实机验证后再升级状态。
+真实 DSO-X 3034A 实机验证结果：
+
+```text
+Points                    40000
+Time Range                -1e-5 .. 9.995e-6 s
+Voltage Range             -0.154738693 .. 0.10254773 V
+Cursor                    PASS
+CSV                       PASS
+Repeated capture          PASS (3/3 or better)
+SYSTem:ERRor?             0, No error in main-path verification
+```
+
+因此 `keysight.dsox3000.single_waveform` 与 DSO-X Data View 已闭环为 `hardware_verified`。
 
 ## 通用 Shell 与仪表 Panel 的边界
 
@@ -232,9 +244,8 @@ FSW + DSO-X 同步联合采集
 
 ## 下一阶段
 
-1. 在真实 DSO-X 3034A 上完成 Single Waveform Data View 验证；
-2. 增加 Trigger 常用设置和 Channel Display 开关；
-3. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
-4. 实现 FSWPanel，接入 Center/Span、RBW/VBW、Reference Level、RF Atten、Preamp；
-5. 接入 FSW Spectrum Trace View 与 Screenshot；
-6. 最后统一配置保存、截图保存和数据导出。
+1. 增加 DSO-X Trigger 常用设置和 Channel Display ON/OFF；
+2. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
+3. 实现 FSWPanel，接入 Center/Span、RBW/VBW、Reference Level、RF Atten、Preamp；
+4. 接入 FSW Spectrum Trace View 与 Screenshot；
+5. 最后统一配置保存、截图保存和数据导出。
