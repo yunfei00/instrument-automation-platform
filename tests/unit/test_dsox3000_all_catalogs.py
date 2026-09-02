@@ -31,6 +31,7 @@ COMMAND_DIR = (
 FILES = [
     "acquisition.json",
     "channel.json",
+    "display.json",
     "measurement.json",
     "system.json",
     "timebase.json",
@@ -75,13 +76,16 @@ def main():
 
         total += count
 
+    assert "display.data" in all_ids
+    assert "hardcopy.inksaver" in all_ids
+
     print()
     print(
         "Total manual-verified commands:",
         total,
     )
 
-    assert total >= 40
+    assert total >= 42
 
     print(
         "DSOX3000 all-catalog validation PASS"
