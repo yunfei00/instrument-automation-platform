@@ -7,7 +7,7 @@ registry without duplicating the low-level acquisition sequence in the GUI.
 
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from typing import Mapping
 
 from .models import SafetyLevel
@@ -19,6 +19,19 @@ from .operations import (
 
 
 _OPERATION_ID = "keysight.dsox3000.single_waveform"
+
+
+@dataclass(frozen=True, slots=True)
+class WaveformDataPayload:
+    """Full waveform arrays with compact text representation for Raw JSON."""
+
+    time_seconds: tuple[float, ...]
+    voltage_volts: tuple[float, ...]
+
+    def __str__(self) -> str:
+        return f"<WaveformDataPayload {len(self.time_seconds)} points>"
+
+    __repr__ = __str__
 
 
 def _run_single_waveform(
@@ -51,8 +64,7 @@ def _run_single_waveform(
         "source": f"CHANnel{channel}",
         "channel": channel,
         "point_count": point_count,
-        "time_seconds": times,
-        "voltage_volts": voltages,
+        "data": WaveformDataPayload(times, voltages),
         "time_start_s": times[0] if times else None,
         "time_stop_s": times[-1] if times else None,
         "voltage_min_v": min(voltages) if voltages else None,
