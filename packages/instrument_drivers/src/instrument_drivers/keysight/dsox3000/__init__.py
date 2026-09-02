@@ -1,3 +1,8 @@
+from .controls import (
+    normalize_edge_trigger_source,
+    set_channel_display,
+    set_edge_trigger,
+)
 from .driver import KeysightDSOX3000Driver
 from .single_capture import acquire_single_word_waveform
 from .snapshot import (
@@ -15,6 +20,9 @@ from .waveform import (
 
 __all__ = [
     "KeysightDSOX3000Driver",
+    "normalize_edge_trigger_source",
+    "set_channel_display",
+    "set_edge_trigger",
     "acquire_single_word_waveform",
     "SNAPSHOT_ALL_MEASUREMENTS",
     "SnapshotMeasurementSpec",
