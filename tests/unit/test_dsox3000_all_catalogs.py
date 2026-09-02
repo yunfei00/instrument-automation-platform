@@ -43,53 +43,48 @@ FILES = [
 def main():
     all_ids = set()
     total = 0
+    hardware_verified_ids = set()
 
     print("DSOX3000 Command Catalog")
+
+    allowed_statuses = {
+        VerificationStatus.MANUAL_VERIFIED,
+        VerificationStatus.HARDWARE_VERIFIED,
+    }
 
     for filename in FILES:
         path = COMMAND_DIR / filename
 
         assert path.exists(), path
 
-        catalog = CommandCatalog.load_json(
-            path
-        )
-
+        catalog = CommandCatalog.load_json(path)
         count = len(catalog.commands)
-
-        print(
-            f"{filename:20s} {count:3d}"
-        )
+        print(f"{filename:20s} {count:3d}")
 
         for command in catalog.commands:
-            assert (
-                command.verification_status
-                == VerificationStatus.MANUAL_VERIFIED
-            )
-
+            assert command.verification_status in allowed_statuses
             assert command.manual_id
             assert command.manual_page is not None
-
             assert command.id not in all_ids
 
             all_ids.add(command.id)
+            if command.verification_status == VerificationStatus.HARDWARE_VERIFIED:
+                hardware_verified_ids.add(command.id)
 
         total += count
 
     assert "display.data" in all_ids
     assert "hardcopy.inksaver" in all_ids
+    assert "display.data" in hardware_verified_ids
+    assert "hardcopy.inksaver" in hardware_verified_ids
 
     print()
-    print(
-        "Total manual-verified commands:",
-        total,
-    )
+    print("Total verified commands:", total)
+    print("Hardware-verified commands:", len(hardware_verified_ids))
 
     assert total >= 42
 
-    print(
-        "DSOX3000 all-catalog validation PASS"
-    )
+    print("DSOX3000 all-catalog validation PASS")
 
 
 if __name__ == "__main__":
