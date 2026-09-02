@@ -1,9 +1,8 @@
 """Instrument-control shell layered on top of the stable engineering GUI.
 
 The existing command browser remains the engineering/debug surface. This module
-adds a generic Instrument Operations dock for reusable multi-command actions.
-Instrument-specific control panels can later plug into the same shell without
-moving SCPI knowledge into Qt widgets.
+adds reusable Instrument Operations plus instrument-family control panels. The
+visual layer never owns VISA sessions and does not duplicate SCPI command logic.
 """
 
 from __future__ import annotations
@@ -13,6 +12,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QApplication,
     QComboBox,
     QDockWidget,
@@ -23,13 +23,18 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from .gui_panels import DSOX3000Panel
 from .gui_stable import StableInstrumentLabWindow
 from .models import SafetyLevel
 from .operations import DEFAULT_OPERATION_REGISTRY, InstrumentOperation
+from .panels import DEFAULT_PANEL_REGISTRY
 
 
 class InstrumentOperationRequests(QObject):
@@ -37,7 +42,7 @@ class InstrumentOperationRequests(QObject):
 
 
 class InstrumentControlWindow(StableInstrumentLabWindow):
-    """Stable Instrument Lab plus reusable instrument-level operations."""
+    """Stable Instrument Lab plus reusable operations and control panels."""
 
     def __init__(self, repo_root: str | Path | None = None) -> None:
         super().__init__(repo_root=repo_root)
@@ -45,6 +50,7 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         self.setWindowTitle("Instrument Automation Studio")
         self._operation_requests = InstrumentOperationRequests(self)
         self._operation_editors: dict[str, QWidget] = {}
+        self._active_panel: QWidget | None = None
 
         self._operation_requests.run_requested.connect(
             self._io_worker.run_instrument_operation
@@ -53,11 +59,98 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             self._instrument_operation_finished
         )
 
+        self._build_instrument_panel_dock()
         self._build_operation_dock()
         self.profile_combo.currentIndexChanged.connect(
-            self._refresh_operations
+            self._profile_context_changed
         )
-        self._refresh_operations()
+        self._profile_context_changed()
+
+    # ------------------------------------------------------------------
+    # Instrument-family panel host
+    # ------------------------------------------------------------------
+
+    def _build_instrument_panel_dock(self) -> None:
+        dock = QDockWidget("仪表控制 / Instrument Control", self)
+        dock.setObjectName("instrument_control_dock")
+
+        self.panel_container = QWidget()
+        self.panel_layout = QVBoxLayout(self.panel_container)
+        dock.setWidget(self.panel_container)
+
+        self.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea,
+            dock,
+        )
+        self.instrument_panel_dock = dock
+
+    def _clear_instrument_panel(self) -> None:
+        self._active_panel = None
+        while self.panel_layout.count():
+            item = self.panel_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+    def _refresh_instrument_panel(self) -> None:
+        self._clear_instrument_panel()
+
+        if self.current_profile is None:
+            self.panel_layout.addWidget(QLabel("未选择 Instrument Profile。"))
+            return
+
+        definition = DEFAULT_PANEL_REGISTRY.find_for_profile(
+            self.current_profile.key
+        )
+        if definition is None:
+            note = QLabel(
+                "当前 Instrument Profile 还没有专用控制面板。\n"
+                "Command Browser、Raw SCPI 和 Instrument Operations 仍可正常使用。"
+            )
+            note.setWordWrap(True)
+            self.panel_layout.addWidget(note)
+            return
+
+        if definition.panel_type == "dsox3000":
+            panel = DSOX3000Panel(self.panel_container)
+            panel.operation_requested.connect(self._run_panel_operation)
+            self.panel_layout.addWidget(panel)
+            self._active_panel = panel
+            return
+
+        note = QLabel(
+            f"Panel '{definition.panel_type}' 已注册，但当前 GUI 尚无对应渲染器。"
+        )
+        note.setWordWrap(True)
+        self.panel_layout.addWidget(note)
+
+    def _run_panel_operation(
+        self,
+        operation_id: str,
+        parameters: object,
+    ) -> None:
+        try:
+            operation = DEFAULT_OPERATION_REGISTRY.get(operation_id)
+        except KeyError as exc:
+            QMessageBox.critical(self, "Unknown Operation", str(exc))
+            return
+
+        if self.current_profile is None or not operation.supports_profile(
+            self.current_profile.key
+        ):
+            QMessageBox.warning(
+                self,
+                "Operation/Profile Mismatch",
+                "当前仪表 Profile 不支持这个操作。",
+            )
+            return
+
+        parameter_map = parameters if isinstance(parameters, dict) else {}
+        self._dispatch_operation(operation, parameter_map, source="PANEL")
+
+    # ------------------------------------------------------------------
+    # Generic operation dock
+    # ------------------------------------------------------------------
 
     def _build_operation_dock(self) -> None:
         dock = QDockWidget("仪表操作 / Instrument Operations", self)
@@ -78,7 +171,6 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         self.operation_description = QLabel()
         self.operation_description.setWordWrap(True)
         selection_layout.addRow("说明", self.operation_description)
-
         layout.addWidget(selection_group)
 
         self.operation_parameters_group = QGroupBox("参数")
@@ -93,12 +185,25 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         )
         layout.addWidget(self.operation_run_button)
 
+        self.operation_result_tabs = QTabWidget()
+
+        self.operation_table = QTableWidget(0, 5)
+        self.operation_table.setHorizontalHeaderLabels(
+            ["Measurement", "Value", "Unit", "Status", "Command"]
+        )
+        self.operation_table.setAlternatingRowColors(True)
+        self.operation_table.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        self.operation_result_tabs.addTab(self.operation_table, "Table")
+
         self.operation_result = QPlainTextEdit()
         self.operation_result.setReadOnly(True)
         self.operation_result.setPlaceholderText(
-            "复合操作结果会显示在这里。Snapshot All 会返回结构化测量结果。"
+            "复合操作的原始结构化结果会显示在这里。"
         )
-        layout.addWidget(self.operation_result, 1)
+        self.operation_result_tabs.addTab(self.operation_result, "Raw JSON")
+        layout.addWidget(self.operation_result_tabs, 1)
 
         dock.setWidget(container)
         self.addDockWidget(
@@ -106,6 +211,10 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             dock,
         )
         self.operation_dock = dock
+
+    def _profile_context_changed(self, _index: int | None = None) -> None:
+        self._refresh_operations()
+        self._refresh_instrument_panel()
 
     def _current_operation(self) -> InstrumentOperation | None:
         operation_id = self.operation_combo.currentData()
@@ -234,10 +343,6 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         operation = self._current_operation()
         if operation is None:
             return
-        if not self._ensure_connected() or self._busy:
-            return
-        if not self._confirm_operation(operation):
-            return
 
         try:
             parameters = self._operation_parameters()
@@ -245,20 +350,83 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             QMessageBox.warning(self, "Operation Parameters", str(exc))
             return
 
+        self._dispatch_operation(operation, parameters, source="OPERATION")
+
+    def _dispatch_operation(
+        self,
+        operation: InstrumentOperation,
+        parameters: dict[str, object],
+        *,
+        source: str,
+    ) -> None:
+        if not self._ensure_connected() or self._busy:
+            return
+        if not self._confirm_operation(operation):
+            return
+
         operation_name = f"operation:{operation.id}"
         if not self._begin_io(operation_name):
             return
 
         self._append_log(
-            "OPERATION",
+            source,
             operation.id,
             json.dumps(parameters, ensure_ascii=False),
         )
         self.operation_result.setPlainText("执行中...")
+        self.operation_table.setRowCount(0)
+        self.operation_result_tabs.setCurrentWidget(self.operation_result)
         self._operation_requests.run_requested.emit(
             operation.id,
             parameters,
         )
+
+    # ------------------------------------------------------------------
+    # Result rendering
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _display_value(value: object) -> str:
+        if value is None:
+            return "-"
+        if isinstance(value, float):
+            return f"{value:.12g}"
+        return str(value)
+
+    def _render_snapshot_table(self, result: dict[str, object]) -> bool:
+        if result.get("kind") != "keysight_infiniivision_snapshot_all":
+            return False
+
+        measurements = result.get("measurements")
+        if not isinstance(measurements, dict):
+            return False
+
+        self.operation_table.setRowCount(0)
+        for entry in measurements.values():
+            if not isinstance(entry, dict):
+                continue
+
+            row = self.operation_table.rowCount()
+            self.operation_table.insertRow(row)
+            valid = bool(entry.get("valid"))
+            value = entry.get("value") if valid else entry.get("raw")
+            cells = (
+                entry.get("label", ""),
+                value,
+                entry.get("unit", ""),
+                "OK" if valid else "INVALID",
+                entry.get("command", ""),
+            )
+            for column, value in enumerate(cells):
+                self.operation_table.setItem(
+                    row,
+                    column,
+                    QTableWidgetItem(self._display_value(value)),
+                )
+
+        self.operation_table.resizeColumnsToContents()
+        self.operation_result_tabs.setCurrentWidget(self.operation_table)
+        return True
 
     def _instrument_operation_finished(
         self,
@@ -277,6 +445,20 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             rendered = str(result)
 
         self.operation_result.setPlainText(rendered)
+        if isinstance(result, dict):
+            if not self._render_snapshot_table(result):
+                self.operation_result_tabs.setCurrentWidget(
+                    self.operation_result
+                )
+
+        panel = self._active_panel
+        if panel is not None and hasattr(panel, "handle_operation_result"):
+            panel.handle_operation_result(
+                operation_id,
+                result,
+                elapsed_ms,
+            )
+
         self._append_log(
             "OPERATION RESULT",
             operation_id,
