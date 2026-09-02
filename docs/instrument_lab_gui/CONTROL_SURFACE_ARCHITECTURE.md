@@ -48,7 +48,7 @@ GUI 的普通仪表控制主要消费 Driver API 与 Instrument Operation；Comm
 
 `instrument_lab.operations` 负责注册、按 Profile 发现并执行高级仪表操作。所有 Operation 继续在长期 VISA Owner Thread 中执行。
 
-DSO-X 当前已经注册：
+DSO-X 当前已经注册或由专用面板扩展注册：
 
 ```text
 keysight.dsox3000.read_control_state
@@ -58,7 +58,10 @@ keysight.dsox3000.single
 keysight.dsox3000.stop
 keysight.dsox3000.screenshot
 keysight.dsox3000.snapshot_all
+keysight.dsox3000.single_waveform
 ```
+
+`single_waveform` 不在 Qt Widget 中重复实现 SCPI，而是直接复用 Driver 层已有 `acquire_single_word_waveform()`。
 
 ### Instrument Panel Registry
 
@@ -85,11 +88,12 @@ Timebase Scale / Position 设置
 Trigger 状态读取
 Acquisition 状态读取
 Instrument Screenshot
+Single Waveform Data View
 Snapshot All
 Snapshot 31 项表格
 ```
 
-Trigger 设置和本地 Waveform Data View 仍在后续阶段。
+Trigger 设置等控制能力仍可继续补充。
 
 ## Snapshot All
 
@@ -128,16 +132,59 @@ SYSTem:ERRor? -> 0, No error
 
 ## Screenshot 与 Data View
 
-每个支持显示的仪表最终同时保留两类视图：
+每个支持显示的仪表同时保留两类视图：
 
 ```text
 Instrument Screen
 Data View
 ```
 
-`Instrument Screen` 读取真实仪表屏幕截图；`Data View` 读取 Waveform / Trace 数据后本地绘制，支持缩放、光标、Marker、导出和多曲线比较。两者不能互相替代。
+`Instrument Screen` 读取真实仪表屏幕截图；`Data View` 读取 Waveform / Trace 数据后本地绘制。两者不能互相替代。
 
-DSO-X 当前已具备硬件验证通过的 Instrument Screen；下一步接入 Single Waveform Capture 到 Data View。
+DSO-X 现在已经具备：
+
+```text
+Instrument Screen    hardware_verified
+Data View            software-integrated / hardware_pending
+```
+
+### DSO-X Data View 第一版
+
+Data View 调用：
+
+```text
+keysight.dsox3000.single_waveform
+    ↓
+acquire_single_word_waveform()
+    ↓
+STOP + Single 同步
+    ↓
+WORD waveform binary read
+    ↓
+Preamble 解码
+    ↓
+time_seconds / voltage_volts
+    ↓
+Qt WaveformPlotWidget
+```
+
+第一版支持：
+
+```text
+CH1 ~ CH4
+Single + 读取波形
+Trigger Timeout
+本地波形显示
+鼠标 Cursor 查看采样点 t / V
+Points / Time Range / Voltage Range
+CSV 导出 time_s, voltage_v
+```
+
+绘图使用纯 Qt，不新增 matplotlib/numpy 依赖。完整采样数据始终保留用于 CSV；当波形点数远多于屏幕像素时，仅显示路径做视觉降采样。
+
+Operation Result 仍是 `dict` 兼容对象，但大规模 time/voltage 数组不进入 Raw JSON 的 `items()`，防止 10k/1M 点波形把诊断文本框展开到不可用。Panel 仍可通过普通 `result.get("time_seconds")` 与 `result.get("voltage_volts")` 访问完整数组。
+
+真实 DSO-X 3034A 的 Data View 仍需按 Qualification Plan 完成实机验证后再升级状态。
 
 ## 通用 Shell 与仪表 Panel 的边界
 
@@ -185,7 +232,7 @@ FSW + DSO-X 同步联合采集
 
 ## 下一阶段
 
-1. 把已有 Single Waveform Capture 接入 DSO-X Data View；
+1. 在真实 DSO-X 3034A 上完成 Single Waveform Data View 验证；
 2. 增加 Trigger 常用设置和 Channel Display 开关；
 3. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
 4. 实现 FSWPanel，接入 Center/Span、RBW/VBW、Reference Level、RF Atten、Preamp；
