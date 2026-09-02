@@ -5,6 +5,15 @@ from .spectrum import (
     build_spectrum_trace,
     parse_ascii_trace,
 )
+from .video_trigger import (
+    configure_video_trigger,
+    get_trigger_offset_s,
+    get_trigger_slope,
+    get_video_trigger_level_pct,
+    set_trigger_offset_s,
+    set_trigger_slope,
+    set_video_trigger_level_pct,
+)
 
 __all__ = [
     "RohdeSchwarzFSWDriver",
@@ -12,4 +21,11 @@ __all__ = [
     "build_frequency_axis",
     "build_spectrum_trace",
     "parse_ascii_trace",
+    "configure_video_trigger",
+    "get_trigger_offset_s",
+    "get_trigger_slope",
+    "get_video_trigger_level_pct",
+    "set_trigger_offset_s",
+    "set_trigger_slope",
+    "set_video_trigger_level_pct",
 ]
