@@ -8,6 +8,7 @@ on:
       - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
+      - "tests/unit/test_instrument_operations.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -21,6 +22,7 @@ on:
       - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
+      - "tests/unit/test_instrument_operations.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -54,9 +56,11 @@ jobs:
           python -m py_compile packages/instrument_core/src/instrument_core/bridge/visa_bridge.py
           python -m py_compile packages/instrument_core/src/instrument_core/bridge/discovery.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_backend.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/operations.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_io.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_stable.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/gui_control.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/port_bridge_gui.py
           python -m py_compile tools/instrument_lab_gui.py
           python -m py_compile tools/instrument_port_bridge.py
@@ -64,5 +68,6 @@ jobs:
       - name: Run GUI and bridge backend tests
         run: |
           python -m pytest -q tests/unit/test_instrument_lab_gui_backend.py
+          python -m pytest -q tests/unit/test_instrument_operations.py
           python -m pytest -q tests/unit/test_bridge_protocol.py
           python -m pytest -q tests/unit/test_instrument_port_bridge_launcher.py
