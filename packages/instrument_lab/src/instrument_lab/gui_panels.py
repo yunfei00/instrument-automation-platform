@@ -1,7 +1,7 @@
 """Qt instrument-specific control panels.
 
 Panels are deliberately thin: they render instrument state and emit registered
-Instrument Operation requests.  They do not contain VISA ownership or direct
+Instrument Operation requests. They do not contain VISA ownership or direct
 SCPI transport calls.
 """
 
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QAbstractItemView,
     QComboBox,
     QFormLayout,
     QGridLayout,
@@ -149,7 +150,7 @@ class DSOX3000Panel(QWidget):
         )
         self.snapshot_table.setAlternatingRowColors(True)
         self.snapshot_table.setEditTriggers(
-            QTableWidget.EditTrigger.NoEditTriggers
+            QAbstractItemView.EditTrigger.NoEditTriggers
         )
         snapshot_layout.addWidget(self.snapshot_table)
         root.addWidget(snapshot_group, 1)
