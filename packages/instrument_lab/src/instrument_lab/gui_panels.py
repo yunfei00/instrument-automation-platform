@@ -7,10 +7,14 @@ SCPI transport calls.
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from pathlib import Path
+
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
+    QFileDialog,
     QFormLayout,
     QGridLayout,
     QGroupBox,
@@ -32,6 +36,8 @@ class DSOX3000Panel(QWidget):
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
+        self._last_screenshot_data = b""
+        self._last_screenshot_format = "PNG"
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -68,6 +74,10 @@ class DSOX3000Panel(QWidget):
             lambda: self._emit("keysight.dsox3000.stop", {})
         )
         action_row.addWidget(stop_button)
+
+        screenshot_button = QPushButton("Screenshot")
+        screenshot_button.clicked.connect(self._screenshot)
+        action_row.addWidget(screenshot_button)
 
         snapshot_button = QPushButton("Snapshot All")
         snapshot_button.clicked.connect(self._snapshot)
@@ -129,14 +139,34 @@ class DSOX3000Panel(QWidget):
 
         root.addLayout(settings_grid)
 
-        preview_group = QGroupBox("Screen / Data View")
+        preview_group = QGroupBox("Instrument Screen")
         preview_layout = QVBoxLayout(preview_group)
         preview_note = QLabel(
-            "这一块预留给仪表截图、Waveform Preview、Cursor/Marker。"
-            "截图命令会在官方手册确认并实机验证后接入，不在 GUI 中猜测 SCPI。"
+            "显示真实仪表屏幕截图。PNG/BMP 数据由 :DISPlay:DATA? 的 "
+            "IEEE 488.2 binary block 获取。"
         )
         preview_note.setWordWrap(True)
         preview_layout.addWidget(preview_note)
+
+        self.screen_label = QLabel("尚未读取仪表截图。")
+        self.screen_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.screen_label.setMinimumSize(420, 220)
+        self.screen_label.setStyleSheet(
+            "QLabel { border: 1px solid #777; background: #111; color: #ddd; }"
+        )
+        preview_layout.addWidget(self.screen_label, 1)
+
+        preview_actions = QHBoxLayout()
+        refresh_screen_button = QPushButton("刷新截图")
+        refresh_screen_button.clicked.connect(self._screenshot)
+        preview_actions.addWidget(refresh_screen_button)
+
+        self.save_screenshot_button = QPushButton("保存截图")
+        self.save_screenshot_button.setEnabled(False)
+        self.save_screenshot_button.clicked.connect(self._save_screenshot)
+        preview_actions.addWidget(self.save_screenshot_button)
+        preview_actions.addStretch(1)
+        preview_layout.addLayout(preview_actions)
         root.addWidget(preview_group)
 
         snapshot_group = QGroupBox("Snapshot All")
@@ -168,6 +198,12 @@ class DSOX3000Panel(QWidget):
             {"channel": self._channel()},
         )
 
+    def _screenshot(self) -> None:
+        self._emit(
+            "keysight.dsox3000.screenshot",
+            {"format": "PNG", "palette": "COLor"},
+        )
+
     def _snapshot(self) -> None:
         self._emit(
             "keysight.dsox3000.snapshot_all",
@@ -193,6 +229,23 @@ class DSOX3000Panel(QWidget):
             },
         )
 
+    def _save_screenshot(self) -> None:
+        if not self._last_screenshot_data:
+            return
+
+        suffix = ".png" if self._last_screenshot_format.upper() == "PNG" else ".bmp"
+        path_text, _ = QFileDialog.getSaveFileName(
+            self,
+            "保存仪表截图",
+            f"dsox_screen{suffix}",
+            "PNG image (*.png);;BMP image (*.bmp);;All files (*)",
+        )
+        if not path_text:
+            return
+
+        Path(path_text).write_bytes(self._last_screenshot_data)
+        self.status_label.setText(f"截图已保存：{path_text}")
+
     @staticmethod
     def _number(value: object, suffix: str = "") -> str:
         try:
@@ -216,6 +269,8 @@ class DSOX3000Panel(QWidget):
         kind = result.get("kind")
         if kind == "keysight_dsox3000_control_state":
             self._render_control_state(result)
+        elif kind == "instrument_screenshot":
+            self._render_screenshot(result)
         elif kind == "keysight_infiniivision_snapshot_all":
             self._render_snapshot(result)
         elif kind == "keysight_dsox3000_setting_applied":
@@ -226,6 +281,40 @@ class DSOX3000Panel(QWidget):
             self.status_label.setText(
                 f"{result.get('action', 'action')}: {result.get('status', '')}"
             )
+
+    def _render_screenshot(self, result: dict[str, object]) -> None:
+        data = result.get("data")
+        if not isinstance(data, (bytes, bytearray)):
+            self.status_label.setText("Screenshot operation did not return image bytes.")
+            return
+
+        payload = bytes(data)
+        pixmap = QPixmap()
+        if not pixmap.loadFromData(payload):
+            self.status_label.setText(
+                f"收到 {len(payload)} bytes，但 Qt 无法解析截图格式。"
+            )
+            return
+
+        self._last_screenshot_data = payload
+        self._last_screenshot_format = str(result.get("format", "PNG"))
+        self.save_screenshot_button.setEnabled(True)
+
+        scaled = pixmap.scaled(
+            720,
+            420,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        self.screen_label.setPixmap(scaled)
+        restore_error = result.get("inksaver_restore_error")
+        message = (
+            f"Screenshot: {result.get('format')} / {result.get('palette')} / "
+            f"{result.get('byte_count')} bytes"
+        )
+        if restore_error:
+            message += f" | INKSaver restore warning: {restore_error}"
+        self.status_label.setText(message)
 
     def _render_control_state(self, result: dict[str, object]) -> None:
         channel = str(result.get("channel", self._channel()))
