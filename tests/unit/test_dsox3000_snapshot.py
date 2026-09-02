@@ -2,10 +2,15 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(
-    0,
-    str(ROOT / "packages" / "instrument_drivers" / "src"),
-)
+for package in [
+    "instrument_core",
+    "instrument_scpi",
+    "instrument_drivers",
+]:
+    sys.path.insert(
+        0,
+        str(ROOT / "packages" / package / "src"),
+    )
 
 from instrument_drivers.keysight.dsox3000 import (
     SNAPSHOT_ALL_MEASUREMENTS,
