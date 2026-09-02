@@ -7,7 +7,7 @@ registry without duplicating the low-level acquisition sequence in the GUI.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from typing import Mapping
 
 from .models import SafetyLevel
@@ -21,17 +21,38 @@ from .operations import (
 _OPERATION_ID = "keysight.dsox3000.single_waveform"
 
 
-@dataclass(frozen=True, slots=True)
-class WaveformDataPayload:
-    """Full waveform arrays with compact text representation for Raw JSON."""
+class WaveformOperationResult(dict[str, object]):
+    """Dict-compatible metadata plus private full-resolution waveform arrays.
 
-    time_seconds: tuple[float, ...]
-    voltage_volts: tuple[float, ...]
+    The GUI panel expects normal ``dict.get()`` access to ``time_seconds`` and
+    ``voltage_volts``. Instrument Lab's Raw JSON sanitizer iterates ``items()``;
+    keeping the large arrays outside the actual mapping prevents a 10k/1M-point
+    waveform from being expanded into the diagnostic text widget.
+    """
 
-    def __str__(self) -> str:
-        return f"<WaveformDataPayload {len(self.time_seconds)} points>"
+    def __init__(
+        self,
+        metadata: Mapping[str, object],
+        time_seconds: tuple[float, ...],
+        voltage_volts: tuple[float, ...],
+    ) -> None:
+        super().__init__(metadata)
+        self._time_seconds = time_seconds
+        self._voltage_volts = voltage_volts
 
-    __repr__ = __str__
+    def get(self, key: str, default: object = None) -> object:
+        if key == "time_seconds":
+            return self._time_seconds
+        if key == "voltage_volts":
+            return self._voltage_volts
+        return super().get(key, default)
+
+    def __getitem__(self, key: str) -> object:
+        if key == "time_seconds":
+            return self._time_seconds
+        if key == "voltage_volts":
+            return self._voltage_volts
+        return super().__getitem__(key)
 
 
 def _run_single_waveform(
@@ -58,19 +79,19 @@ def _run_single_waveform(
     voltages = waveform.voltage_volts
     times = waveform.time_seconds
     point_count = len(voltages)
-
-    return {
+    metadata = {
         "kind": "keysight_dsox3000_single_waveform",
         "source": f"CHANnel{channel}",
         "channel": channel,
         "point_count": point_count,
-        "data": WaveformDataPayload(times, voltages),
+        "waveform_data": f"<{point_count} time/voltage points>",
         "time_start_s": times[0] if times else None,
         "time_stop_s": times[-1] if times else None,
         "voltage_min_v": min(voltages) if voltages else None,
         "voltage_max_v": max(voltages) if voltages else None,
         "preamble": asdict(waveform.preamble),
     }
+    return WaveformOperationResult(metadata, times, voltages)
 
 
 def ensure_dsox_waveform_operation_registered() -> None:
