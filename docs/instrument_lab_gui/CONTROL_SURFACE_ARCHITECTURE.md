@@ -2,15 +2,9 @@
 
 ## 目标
 
-Instrument Lab 不再只作为 SCPI 命令浏览器，而是逐步升级为统一的 Instrument Automation Studio。
+Instrument Lab 正在从 SCPI 命令浏览器升级为统一的 Instrument Automation Studio。
 
-最终目标是：
-
-- 保留通用 Command Browser、Raw SCPI、Qualification、Record/Replay 等工程调试能力；
-- 每个仪表家族拥有自己的控制面板；
-- 示波器、频谱仪等常用功能可以直接在电脑界面完成读取、设置、波形/频谱显示和截图；
-- 所有仪表专用界面共用同一个连接、Transport、日志、恢复和打包框架；
-- 联合采集、客户业务流程等仍然留在产品仓库，不进入本平台。
+长期目标：保留通用 Command Browser、Raw SCPI、Qualification、Record/Replay 等工程调试能力，同时为每个仪表家族提供专用控制面板。示波器、频谱仪等常用功能可以直接在电脑端完成读取、设置、波形/频谱显示和截图；所有专用面板共用同一套连接、Transport、日志、恢复和打包框架。联合采集、近场扫描、客户流程等业务能力仍留在产品仓库。
 
 ## 五层结构
 
@@ -33,58 +27,26 @@ Instrument Lab 不再只作为 SCPI 命令浏览器，而是逐步升级为统�
 └──────────────────────────────────────────────┘
 ```
 
-界面只能向下调用 Driver / Operation API，不允许把仪表 SCPI 流程重新写进 Qt Widget。
+界面只能调用 Driver / Operation API，不允许把仪表 SCPI 流程重新写进 Qt Widget。
 
 ## Command、Driver 与 Operation
-
-### Command
 
 Command 表示一条最小 SCPI 知识，例如：
 
 ```text
 INPut:ATTenuation?
-INPut:ATTenuation 2DB
 :MEASure:VPP? CHANnel1
 ```
 
-它们适合 Command Browser、Raw SCPI、手册知识库和单条命令验证。
+Driver API 将 SCPI 封装成稳定程序接口。Instrument Operation 则表示多条命令组成的完整工程动作，例如 Snapshot All、Single Waveform Capture、FSW Trace Acquisition 和 Screenshot Capture。
 
-### Driver API
-
-Driver API 将 SCPI 封装为稳定程序接口，例如：
-
-```python
-driver.get_rf_attenuation_db()
-driver.set_rf_attenuation_manual_db(2)
-driver.set_preamp_db(15)
-```
-
-### Instrument Operation
-
-Operation 表示多条 SCPI 组成的完整仪表动作，例如：
-
-```text
-Snapshot All
-Single Waveform Capture
-FSW Single Trace Acquisition
-Screenshot Capture
-```
-
-Operation 可以包含多条 Write / Query、等待与超时、二进制读取、解析、校验、部分失败记录以及结构化结果返回。
-
-GUI 的普通仪表控制主要消费 Driver API 和 Instrument Operation。
+GUI 的普通仪表控制主要消费 Driver API 与 Instrument Operation；Command Browser 和 Raw SCPI 继续作为工程调试入口。
 
 ## 当前已经落地
 
 ### Operation Registry
 
-无 Qt 依赖的：
-
-```text
-instrument_lab.operations
-```
-
-负责注册、按 Profile 发现并执行高级仪表操作。所有 Operation 继续在长期 VISA Owner Thread 中执行。
+`instrument_lab.operations` 负责注册、按 Profile 发现并执行高级仪表操作。所有 Operation 继续在长期 VISA Owner Thread 中执行。
 
 DSO-X 当前已经注册：
 
@@ -98,17 +60,9 @@ keysight.dsox3000.screenshot
 keysight.dsox3000.snapshot_all
 ```
 
-其中 Snapshot All 调用已有 `read_snapshot_all()`，不是伪造 `:MEASure:ALL?`。
-
 ### Instrument Panel Registry
 
-无 Qt 依赖的：
-
-```text
-instrument_lab.panels
-```
-
-只描述 Panel ID、Panel Type、支持的 Instrument Profile、标题和说明。Qt、未来 Web 或其他前端可以根据同一个 Panel Definition 选择自己的渲染器。
+`instrument_lab.panels` 只描述 Panel ID、Panel Type、支持的 Instrument Profile、标题和说明。Qt、未来 Web 或其他前端可以根据同一个 Panel Definition 选择自己的渲染器。
 
 当前第一项：
 
@@ -120,13 +74,12 @@ profile = keysight/dsox3000
 
 ### DSOX3000Panel
 
-GUI 已加入 DSO-X 专用控制面板，目前包括：
+当前 DSO-X 专用面板包括：
 
 ```text
 Channel 1~4 选择
 读取当前状态
-Single
-Stop
+Single / Stop
 Channel Scale / Offset 设置
 Timebase Scale / Position 设置
 Trigger 状态读取
@@ -138,23 +91,15 @@ Snapshot 31 项表格
 
 Trigger 设置和本地 Waveform Data View 仍在后续阶段。
 
-界面不直接持有 VISA Session，也不直接执行 SCPI；按钮只发出 Operation 请求。
+## Snapshot All
 
-### Snapshot 表格
-
-Snapshot All 结构化 JSON 继续保留，同时 GUI 增加表格视图：
-
-```text
-Measurement | Value | Unit | Status | Command
-```
-
-无效测量仍保留原始 `raw` 值，并显示 `INVALID`，不会伪装为真实数值。
+Snapshot All 不是 `:MEASure:ALL?` 单条查询，而是一个复合 Operation：设置测量源、执行 `:MEASure:ALL`，再逐项读取 31 个测量结果并返回结构化数据。GUI 同时保留表格和 Raw JSON。
 
 ## Instrument Screenshot
 
-DSO-X Screenshot 已按照 Programmer's Guide 建立 `display` Command Catalog，并实现为 Instrument Operation。
+DSO-X Screenshot 已在真实 DSO-X 3034A 上完成实机验证，当前状态为 `hardware_verified`。
 
-使用的核心命令为：
+核心命令：
 
 ```text
 :HARDcopy:INKSaver?
@@ -162,54 +107,24 @@ DSO-X Screenshot 已按照 Programmer's Guide 建立 `display` Command Catalog�
 :DISPlay:DATA? PNG,COLor
 ```
 
-`:DISPlay:DATA?` 返回 IEEE 488.2 definite-length binary block。Operation 通过 Transport 的长度感知 Binary Query 读取图像 payload，而不是用普通文本 `query()`。
+首版实机测试发现：第一张截图成功，但第二张截图的 Binary Query 会读到 `0\n` 而不是 `#` block header。根因是第一次 `:DISPlay:DATA?` 的 IEEE 488.2 block 结束符没有被消费，导致后续文本 Query 与 Binary Query 错位。
 
-为尽量保持真实屏幕配色，若原始 `INKSaver` 为 ON，Operation 会暂时切为 OFF；截图成功后再恢复原状态。若 Binary Query Timeout，则不再继续发送恢复命令，由 VISA Owner Thread 直接判定 Session 不可信并关闭，防止未读二进制数据污染后续 SCPI。
-
-GUI 默认请求：
+修复后 Screenshot 专门使用：
 
 ```text
-PNG + COLor
+Transport.query_ieee_block_bytes(..., expect_termination=True)
 ```
 
-收到图像字节后直接在 `Instrument Screen` 区域显示，并允许用户另存为图片。
+使 screenshot payload 与结尾 termination 一次消费完整。该规则只适用于已经实机确认的 Screenshot 路径，不全局修改 Waveform 等其他 Binary Query。
 
-通用 Raw JSON 视图不会展开二进制 payload，而只显示类似：
+修复后同一个 VISA Session 连续 5 次 Screenshot 全部成功，随后：
 
 ```text
-<data>: <123456 bytes>
+SYSTem:ERRor? -> 0, No error
+:HARDcopy:INKSaver? -> 0
 ```
 
-避免大图片字节转成文本后拖慢界面。
-
-当前验证状态：
-
-```text
-Command / Operation: manual_verified
-Real DSO-X 3034A screenshot: hardware_pending
-```
-
-在真实 DSO-X 3034A 完成截图显示、错误队列和状态恢复验证之前，不升级为 `hardware_verified`。
-
-## Instrument Panel 设计原则
-
-仪表专用 Panel 负责参数布局和数据显示，但不负责 Transport 和底层命令知识。
-
-```text
-Panel
-  ↓
-Instrument Operation / Driver API
-  ↓
-Driver
-  ↓
-SCPI Client
-  ↓
-Transport
-  ↓
-Physical Instrument
-```
-
-如果一个功能需要把两台仪表组合才能成立，它就不属于这里的 Instrument Panel。
+因此 `display.data`、`hardcopy.inksaver` 和 DSO-X Screenshot 主链路已经闭环。
 
 ## Screenshot 与 Data View
 
@@ -220,13 +135,9 @@ Instrument Screen
 Data View
 ```
 
-`Instrument Screen` 读取真实仪表 Hardcopy/Screenshot，保留仪表当时屏幕完整状态。
+`Instrument Screen` 读取真实仪表屏幕截图；`Data View` 读取 Waveform / Trace 数据后本地绘制，支持缩放、光标、Marker、导出和多曲线比较。两者不能互相替代。
 
-`Data View` 读取 Waveform / Trace 数据后本地绘制，支持缩放、光标、Marker、导出和多曲线比较。
-
-两者不能互相替代。
-
-DSO-X 现在已经具备第一版 `Instrument Screen`；下一步将把现有 Single Waveform Capture 接入本地 `Data View`。
+DSO-X 当前已具备硬件验证通过的 Instrument Screen；下一步接入 Single Waveform Capture 到 Data View。
 
 ## 通用 Shell 与仪表 Panel 的边界
 
@@ -246,13 +157,7 @@ Qualification
 Data Save
 ```
 
-仪表 Panel 负责：
-
-```text
-该仪表独有的参数布局、控制入口和数据显示方式
-```
-
-所有 Panel 复用同一个 VISA Owner Thread 和同一套异常恢复策略。
+仪表 Panel 负责该仪表独有的参数布局、控制入口和数据显示方式。所有 Panel 复用同一个 VISA Owner Thread 和同一套异常恢复策略。
 
 ## 平台与产品仓库边界
 
@@ -276,16 +181,13 @@ FSW + DSO-X 同步联合采集
 客户专用报告
 ```
 
-判断原则：
-
-> 如果删除其他仪表后，该功能仍然对这一台仪表独立成立，则通常属于平台；否则属于业务/产品仓库。
+判断原则：如果删除其他仪表后，该功能仍然对这一台仪表独立成立，则通常属于平台；否则属于业务/产品仓库。
 
 ## 下一阶段
 
-1. 在真实 DSO-X 3034A 上验证 Instrument Screenshot，确认 PNG 显示、错误队列和 INKSaver 恢复；
-2. 把已有 Single Waveform Capture 接入 DSO-X Data View；
-3. 增加 Trigger 常用设置和 Channel Display 开关；
-4. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
-5. 实现 FSWPanel，接入 Center/Span、RBW/VBW、Reference Level、RF Atten、Preamp；
-6. 接入 FSW Spectrum Trace View 与 Screenshot；
-7. 最后统一配置保存、截图保存和数据导出。
+1. 把已有 Single Waveform Capture 接入 DSO-X Data View；
+2. 增加 Trigger 常用设置和 Channel Display 开关；
+3. 建立公共数值/单位 Setting Widget，减少不同仪表面板重复代码；
+4. 实现 FSWPanel，接入 Center/Span、RBW/VBW、Reference Level、RF Atten、Preamp；
+5. 接入 FSW Spectrum Trace View 与 Screenshot；
+6. 最后统一配置保存、截图保存和数据导出。
