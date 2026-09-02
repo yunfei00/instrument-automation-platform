@@ -17,6 +17,7 @@ from .models import SafetyLevel
 
 
 OperationRunner = Callable[[object, Mapping[str, object]], object]
+BINARY_OPERATION_MIN_TIMEOUT_MS = 30000
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +93,41 @@ def _dsox_driver(transport: object):
     return KeysightDSOX3000Driver(transport)
 
 
+def _query_ieee_block_bytes(
+    transport: object,
+    command: str,
+) -> bytes:
+    """Run a bounded IEEE 488.2 binary query on a transport that supports it."""
+
+    query = getattr(transport, "query_ieee_block_bytes", None)
+    if not callable(query):
+        raise TypeError(
+            "This instrument operation requires a transport with "
+            "query_ieee_block_bytes() support"
+        )
+
+    config = getattr(transport, "config", None)
+    previous_timeout_ms = getattr(config, "timeout_ms", None)
+    set_timeout = getattr(transport, "set_timeout_ms", None)
+    changed_timeout = (
+        isinstance(previous_timeout_ms, int)
+        and previous_timeout_ms < BINARY_OPERATION_MIN_TIMEOUT_MS
+        and callable(set_timeout)
+    )
+
+    if changed_timeout:
+        set_timeout(BINARY_OPERATION_MIN_TIMEOUT_MS)
+
+    try:
+        return bytes(query(command, expect_termination=False))
+    finally:
+        if changed_timeout:
+            try:
+                set_timeout(previous_timeout_ms)
+            except Exception:
+                pass
+
+
 def _run_dsox_snapshot_all(
     transport: object,
     parameters: Mapping[str, object],
@@ -103,6 +139,94 @@ def _run_dsox_snapshot_all(
     channel = int(parameters.get("channel", 1))
     driver = _dsox_driver(transport)
     return read_snapshot_all(driver, channel=channel)
+
+
+def _run_dsox_screenshot(
+    transport: object,
+    parameters: Mapping[str, object],
+) -> object:
+    """Capture the physical DSO-X screen as image-file bytes.
+
+    The Programmer's Guide documents :DISPlay:DATA? as an IEEE 488.2 binary
+    block. INKSaver is temporarily disabled so the returned colors match the
+    physical screen, then restored after a successful transfer.
+    """
+
+    from instrument_core.errors import InstrumentTimeoutError
+
+    format_key = str(parameters.get("format", "PNG")).strip().upper()
+    palette_key = str(parameters.get("palette", "COLOR")).strip().upper()
+
+    formats = {
+        "PNG": ("PNG", "image/png"),
+        "BMP": ("BMP", "image/bmp"),
+        "BMP8BIT": ("BMP8bit", "image/bmp"),
+    }
+    palettes = {
+        "COLOR": "COLor",
+        "COLOUR": "COLor",
+        "GRAYSCALE": "GRAYscale",
+        "GREYSCALE": "GRAYscale",
+        "GRAY": "GRAYscale",
+        "GREY": "GRAYscale",
+    }
+
+    try:
+        format_scpi, mime_type = formats[format_key]
+    except KeyError as exc:
+        raise ValueError("Screenshot format must be PNG, BMP or BMP8bit") from exc
+    try:
+        palette_scpi = palettes[palette_key]
+    except KeyError as exc:
+        raise ValueError("Screenshot palette must be COLor or GRAYscale") from exc
+
+    # Check binary-query support before changing any instrument state.
+    if not callable(getattr(transport, "query_ieee_block_bytes", None)):
+        raise TypeError(
+            "Screenshot capture requires query_ieee_block_bytes() transport support"
+        )
+
+    driver = _dsox_driver(transport)
+    original_inksaver = driver.query(":HARDcopy:INKSaver?").strip()
+    original_inksaver_on = original_inksaver.upper() in {"1", "ON", "TRUE"}
+
+    if original_inksaver_on:
+        driver.write(":HARDcopy:INKSaver OFF")
+
+    command = f":DISPlay:DATA? {format_scpi},{palette_scpi}"
+
+    try:
+        payload = _query_ieee_block_bytes(transport, command)
+    except InstrumentTimeoutError:
+        # Do not send more SCPI after a binary timeout. The owning I/O worker
+        # will invalidate the VISA session before any later operation.
+        raise
+    except Exception:
+        if original_inksaver_on:
+            try:
+                driver.write(":HARDcopy:INKSaver ON")
+            except Exception:
+                pass
+        raise
+
+    restore_error: str | None = None
+    if original_inksaver_on:
+        try:
+            driver.write(":HARDcopy:INKSaver ON")
+        except Exception as exc:
+            restore_error = str(exc)
+
+    return {
+        "kind": "instrument_screenshot",
+        "instrument_family": "keysight_dsox3000",
+        "format": format_scpi,
+        "palette": palette_scpi,
+        "mime_type": mime_type,
+        "byte_count": len(payload),
+        "data": payload,
+        "inksaver_original": original_inksaver,
+        "inksaver_restore_error": restore_error,
+    }
 
 
 def _run_dsox_read_control_state(
@@ -336,6 +460,36 @@ def build_default_operation_registry() -> InstrumentOperationRegistry:
             safety=SafetyLevel.DISRUPTIVE,
             parameters=(),
             runner=_run_dsox_stop,
+        )
+    )
+
+    registry.register(
+        InstrumentOperation(
+            id="keysight.dsox3000.screenshot",
+            title="Instrument Screenshot",
+            description=(
+                "读取真实 DSO-X 屏幕图像。使用 :DISPlay:DATA? IEEE 488.2 "
+                "binary block，并在成功传输后恢复原 INKSaver 状态。"
+            ),
+            profile_keys=dsox_profiles,
+            safety=SafetyLevel.SAFE,
+            parameters=(
+                OperationParameter(
+                    name="format",
+                    label="Format",
+                    kind="choice",
+                    default="PNG",
+                    choices=("PNG", "BMP", "BMP8bit"),
+                ),
+                OperationParameter(
+                    name="palette",
+                    label="Palette",
+                    kind="choice",
+                    default="COLor",
+                    choices=("COLor", "GRAYscale"),
+                ),
+            ),
+            runner=_run_dsox_screenshot,
         )
     )
 
