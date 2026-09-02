@@ -1,0 +1,50 @@
+{
+  "metadata": {
+    "manufacturer": "Keysight Technologies",
+    "family": "DSO-X 3000 X-Series",
+    "target_model": "DSO-X 3034A",
+    "category": "display",
+    "status": "manual_verified",
+    "manual_id": "dsox3000_programmers_guide"
+  },
+  "commands": [
+    {
+      "id": "display.data",
+      "name": "Display Screenshot Data",
+      "category": "display",
+      "command": ":DISPlay:DATA?",
+      "query_command": ":DISPlay:DATA? <format>,<palette>",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "binary",
+      "description": "Read the oscilloscope screen image as an IEEE 488.2 definite-length binary block.",
+      "response_notes": "Programmer's Guide supports BMP, BMP8bit and PNG with COLor or GRAYscale palette. The returned payload is image-file bytes after removing the IEEE block header.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 320,
+      "manual_section": "DISPlay Commands - :DISPlay:DATA",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["DSO-X 3034A"],
+      "notes": "Large binary transfer; do not execute in generic safe probe. Use the screenshot Instrument Operation so binary framing and INKSaver handling remain consistent."
+    },
+    {
+      "id": "hardcopy.inksaver",
+      "name": "Hardcopy Ink Saver",
+      "category": "display",
+      "command": ":HARDcopy:INKSaver?",
+      "set_command": ":HARDcopy:INKSaver <state>",
+      "query_command": ":HARDcopy:INKSaver?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "boolean",
+      "description": "Control whether graticule colors are inverted for hardcopy/display image output.",
+      "response_notes": "0 means OFF and 1 means ON. For a normal non-inverted screenshot, the Programmer's Guide recommends INKSaver OFF before :DISPlay:DATA?.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 383,
+      "manual_section": "HARDcopy Commands - :HARDcopy:INKSaver",
+      "verification_status": "manual_verified",
+      "probe_enabled": true,
+      "supported_models": ["DSO-X 3034A"]
+    }
+  ]
+}
