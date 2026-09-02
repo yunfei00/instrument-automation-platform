@@ -185,7 +185,7 @@ def test_dsox_screenshot_operation_reads_binary_and_restores_inksaver():
         ":HARDcopy:INKSaver ON",
     ]
     assert transport.binary_commands == [
-        (":DISPlay:DATA? PNG,COLor", False),
+        (":DISPlay:DATA? PNG,COLor", True),
     ]
 
 
@@ -205,6 +205,34 @@ def test_dsox_screenshot_keeps_inksaver_off_when_already_off():
     assert transport.writes == [
         ":HARDcopy:INKSaver?",
         ":DISPlay:DATA? BMP,GRAYscale",
+    ]
+    assert transport.binary_commands == [
+        (":DISPlay:DATA? BMP,GRAYscale", True),
+    ]
+
+
+def test_dsox_repeated_screenshot_consumes_binary_termination_each_time():
+    payload = b"\x89PNG\r\n\x1a\nexample"
+    transport = BinaryMockTransport(payload)
+    transport.queue_response("0\n")
+    transport.queue_response("0\n")
+
+    first = DEFAULT_OPERATION_REGISTRY.run(
+        "keysight.dsox3000.screenshot",
+        transport,
+        {"format": "PNG", "palette": "COLor"},
+    )
+    second = DEFAULT_OPERATION_REGISTRY.run(
+        "keysight.dsox3000.screenshot",
+        transport,
+        {"format": "PNG", "palette": "COLor"},
+    )
+
+    assert first["data"] == payload
+    assert second["data"] == payload
+    assert transport.binary_commands == [
+        (":DISPlay:DATA? PNG,COLor", True),
+        (":DISPlay:DATA? PNG,COLor", True),
     ]
 
 
