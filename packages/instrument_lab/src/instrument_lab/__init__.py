@@ -26,6 +26,12 @@ from .operations import (
     OperationParameter,
     build_default_operation_registry,
 )
+from .panels import (
+    DEFAULT_PANEL_REGISTRY,
+    InstrumentPanelDefinition,
+    InstrumentPanelRegistry,
+    build_default_panel_registry,
+)
 from .parser import parse_response
 from .probe import ProbeRunner
 from .storage import save_probe_results
@@ -35,9 +41,12 @@ __all__ = [
     "CommandDefinition",
     "CommandKind",
     "DEFAULT_OPERATION_REGISTRY",
+    "DEFAULT_PANEL_REGISTRY",
     "InstrumentCommandEntry",
     "InstrumentOperation",
     "InstrumentOperationRegistry",
+    "InstrumentPanelDefinition",
+    "InstrumentPanelRegistry",
     "InstrumentProfile",
     "OperationParameter",
     "ProbeResult",
@@ -46,6 +55,7 @@ __all__ = [
     "SafetyLevel",
     "VerificationStatus",
     "build_default_operation_registry",
+    "build_default_panel_registry",
     "discover_instrument_profiles",
     "extract_placeholders",
     "find_repo_root",
