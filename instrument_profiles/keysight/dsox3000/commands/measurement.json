@@ -30,6 +30,27 @@
       "notes": "State-changing configuration command. Do not execute in the generic safe probe."
     },
     {
+      "id": "measure.snapshot_all",
+      "name": "Snapshot All Measurements",
+      "category": "measurement",
+      "command": ":MEASure:ALL",
+      "set_command": ":MEASure:ALL",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
+      "description": "Install the front-panel-equivalent Snapshot All measurement set.",
+      "response_notes": "The command itself is not a query. The baseline read_snapshot_all helper queries the individual scalar values after installing Snapshot All.",
+      "manual_id": "dsox3000_programmers_guide",
+      "manual_page": 432,
+      "manual_section": "MEASure Commands",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": [
+        "DSO-X 3034A"
+      ],
+      "notes": "Confirmed in the Keysight Programmer's Guide. Real DSO-X 3034A Snapshot All execution is still hardware-pending."
+    },
+    {
       "id": "measure.delay",
       "name": "Delay Measurement",
       "category": "measurement",
