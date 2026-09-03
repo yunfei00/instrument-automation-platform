@@ -13,7 +13,7 @@ the reusable Driver/Operation control APIs.
 
 from __future__ import annotations
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -31,6 +31,30 @@ from .gui_panels import DSOX3000Panel
 
 
 ensure_dsox_control_operations_registered()
+
+
+def _tune_main_panel_layout(panel: DSOX3000Panel) -> None:
+    """Rebalance the verified DSO-X panel for the new full-width workspace.
+
+    The screenshot renderer itself is intentionally untouched.  We only keep its
+    QLabel from stretching across the entire custom-control page, center it, and
+    reserve more vertical room by capping the always-visible Snapshot table.
+    """
+
+    panel.screen_label.setMinimumSize(700, 400)
+    panel.screen_label.setMaximumSize(760, 440)
+
+    screen_parent = panel.screen_label.parentWidget()
+    screen_layout = screen_parent.layout() if screen_parent is not None else None
+    if screen_layout is not None:
+        screen_layout.setAlignment(
+            panel.screen_label,
+            Qt.AlignmentFlag.AlignHCenter,
+        )
+
+    # Snapshot remains available below the main view, but it should not consume
+    # half of the new large page while the user is looking at Instrument Screen.
+    panel.snapshot_table.setMaximumHeight(180)
 
 
 class DSOX3000WritableControls(QWidget):
@@ -238,9 +262,10 @@ class DSOX3000ControlPanel(QWidget):
         self.tabs = QTabWidget(self)
         root.addWidget(self.tabs)
 
-        # Do not subclass or patch this object. Screenshot/Data View rendering
-        # stays on the exact hardware-verified DSOX3000Panel implementation.
+        # Do not subclass or patch the verified renderer. Only apply benign
+        # geometry tuning after construction for the new full-width workspace.
         self.main_panel = DSOX3000Panel(self.tabs)
+        _tune_main_panel_layout(self.main_panel)
         self.main_panel.operation_requested.connect(self.operation_requested.emit)
         self.tabs.addTab(self.main_panel, "主控制台")
 
