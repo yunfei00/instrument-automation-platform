@@ -1,6 +1,6 @@
 # FSW Instrument Screen 实机验证计划（2026-09-03）
 
-状态：`hardware_pending`
+状态：`hardware_pending_stability`
 
 ## 目标
 
@@ -10,18 +10,31 @@
 
 ## 第一轮实机反馈
 
-第一轮实机已经确认 PNG 截图链路能够工作，但截图颜色与仪表当前屏幕明显不一致，部分文字/网格可读性较差，因此本轮**不得**将 Screenshot 标记为 `hardware_verified`。
+第一轮实机确认 PNG 截图链路能够工作，但默认 Hardcopy 配色与仪表当前屏幕明显不一致，部分文字/网格可读性较差。
 
-问题定位到 FSW 的 Hardcopy 色彩配置：仪表的 Hardcopy/Print Colors 与当前 Screen Colors 是两套设置。FSW 手册明确提供 `Screen Colors (Screenshot)` 模式，对应：
+问题定位到 FSW 的 Hardcopy 色彩配置：Hardcopy/Print Colors 与当前 Screen Colors 是两套设置。修复为：
 
 - `HCOPy:DEVice:COLor ON`
 - `HCOPy:CMAP:DEFault4`
 
-其中 `DEFault4` 表示直接使用当前屏幕颜色，不再使用默认的打印优化配色。修复后需重新实机验证颜色一致性。
+其中 `DEFault4` 为 `Screen Colors (Screenshot)`。
+
+## 第二轮实机反馈：颜色修复通过
+
+真实 FSW 上重新验证后确认：
+
+- Screenshot 正常获取；
+- 背景、网格、Trace、Marker 和文字颜色均正常；
+- 文字与曲线可读性正常；
+- 截图视觉效果与仪表当前屏幕一致。
+
+颜色复现路径已完成实机验证，并单独记录在 `FSW_SCREENSHOT_COLOR_2026-09-03.md`。
+
+当前 Screenshot 整体资格仍保持 `hardware_pending_stability`，只剩连续运行和 Screenshot/Trace 交叉回归。
 
 ## 当前实现
 
-截图链路使用 FSW 手册已核对的 Hardcopy / Mass Memory 能力：
+截图链路：
 
 1. 启用彩色 Hardcopy，并选择 `Screen Colors (Screenshot)`；
 2. 将 Hardcopy Device 1 指向 Mass Memory；
@@ -33,34 +46,27 @@
 8. 成功回传后删除临时文件；
 9. Qt 只负责 PNG 解码、等比例缩放和本地保存，不包含 SCPI。
 
-当前命令目录状态为 `manual_verified`，本轮实机通过前不得提升为 `hardware_verified`。
+## 剩余实机回归步骤
 
-## 建议实机步骤
+1. 连续点击 `刷新截图` 5 次，确认每次均成功；
+2. 点击 `保存截图`，确认本地 PNG 可正常打开；
+3. 返回 `主控制台`，执行 `Single + 读取 Trace`；
+4. 执行 `Screenshot -> Trace -> Screenshot -> Trace` 交叉操作至少 2~3 轮；
+5. 确认 Binary Read 后没有残留数据污染下一条查询；
+6. 确认 GUI 无闪退、VISA Session 未丢失；
+7. 最后执行 `SYSTem:ERRor?` 检查错误队列。
 
-1. 启动 Instrument Automation Studio，连接 FSW；
-2. 进入 `定制控制 -> Instrument Screen`；
-3. 先执行一次 `刷新截图`，重点确认背景、网格、Trace、Marker 和文字颜色与仪表当前屏幕基本一致；
-4. 确认可读性恢复后，连续点击 `刷新截图` 5 次；
-5. 确认图像保持宽高比、能够利用大显示区域，不出现明显拉伸或截断；
-6. 点击 `保存截图`，确认本地 PNG 能正常打开；
-7. 返回 `主控制台`，执行一次 `Single + 读取 Trace`；
-8. 再执行 Screenshot -> Trace -> Screenshot 的交叉操作至少 2~3 轮，确认 Binary Read 后没有残留数据污染下一条查询；
-9. 确认 GUI 无闪退、VISA Session 未丢失；
-10. 最后执行 `SYSTem:ERRor?` 检查错误队列。
+## 最终通过标准
 
-## 通过标准
-
-- 截图颜色与当前仪表屏幕基本一致，背景/网格/Trace/Marker/文字清晰可读；
 - Screenshot 连续 5 次均成功；
-- PNG 能由 Qt 正常解码和显示；
-- 图像比例正常，保存的本地 PNG 可打开；
+- 保存 PNG 正常；
 - Screenshot 与 Trace 交叉操作稳定；
 - 未观察到 Binary Block 对后续 SCPI 的污染；
 - GUI 不闪退，连接不中断；
 - `SYSTem:ERRor?` 无新增错误。
 
-通过后：
+全部通过后：
 
-- 将 FSW Hardcopy/Screenshot 相关命令与 Instrument Screen 标记为 `hardware_verified`；
-- 将其纳入 FSW 第一版统一回归；
-- 再决定是否将当前 FSW 专用控制台从阶段性验证状态提升到第一版稳定基线。
+- 将 FSW Hardcopy/Screenshot 相关命令与 Instrument Screen 整体标记为 `hardware_verified`；
+- 纳入 FSW 第一版统一回归；
+- 对当前 FSW 专用控制台执行第一版稳定基线收口。
