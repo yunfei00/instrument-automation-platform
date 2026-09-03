@@ -14,6 +14,8 @@ on:
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
       - "tests/unit/test_dsox_control_panel_composition.py"
+      - "tests/unit/test_fsw_operations.py"
+      - "tests/unit/test_instrument_control_workspace.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -33,6 +35,8 @@ on:
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
       - "tests/unit/test_dsox_control_panel_composition.py"
+      - "tests/unit/test_fsw_operations.py"
+      - "tests/unit/test_instrument_control_workspace.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -69,12 +73,14 @@ jobs:
           python -m py_compile packages/instrument_lab/src/instrument_lab/operations.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/dsox_waveform_operation.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/dsox_control_operations.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/fsw_operations.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/panels.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_io.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_stable.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_panels.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_dsox_controls.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/gui_fsw.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_control.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/port_bridge_gui.py
           python -m py_compile tools/instrument_lab_gui.py
@@ -89,5 +95,7 @@ jobs:
           python -m pytest -q tests/unit/test_dsox_control_operations.py
           python -m pytest -q tests/unit/test_dsox_gui_control_registration.py
           python -m pytest -q tests/unit/test_dsox_control_panel_composition.py
+          python -m pytest -q tests/unit/test_fsw_operations.py
+          python -m pytest -q tests/unit/test_instrument_control_workspace.py
           python -m pytest -q tests/unit/test_bridge_protocol.py
           python -m pytest -q tests/unit/test_instrument_port_bridge_launcher.py

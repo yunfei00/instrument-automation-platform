@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QPushButton,
+    QSplitter,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from .gui_dsox_controls import DSOX3000ControlPanel
+from .gui_fsw import FSWControlPanel
 from .gui_stable import StableInstrumentLabWindow
 from .models import SafetyLevel
 from .operations import DEFAULT_OPERATION_REGISTRY, InstrumentOperation
@@ -44,15 +46,22 @@ class InstrumentOperationRequests(QObject):
 def json_safe_operation_result(value: object) -> object:
     """Convert an operation result to compact JSON-safe diagnostic metadata.
 
-    Binary waveform/screenshot payloads must stay available to the owning panel,
-    but dumping hundreds of kilobytes of ``bytes`` into the Raw JSON widget is
-    both slow and unreadable. Replace binary values with a size-only marker while
-    preserving the original result object for the actual renderer.
+    Binary payloads and large numeric arrays must stay available to the owning
+    dedicated panel, but should not be expanded into the optional Raw JSON dock.
     """
 
     if isinstance(value, (bytes, bytearray, memoryview)):
         return f"<{len(value)} bytes>"
     if isinstance(value, dict):
+        if value.get("kind") == "rohde_schwarz_fsw_trace":
+            compact = dict(value)
+            frequencies = compact.get("frequencies_hz")
+            levels = compact.get("levels_dbm")
+            if isinstance(frequencies, (list, tuple)):
+                compact["frequencies_hz"] = f"<{len(frequencies)} points>"
+            if isinstance(levels, (list, tuple)):
+                compact["levels_dbm"] = f"<{len(levels)} points>"
+            value = compact
         return {
             str(key): json_safe_operation_result(item)
             for key, item in value.items()
@@ -63,7 +72,7 @@ def json_safe_operation_result(value: object) -> object:
 
 
 class InstrumentControlWindow(StableInstrumentLabWindow):
-    """Stable Instrument Lab plus reusable operations and control panels."""
+    """Stable Instrument Lab plus reusable operations and dedicated panels."""
 
     def __init__(self, repo_root: str | Path | None = None) -> None:
         super().__init__(repo_root=repo_root)
@@ -80,7 +89,7 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             self._instrument_operation_finished
         )
 
-        self._build_instrument_panel_dock()
+        self._build_workspace_pages()
         self._build_operation_dock()
         self.profile_combo.currentIndexChanged.connect(
             self._profile_context_changed
@@ -88,22 +97,55 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         self._profile_context_changed()
 
     # ------------------------------------------------------------------
-    # Instrument-family panel host
+    # Large two-page workspace
     # ------------------------------------------------------------------
 
-    def _build_instrument_panel_dock(self) -> None:
-        dock = QDockWidget("仪表控制 / Instrument Control", self)
-        dock.setObjectName("instrument_control_dock")
+    def _build_workspace_pages(self) -> None:
+        """Keep Connection global and split the dense body into two big pages."""
 
-        self.panel_container = QWidget()
+        central = self.centralWidget()
+        root = central.layout() if central is not None else None
+        if root is None:
+            raise RuntimeError("Instrument Lab central layout is unavailable")
+
+        generic_surface: QWidget | None = None
+        for index in range(root.count()):
+            item = root.itemAt(index)
+            widget = item.widget()
+            if isinstance(widget, QSplitter):
+                generic_surface = widget
+                break
+
+        if generic_surface is None:
+            raise RuntimeError("Instrument Lab generic command surface was not found")
+
+        root.removeWidget(generic_surface)
+
+        self.workspace_tabs = QTabWidget(central)
+        self.workspace_tabs.setDocumentMode(True)
+
+        generic_page = QWidget(self.workspace_tabs)
+        generic_layout = QVBoxLayout(generic_page)
+        generic_layout.setContentsMargins(0, 0, 0, 0)
+        generic_layout.addWidget(generic_surface)
+        self.workspace_tabs.addTab(generic_page, "通用命令")
+        self.generic_commands_page = generic_page
+
+        custom_page = QWidget(self.workspace_tabs)
+        custom_layout = QVBoxLayout(custom_page)
+        custom_layout.setContentsMargins(6, 6, 6, 6)
+        self.panel_container = QWidget(custom_page)
         self.panel_layout = QVBoxLayout(self.panel_container)
-        dock.setWidget(self.panel_container)
+        self.panel_layout.setContentsMargins(0, 0, 0, 0)
+        custom_layout.addWidget(self.panel_container, 1)
+        self.workspace_tabs.addTab(custom_page, "定制控制")
+        self.custom_control_page = custom_page
 
-        self.addDockWidget(
-            Qt.DockWidgetArea.RightDockWidgetArea,
-            dock,
-        )
-        self.instrument_panel_dock = dock
+        root.addWidget(self.workspace_tabs, 1)
+
+    # ------------------------------------------------------------------
+    # Instrument-family panel host
+    # ------------------------------------------------------------------
 
     def _clear_instrument_panel(self) -> None:
         self._active_panel = None
@@ -126,7 +168,7 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         if definition is None:
             note = QLabel(
                 "当前 Instrument Profile 还没有专用控制面板。\n"
-                "Command Browser、Raw SCPI 和 Instrument Operations 仍可正常使用。"
+                "请使用“通用命令”页面的 Command Browser / Raw SCPI。"
             )
             note.setWordWrap(True)
             self.panel_layout.addWidget(note)
@@ -134,16 +176,19 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
 
         if definition.panel_type == "dsox3000":
             panel = DSOX3000ControlPanel(self.panel_container)
-            panel.operation_requested.connect(self._run_panel_operation)
-            self.panel_layout.addWidget(panel)
-            self._active_panel = panel
+        elif definition.panel_type == "fsw":
+            panel = FSWControlPanel(self.panel_container)
+        else:
+            note = QLabel(
+                f"Panel '{definition.panel_type}' 已注册，但当前 GUI 尚无对应渲染器。"
+            )
+            note.setWordWrap(True)
+            self.panel_layout.addWidget(note)
             return
 
-        note = QLabel(
-            f"Panel '{definition.panel_type}' 已注册，但当前 GUI 尚无对应渲染器。"
-        )
-        note.setWordWrap(True)
-        self.panel_layout.addWidget(note)
+        panel.operation_requested.connect(self._run_panel_operation)
+        self.panel_layout.addWidget(panel, 1)
+        self._active_panel = panel
 
     def _run_panel_operation(
         self,
@@ -232,6 +277,14 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
             dock,
         )
         self.operation_dock = dock
+
+        # Keep both large workspace pages spacious by default. Advanced users
+        # can reopen Instrument Operations from the View menu when needed.
+        dock.hide()
+        view_menu = self.menuBar().addMenu("视图")
+        toggle_action = dock.toggleViewAction()
+        toggle_action.setText("高级 Instrument Operations")
+        view_menu.addAction(toggle_action)
 
     def _profile_context_changed(self, _index: int | None = None) -> None:
         self._refresh_operations()
