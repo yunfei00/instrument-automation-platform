@@ -96,11 +96,24 @@ class SpectrumPlotWidget(QWidget):
     def _ranges(self) -> tuple[float, float, float, float] | None:
         if not self._axis_values or not self._levels:
             return None
-        x_min, x_max = self._expanded_range(
-            self._axis_values[0],
-            self._axis_values[-1],
-            minimum_padding=1e-12,
-        )
+
+        axis_start = self._axis_values[0]
+        axis_stop = self._axis_values[-1]
+        if axis_stop > axis_start:
+            # Match the FSW's ten horizontal divisions: Start/0 s belongs on
+            # the left border and Stop/Sweep Time belongs on the right border.
+            # Horizontal padding made the real trace occupy only nine of the
+            # ten visible divisions (half a division blank at each side).
+            x_min, x_max = axis_start, axis_stop
+        else:
+            # Degenerate one-point traces still need a finite drawable range.
+            x_min, x_max = self._expanded_range(
+                axis_start,
+                axis_stop,
+                minimum_padding=1e-12,
+            )
+
+        # Keep a little vertical headroom so peaks do not touch the frame.
         y_min, y_max = self._expanded_range(
             min(self._levels),
             max(self._levels),
