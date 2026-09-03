@@ -57,6 +57,17 @@ def _positive_optional_float(
     return value
 
 
+def _nonnegative_optional_float(
+    parameters: Mapping[str, object],
+    name: str,
+    label: str,
+) -> float | None:
+    value = _optional_float(parameters, name)
+    if value is not None and value < 0:
+        raise ValueError(f"{label} must be non-negative")
+    return value
+
+
 def _run_read_control_state(
     transport: object,
     _parameters: Mapping[str, object],
@@ -87,7 +98,8 @@ def _run_set_center_span(
     parameters: Mapping[str, object],
 ) -> object:
     center = _positive_optional_float(parameters, "center_hz", "Center frequency")
-    span = _positive_optional_float(parameters, "span_hz", "Span")
+    # Span=0 is a valid and important FSW Zero Span configuration.
+    span = _nonnegative_optional_float(parameters, "span_hz", "Span")
     if center is None and span is None:
         raise ValueError("Enter Center and/or Span before applying")
 
@@ -252,7 +264,7 @@ def ensure_fsw_operations_registered() -> None:
         InstrumentOperation(
             id=_SET_CENTER_SPAN_ID,
             title="设置 Center / Span",
-            description="设置中心频率和/或 Span；空值保持当前值。",
+            description="设置中心频率和/或 Span；Span=0 表示 Zero Span；空值保持当前值。",
             profile_keys=_PROFILE_KEYS,
             safety=SafetyLevel.SAFE,
             parameters=(

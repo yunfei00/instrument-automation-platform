@@ -38,6 +38,26 @@ def test_fsw_center_span_operation_uses_driver_api():
     ]
 
 
+def test_fsw_center_span_operation_accepts_zero_span():
+    transport = MockTransport()
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "rohde_schwarz.fsw.set_center_span",
+        transport,
+        {"center_hz": "800e6", "span_hz": "0"},
+    )
+
+    assert result["setting"] == "center_span"
+    assert result["applied"] == {
+        "center_hz": 800e6,
+        "span_hz": 0.0,
+    }
+    assert transport.writes == [
+        "SENSe:FREQuency:CENTer 800000000.0",
+        "SENSe:FREQuency:SPAN 0.0",
+    ]
+
+
 def test_fsw_input_operation_keeps_hardware_verified_manual_attenuation_sequence():
     transport = MockTransport()
 
