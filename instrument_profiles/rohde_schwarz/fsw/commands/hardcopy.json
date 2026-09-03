@@ -3,7 +3,7 @@
     "manufacturer": "Rohde & Schwarz",
     "family": "FSW",
     "category": "hardcopy",
-    "status": "manual_verified",
+    "status": "hardware_verified",
     "manual_id": "fsw_user_manual"
   },
   "commands": [
@@ -19,9 +19,10 @@
       "source": "R&S FSW User Manual, HCOPy:DEVice:COLor",
       "manual_id": "fsw_user_manual",
       "manual_section": "Managing settings and results / Hardcopy",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["FSW"]
+      "supported_models": ["FSW"],
+      "notes": "Hardware verified on the reference FSW screenshot workflow."
     },
     {
       "id": "hardcopy.screen_colors",
@@ -35,10 +36,10 @@
       "source": "R&S FSW User Manual, Print Colors / HCOPy:CMAP<it>:DEFault<ci>",
       "manual_id": "fsw_user_manual",
       "manual_section": "Print Colors",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "DEFault4 is the documented Screen Colors (Screenshot) mode."
+      "notes": "DEFault4 is the documented Screen Colors (Screenshot) mode and was hardware verified to match the instrument display."
     },
     {
       "id": "hardcopy.destination",
@@ -52,7 +53,7 @@
       "source": "R&S FSW User Manual, Storing or printing screenshots",
       "manual_id": "fsw_user_manual",
       "manual_section": "Storing or printing screenshots",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     },
@@ -68,7 +69,7 @@
       "source": "R&S FSW User Manual, HCOPy:DEVice:LANGuage",
       "manual_id": "fsw_user_manual",
       "manual_section": "Storing or printing screenshots",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     },
@@ -84,7 +85,7 @@
       "source": "R&S FSW User Manual, HCOPy:CONTent",
       "manual_id": "fsw_user_manual",
       "manual_section": "Storing or printing screenshots",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     },
@@ -100,7 +101,7 @@
       "source": "R&S FSW User Manual, MMEMory:NAME",
       "manual_id": "fsw_user_manual",
       "manual_section": "Managing settings and results",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     },
@@ -116,7 +117,7 @@
       "source": "R&S FSW User Manual, HCOPy[:IMMediate]",
       "manual_id": "fsw_user_manual",
       "manual_section": "Storing or printing screenshots",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     },
@@ -133,9 +134,10 @@
       "source": "R&S FSW User Manual, MMEMory:DATA",
       "manual_id": "fsw_user_manual",
       "manual_section": "Managing settings and results",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
-      "supported_models": ["FSW"]
+      "supported_models": ["FSW"],
+      "notes": "Hardware verified through repeated Screenshot/Trace interleaving without post-binary SCPI contamination."
     },
     {
       "id": "memory.delete",
@@ -149,7 +151,7 @@
       "source": "R&S FSW User Manual, MMEMory:DELete",
       "manual_id": "fsw_user_manual",
       "manual_section": "Managing settings and results",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"]
     }
