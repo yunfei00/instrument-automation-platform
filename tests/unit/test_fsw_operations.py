@@ -113,6 +113,42 @@ def test_fsw_read_control_state_avoids_candidate_reference_level_query():
     assert not any("RLEVel" in command for command in transport.writes)
 
 
+def test_fsw_set_sweep_time_operation_uses_manual_verified_driver_helper():
+    transport = MockTransport()
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "rohde_schwarz.fsw.set_sweep_time",
+        transport,
+        {"sweep_time_s": 0.002},
+    )
+
+    assert result["setting"] == "sweep_time"
+    assert result["applied"] == {"sweep_time_s": 0.002}
+    assert transport.writes == ["SENSe:SWEep:TIME 0.002"]
+
+
+def test_fsw_marker_peak_operation_uses_only_verified_peak_and_y_commands():
+    transport = MockTransport()
+    transport.queue_response("-33.5")
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "rohde_schwarz.fsw.marker_peak",
+        transport,
+        {},
+    )
+
+    assert result == {
+        "kind": "rohde_schwarz_fsw_marker_peak",
+        "window": 1,
+        "marker": 1,
+        "level_dbm": -33.5,
+    }
+    assert transport.writes == [
+        "CALCulate1:MARKer1:MAXimum:PEAK",
+        "CALCulate1:MARKer1:Y?",
+    ]
+
+
 def test_fsw_single_trace_uses_bounded_completion_and_builds_frequency_axis():
     transport = MockTransport()
     for response in [
