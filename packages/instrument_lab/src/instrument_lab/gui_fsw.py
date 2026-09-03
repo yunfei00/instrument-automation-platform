@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from .fsw_operations import ensure_fsw_operations_registered
+from .gui_units import UnitValueEdit
 
 
 ensure_fsw_operations_registered()
@@ -271,7 +272,7 @@ class FSWControlPanel(QWidget):
         root.addWidget(title)
 
         self.status_label = QLabel(
-            "Frequency / Bandwidth / RF Input / Continuous / Spectrum & Zero Span Trace。"
+            "Frequency / Bandwidth / RF Input / Sweep / Marker / Spectrum & Zero Span Trace。"
         )
         self.status_label.setWordWrap(True)
         root.addWidget(self.status_label)
@@ -309,42 +310,55 @@ class FSWControlPanel(QWidget):
 
         center_group = QGroupBox("Frequency · Center / Span")
         center_layout = QFormLayout(center_group)
-        self.center_edit = QLineEdit()
-        self.center_edit.setPlaceholderText("Hz，例如 800e6")
-        self.span_edit = QLineEdit()
-        self.span_edit.setPlaceholderText("Hz；0 = Zero Span")
+        self.center_edit = UnitValueEdit.frequency(
+            default_unit="MHz",
+            placeholder="例如 800",
+        )
+        self.span_edit = UnitValueEdit.frequency(
+            default_unit="MHz",
+            zero_unit="MHz",
+            placeholder="0 = Zero Span",
+        )
         center_apply = QPushButton("应用 Center / Span")
         center_apply.clicked.connect(self._apply_center_span)
-        center_layout.addRow("Center (Hz)", self.center_edit)
-        center_layout.addRow("Span (Hz)", self.span_edit)
+        center_layout.addRow("Center", self.center_edit)
+        center_layout.addRow("Span", self.span_edit)
         center_layout.addRow(center_apply)
         control_layout.addWidget(center_group)
 
         start_group = QGroupBox("Frequency · Start / Stop")
         start_layout = QFormLayout(start_group)
-        self.start_edit = QLineEdit()
-        self.start_edit.setPlaceholderText("Hz")
-        self.stop_edit = QLineEdit()
-        self.stop_edit.setPlaceholderText("Hz")
+        self.start_edit = UnitValueEdit.frequency(default_unit="MHz")
+        self.stop_edit = UnitValueEdit.frequency(default_unit="MHz")
         start_apply = QPushButton("应用 Start / Stop")
         start_apply.clicked.connect(self._apply_start_stop)
-        start_layout.addRow("Start (Hz)", self.start_edit)
-        start_layout.addRow("Stop (Hz)", self.stop_edit)
+        start_layout.addRow("Start", self.start_edit)
+        start_layout.addRow("Stop", self.stop_edit)
         start_layout.addRow(start_apply)
         control_layout.addWidget(start_group)
 
         bandwidth_group = QGroupBox("Bandwidth")
         bandwidth_layout = QFormLayout(bandwidth_group)
-        self.rbw_edit = QLineEdit()
-        self.rbw_edit.setPlaceholderText("Hz")
-        self.vbw_edit = QLineEdit()
-        self.vbw_edit.setPlaceholderText("Hz")
+        self.rbw_edit = UnitValueEdit.frequency(default_unit="MHz")
+        self.vbw_edit = UnitValueEdit.frequency(default_unit="MHz")
         bandwidth_apply = QPushButton("应用 RBW / VBW")
         bandwidth_apply.clicked.connect(self._apply_bandwidth)
-        bandwidth_layout.addRow("RBW (Hz)", self.rbw_edit)
-        bandwidth_layout.addRow("VBW (Hz)", self.vbw_edit)
+        bandwidth_layout.addRow("RBW", self.rbw_edit)
+        bandwidth_layout.addRow("VBW", self.vbw_edit)
         bandwidth_layout.addRow(bandwidth_apply)
         control_layout.addWidget(bandwidth_group)
+
+        sweep_group = QGroupBox("Sweep")
+        sweep_layout = QFormLayout(sweep_group)
+        self.sweep_time_edit = UnitValueEdit.time(
+            default_unit="ms",
+            placeholder="例如 10",
+        )
+        sweep_apply = QPushButton("应用 Sweep Time")
+        sweep_apply.clicked.connect(self._apply_sweep_time)
+        sweep_layout.addRow("Sweep Time", self.sweep_time_edit)
+        sweep_layout.addRow(sweep_apply)
+        control_layout.addWidget(sweep_group)
 
         input_group = QGroupBox("RF Input")
         input_layout = QFormLayout(input_group)
@@ -362,15 +376,25 @@ class FSWControlPanel(QWidget):
         input_layout.addRow(input_apply)
         control_layout.addWidget(input_group)
 
+        marker_group = QGroupBox("Marker 1")
+        marker_layout = QFormLayout(marker_group)
+        marker_peak_button = QPushButton("Peak Search")
+        marker_peak_button.clicked.connect(self._marker_peak)
+        self.marker_level_label = QLabel("-")
+        marker_note = QLabel("当前仅使用已人工核对的 Peak Search 与 Marker Y 查询。")
+        marker_note.setWordWrap(True)
+        marker_layout.addRow(marker_peak_button)
+        marker_layout.addRow("Marker Level", self.marker_level_label)
+        marker_layout.addRow(marker_note)
+        control_layout.addWidget(marker_group)
+
         state_group = QGroupBox("当前状态")
         state_layout = QFormLayout(state_group)
         self.mode_label = QLabel("-")
-        self.sweep_time_label = QLabel("-")
         self.trigger_source_label = QLabel("-")
         self.reference_level_label = QLabel("待实机资格验证，本阶段不自动读取")
         self.reference_level_label.setWordWrap(True)
         state_layout.addRow("View Mode", self.mode_label)
-        state_layout.addRow("Sweep Time", self.sweep_time_label)
         state_layout.addRow("Trigger Source", self.trigger_source_label)
         state_layout.addRow("Reference Level", self.reference_level_label)
         control_layout.addWidget(state_group)
@@ -428,10 +452,17 @@ class FSWControlPanel(QWidget):
                 raise ValueError(f"{label} 必须是数字") from exc
         return text
 
+    @staticmethod
+    def _unit_value(edit: UnitValueEdit, label: str) -> float | str:
+        try:
+            return edit.base_value_or_blank()
+        except ValueError as exc:
+            raise ValueError(f"{label} {exc}") from exc
+
     def _apply_center_span(self) -> None:
         try:
-            center = self._float_text(self.center_edit, "Center")
-            span = self._float_text(self.span_edit, "Span")
+            center = self._unit_value(self.center_edit, "Center")
+            span = self._unit_value(self.span_edit, "Span")
         except ValueError as exc:
             self.status_label.setText(str(exc))
             return
@@ -442,8 +473,8 @@ class FSWControlPanel(QWidget):
 
     def _apply_start_stop(self) -> None:
         try:
-            start = self._float_text(self.start_edit, "Start")
-            stop = self._float_text(self.stop_edit, "Stop")
+            start = self._unit_value(self.start_edit, "Start")
+            stop = self._unit_value(self.stop_edit, "Stop")
         except ValueError as exc:
             self.status_label.setText(str(exc))
             return
@@ -454,14 +485,25 @@ class FSWControlPanel(QWidget):
 
     def _apply_bandwidth(self) -> None:
         try:
-            rbw = self._float_text(self.rbw_edit, "RBW")
-            vbw = self._float_text(self.vbw_edit, "VBW")
+            rbw = self._unit_value(self.rbw_edit, "RBW")
+            vbw = self._unit_value(self.vbw_edit, "VBW")
         except ValueError as exc:
             self.status_label.setText(str(exc))
             return
         self._emit(
             "rohde_schwarz.fsw.set_bandwidth",
             {"rbw_hz": rbw, "vbw_hz": vbw},
+        )
+
+    def _apply_sweep_time(self) -> None:
+        try:
+            sweep_time = self._unit_value(self.sweep_time_edit, "Sweep Time")
+        except ValueError as exc:
+            self.status_label.setText(str(exc))
+            return
+        self._emit(
+            "rohde_schwarz.fsw.set_sweep_time",
+            {"sweep_time_s": sweep_time},
         )
 
     def _apply_input(self) -> None:
@@ -484,6 +526,9 @@ class FSWControlPanel(QWidget):
             "rohde_schwarz.fsw.set_continuous",
             {"state": self.continuous_combo.currentText()},
         )
+
+    def _marker_peak(self) -> None:
+        self._emit("rohde_schwarz.fsw.marker_peak", {})
 
     def _single_trace(self) -> None:
         try:
@@ -535,7 +580,11 @@ class FSWControlPanel(QWidget):
         for edit, key in mapping:
             value = result.get(key)
             if value is not None:
-                edit.setText(self._number(value))
+                edit.set_base_value(float(value))
+
+        sweep_time = result.get("sweep_time_s")
+        if sweep_time is not None:
+            self.sweep_time_edit.set_base_value(float(sweep_time))
 
         continuous = "ON" if bool(result.get("continuous")) else "OFF"
         index = self.continuous_combo.findText(continuous)
@@ -561,15 +610,13 @@ class FSWControlPanel(QWidget):
             zero_span = float(span) == 0.0
         except (TypeError, ValueError):
             zero_span = False
-        self.mode_label.setText("Zero Span · Time/Level" if zero_span else "Spectrum · Frequency/Level")
-
-        sweep_time = result.get("sweep_time_s")
-        self.sweep_time_label.setText(
-            "-" if sweep_time is None else self._time(sweep_time)
+        self.mode_label.setText(
+            "Zero Span · Time/Level" if zero_span else "Spectrum · Frequency/Level"
         )
+
         self.trigger_source_label.setText(str(result.get("trigger_source", "-")))
         self.status_label.setText(
-            "FSW 状态已同步：Frequency / Bandwidth / RF Input / Continuous。"
+            "FSW 状态已同步；频率与时间已自动换算为易读工程单位。"
         )
 
     def _render_trace(self, result: dict[str, object]) -> None:
@@ -593,9 +640,7 @@ class FSWControlPanel(QWidget):
         self._last_levels = tuple(float(value) for value in levels)
         self._last_axis_kind = axis_kind
         center = result.get("center_frequency_hz")
-        self._last_center_frequency_hz = (
-            None if center is None else float(center)
-        )
+        self._last_center_frequency_hz = None if center is None else float(center)
 
         self.spectrum_plot.set_trace(
             self._last_axis_values,
@@ -683,6 +728,15 @@ class FSWControlPanel(QWidget):
             return
         if operation_id == "rohde_schwarz.fsw.single_trace":
             self._render_trace(result)
+            return
+        if operation_id == "rohde_schwarz.fsw.marker_peak":
+            level = result.get("level_dbm")
+            self.marker_level_label.setText(
+                "-" if level is None else f"{self._number(level)} dBm"
+            )
+            self.status_label.setText(
+                f"Marker 1 Peak Search 完成 ({elapsed_ms:.0f} ms)。"
+            )
             return
         if result.get("kind") == "rohde_schwarz_fsw_setting_applied":
             setting = result.get("setting", "setting")

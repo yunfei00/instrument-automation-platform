@@ -49,6 +49,7 @@ jobs:
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/single_capture.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/snapshot.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
+          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/controls.py
           python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
           python -m py_compile tools/verify_dsox3034a_snapshot_all.py
           python -m py_compile tools/verify_fsw_video_trigger.py
@@ -68,6 +69,7 @@ jobs:
           python -m pytest -q \
             tests/unit/test_fsw_driver.py \
             tests/unit/test_fsw_input.py \
+            tests/unit/test_fsw_controls.py \
             tests/unit/test_fsw_arm_read.py \
             tests/unit/test_fsw_bounded_wait.py \
             tests/unit/test_fsw_trace.py \

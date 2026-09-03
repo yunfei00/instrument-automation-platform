@@ -34,10 +34,32 @@ def test_fsw_gui_supports_frequency_and_zero_span_time_axes():
     assert "Zero Span · Time/Level" in text
 
 
+def test_fsw_gui_uses_engineering_unit_controls():
+    text = SOURCE.read_text(encoding="utf-8")
+
+    assert "from .gui_units import UnitValueEdit" in text
+    assert 'UnitValueEdit.frequency(' in text
+    assert 'default_unit="MHz"' in text
+    assert 'UnitValueEdit.time(' in text
+    assert 'default_unit="ms"' in text
+    assert '"rohde_schwarz.fsw.set_sweep_time"' in text
+
+
+def test_fsw_gui_exposes_verified_marker_peak_action():
+    text = SOURCE.read_text(encoding="utf-8")
+
+    assert 'QGroupBox("Marker 1")' in text
+    assert 'QPushButton("Peak Search")' in text
+    assert '"rohde_schwarz.fsw.marker_peak"' in text
+    assert "Marker Level" in text
+
+
 def test_fsw_gui_keeps_scpi_out_of_visual_layer():
     text = SOURCE.read_text(encoding="utf-8")
 
     assert "SENSe:FREQuency" not in text
+    assert "SENSe:SWEep" not in text
+    assert "CALCulate1:MARKer1" not in text
     assert "INPut:ATTenuation" not in text
     assert "TRACe1:DATA" not in text
     assert "rohde_schwarz.fsw.single_trace" in text
