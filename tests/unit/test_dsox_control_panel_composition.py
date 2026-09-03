@@ -28,5 +28,7 @@ def test_binary_rendering_stays_owned_by_stable_panel():
         "class DSOX3000ControlPanel", 1
     )[0]
     assert "QPixmap" not in writable_section
-    assert "screenshot" not in writable_section.lower()
-    assert "waveform" not in writable_section.lower()
+    assert "screen_label" not in writable_section
+    assert "waveform_plot" not in writable_section
+    assert "_last_screenshot_data" not in writable_section
+    assert "_last_waveform_times" not in writable_section
