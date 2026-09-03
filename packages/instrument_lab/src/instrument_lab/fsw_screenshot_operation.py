@@ -43,9 +43,17 @@ def _run_screenshot(
     driver = _driver(transport)
     remote_path = _DEFAULT_REMOTE_PATH
 
-    # R&S FSW User Manual, Storing or printing screenshots:
-    # route Device 1 to mass memory, select PNG, select complete-screen hardcopy,
-    # name the file and execute the hardcopy job.
+    # R&S FSW User Manual, Hardcopy/Print Colors:
+    # - HCOPy:DEVice:COLor ON keeps the file output in color.
+    # - HCOPy:CMAP:DEFault4 selects "Screen Colors (Screenshot)", which uses
+    #   the current screen colors without converting the background/grid to
+    #   printer-oriented colors.  Without DEF4 the default optimized print
+    #   palette can look very different from the physical FSW display.
+    #
+    # Then route Device 1 to mass memory, select PNG, select complete-screen
+    # hardcopy, name the file and execute the hardcopy job.
+    driver.write("HCOPy:DEVice:COLor ON")
+    driver.write("HCOPy:CMAP:DEFault4")
     driver.write("HCOPy:DESTination1 'MMEM'")
     driver.write("HCOPy:DEVice:LANGuage1 PNG")
     driver.write("HCOPy:CONTent HCOPy")
@@ -93,6 +101,7 @@ def _run_screenshot(
         "byte_count": len(payload),
         "data": payload,
         "remote_temp_path": remote_path,
+        "hardcopy_color_mode": "screen_colors_screenshot",
         "cleanup_error": cleanup_error,
     }
 
@@ -111,7 +120,8 @@ def ensure_fsw_screenshot_operation_registered() -> None:
             id=_OPERATION_ID,
             title="Instrument Screenshot",
             description=(
-                "获取 FSW 当前测量屏幕 PNG。截图先临时保存在仪表用户目录，"
+                "获取 FSW 当前测量屏幕 PNG，并使用 Screen Colors (Screenshot) "
+                "保持与仪表屏幕一致的颜色。截图先临时保存在仪表用户目录，"
                 "随后通过 IEEE 488.2 block 传回并清理临时文件。"
             ),
             profile_keys=("rohde_schwarz/fsw",),
