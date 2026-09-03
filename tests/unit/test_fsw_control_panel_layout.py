@@ -34,6 +34,17 @@ def test_fsw_gui_supports_frequency_and_zero_span_time_axes():
     assert "Zero Span · Time/Level" in text
 
 
+def test_fsw_trace_uses_the_full_ten_horizontal_divisions():
+    text = SOURCE.read_text(encoding="utf-8")
+
+    assert "for column in range(11):" in text
+    assert "column / 10.0" in text
+    assert "axis_start = self._axis_values[0]" in text
+    assert "axis_stop = self._axis_values[-1]" in text
+    assert "x_min, x_max = axis_start, axis_stop" in text
+    assert "Horizontal padding made the real trace occupy only nine" in text
+
+
 def test_fsw_gui_uses_engineering_unit_controls():
     text = SOURCE.read_text(encoding="utf-8")
 
