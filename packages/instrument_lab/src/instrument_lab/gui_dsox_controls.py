@@ -14,13 +14,18 @@ the reusable Driver/Operation control APIs.
 from __future__ import annotations
 
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
+    QGridLayout,
     QGroupBox,
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSplitter,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -33,28 +38,168 @@ from .gui_panels import DSOX3000Panel
 ensure_dsox_control_operations_registered()
 
 
-def _tune_main_panel_layout(panel: DSOX3000Panel) -> None:
-    """Rebalance the verified DSO-X panel for the new full-width workspace.
+class AspectPixmapLabel(QLabel):
+    """Resize a screenshot to the available area while preserving its ratio."""
 
-    The screenshot renderer itself is intentionally untouched.  We only keep its
-    QLabel from stretching across the entire custom-control page, center it, and
-    reserve more vertical room by capping the always-visible Snapshot table.
-    """
-
-    panel.screen_label.setMinimumSize(700, 400)
-    panel.screen_label.setMaximumSize(760, 440)
-
-    screen_parent = panel.screen_label.parentWidget()
-    screen_layout = screen_parent.layout() if screen_parent is not None else None
-    if screen_layout is not None:
-        screen_layout.setAlignment(
-            panel.screen_label,
-            Qt.AlignmentFlag.AlignHCenter,
+    def __init__(
+        self,
+        text: str = "",
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(text, parent)
+        self._source_pixmap = QPixmap()
+        self.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Expanding,
+            QSizePolicy.Policy.Expanding,
         )
 
-    # Snapshot remains available below the main view, but it should not consume
-    # half of the new large page while the user is looking at Instrument Screen.
-    panel.snapshot_table.setMaximumHeight(180)
+    def setPixmap(self, pixmap: QPixmap) -> None:  # noqa: N802 - Qt API
+        self._source_pixmap = QPixmap(pixmap)
+        self._refresh_scaled_pixmap()
+
+    def _refresh_scaled_pixmap(self) -> None:
+        if self._source_pixmap.isNull():
+            return
+
+        target_size = self.contentsRect().size()
+        if target_size.width() <= 0 or target_size.height() <= 0:
+            return
+
+        scaled = self._source_pixmap.scaled(
+            target_size,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+        QLabel.setPixmap(self, scaled)
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 - Qt API
+        super().resizeEvent(event)
+        self._refresh_scaled_pixmap()
+
+
+def _replace_screen_label(panel: DSOX3000Panel) -> None:
+    """Swap only the visual QLabel; screenshot acquisition/render ownership stays put."""
+
+    old_label = panel.screen_label
+    parent = old_label.parentWidget()
+    layout = parent.layout() if parent is not None else None
+    if parent is None or layout is None:
+        return
+
+    screen_label = AspectPixmapLabel(old_label.text(), parent)
+    screen_label.setStyleSheet(old_label.styleSheet())
+    screen_label.setToolTip(old_label.toolTip())
+    screen_label.setMinimumSize(640, 400)
+
+    layout.replaceWidget(old_label, screen_label)
+    old_label.hide()
+    old_label.setParent(None)
+    old_label.deleteLater()
+    panel.screen_label = screen_label
+
+
+def _reflow_main_panel_layout(panel: DSOX3000Panel) -> None:
+    """Place controls on the left and the large Screen/Data View on the right.
+
+    ``DSOX3000Panel`` still owns every command callback and every screenshot /
+    waveform result renderer.  This function only rearranges the widgets that
+    the verified panel already created, so no SCPI or binary-transfer path is
+    duplicated here.
+    """
+
+    root = panel.layout()
+    if root is None or root.count() < 6:
+        return
+
+    # Original order is title, status, action row, settings grid, view tabs,
+    # Snapshot. Take the lower four items from bottom to top so title/status stay
+    # untouched at the top of the panel.
+    snapshot_item = root.takeAt(5)
+    view_item = root.takeAt(4)
+    settings_item = root.takeAt(3)
+    actions_item = root.takeAt(2)
+
+    snapshot_group = snapshot_item.widget() if snapshot_item is not None else None
+    view_tabs = view_item.widget() if view_item is not None else None
+    settings_layout = settings_item.layout() if settings_item is not None else None
+    actions_layout = actions_item.layout() if actions_item is not None else None
+
+    if view_tabs is None or settings_layout is None or actions_layout is None:
+        return
+
+    _replace_screen_label(panel)
+
+    splitter = QSplitter(Qt.Orientation.Horizontal, panel)
+    splitter.setChildrenCollapsible(False)
+
+    # Left: compact controls / state / Snapshot. A scroll area keeps the panel
+    # usable on smaller displays without stealing width from the instrument view.
+    left_scroll = QScrollArea(splitter)
+    left_scroll.setWidgetResizable(True)
+    left_scroll.setHorizontalScrollBarPolicy(
+        Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+    )
+    left_scroll.setMinimumWidth(360)
+    left_scroll.setMaximumWidth(500)
+
+    left_content = QWidget(left_scroll)
+    left_layout = QVBoxLayout(left_content)
+    left_layout.setContentsMargins(6, 6, 6, 6)
+    left_layout.setSpacing(8)
+
+    actions_group = QGroupBox("常用操作", left_content)
+    actions_grid = QGridLayout(actions_group)
+    action_widgets: list[QWidget] = []
+    while actions_layout.count():
+        item = actions_layout.takeAt(0)
+        widget = item.widget()
+        if widget is not None:
+            action_widgets.append(widget)
+
+    channel_label = next(
+        (widget for widget in action_widgets if isinstance(widget, QLabel)),
+        QLabel("Channel", actions_group),
+    )
+    actions_grid.addWidget(channel_label, 0, 0)
+    actions_grid.addWidget(panel.channel_combo, 0, 1)
+
+    buttons = [
+        widget
+        for widget in action_widgets
+        if isinstance(widget, QPushButton)
+    ]
+    for index, button in enumerate(buttons):
+        row = 1 + index // 2
+        column = index % 2
+        actions_grid.addWidget(button, row, column)
+
+    left_layout.addWidget(actions_group)
+
+    # The old settings grid was 2x2. On the narrower left column, stack its four
+    # groups vertically so labels and edit boxes remain readable.
+    while settings_layout.count():
+        item = settings_layout.takeAt(0)
+        widget = item.widget()
+        if widget is not None:
+            left_layout.addWidget(widget)
+
+    if snapshot_group is not None:
+        panel.snapshot_table.setMaximumHeight(240)
+        left_layout.addWidget(snapshot_group)
+
+    left_layout.addStretch(1)
+    left_scroll.setWidget(left_content)
+
+    # Right: give the real screen and local Data View most of the workspace.
+    view_tabs.setMinimumSize(680, 500)
+    splitter.addWidget(left_scroll)
+    splitter.addWidget(view_tabs)
+    splitter.setStretchFactor(0, 0)
+    splitter.setStretchFactor(1, 1)
+    splitter.setSizes([430, 900])
+
+    root.addWidget(splitter, 1)
 
 
 class DSOX3000WritableControls(QWidget):
@@ -262,10 +407,11 @@ class DSOX3000ControlPanel(QWidget):
         self.tabs = QTabWidget(self)
         root.addWidget(self.tabs)
 
-        # Do not subclass or patch the verified renderer. Only apply benign
-        # geometry tuning after construction for the new full-width workspace.
+        # Keep the verified panel object and all of its operation handlers. Only
+        # rearrange the widgets after construction: controls left, Screen/Data
+        # View right. No screenshot acquisition or binary parsing is changed.
         self.main_panel = DSOX3000Panel(self.tabs)
-        _tune_main_panel_layout(self.main_panel)
+        _reflow_main_panel_layout(self.main_panel)
         self.main_panel.operation_requested.connect(self.operation_requested.emit)
         self.tabs.addTab(self.main_panel, "主控制台")
 
