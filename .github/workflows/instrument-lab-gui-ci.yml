@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - "packages/instrument_lab/**"
+      - "packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/**"
       - "packages/instrument_core/src/instrument_core/transport/visa.py"
       - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
       - "tests/unit/test_instrument_operations.py"
       - "tests/unit/test_instrument_panels.py"
+      - "tests/unit/test_instrument_lab_units.py"
       - "tests/unit/test_dsox_waveform_operation.py"
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
@@ -26,12 +28,14 @@ on:
   pull_request:
     paths:
       - "packages/instrument_lab/**"
+      - "packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/**"
       - "packages/instrument_core/src/instrument_core/transport/visa.py"
       - "packages/instrument_core/src/instrument_core/bridge/**"
       - "instrument_profiles/**"
       - "tests/unit/test_instrument_lab_gui_backend.py"
       - "tests/unit/test_instrument_operations.py"
       - "tests/unit/test_instrument_panels.py"
+      - "tests/unit/test_instrument_lab_units.py"
       - "tests/unit/test_dsox_waveform_operation.py"
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
@@ -71,8 +75,11 @@ jobs:
           python -m py_compile packages/instrument_core/src/instrument_core/bridge/tcp_bridge.py
           python -m py_compile packages/instrument_core/src/instrument_core/bridge/visa_bridge.py
           python -m py_compile packages/instrument_core/src/instrument_core/bridge/discovery.py
+          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/controls.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/gui_backend.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/operations.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/units.py
+          python -m py_compile packages/instrument_lab/src/instrument_lab/gui_units.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/dsox_waveform_operation.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/dsox_control_operations.py
           python -m py_compile packages/instrument_lab/src/instrument_lab/fsw_operations.py
@@ -93,6 +100,7 @@ jobs:
           python -m pytest -q tests/unit/test_instrument_lab_gui_backend.py
           python -m pytest -q tests/unit/test_instrument_operations.py
           python -m pytest -q tests/unit/test_instrument_panels.py
+          python -m pytest -q tests/unit/test_instrument_lab_units.py
           python -m pytest -q tests/unit/test_dsox_waveform_operation.py
           python -m pytest -q tests/unit/test_dsox_control_operations.py
           python -m pytest -q tests/unit/test_dsox_gui_control_registration.py
