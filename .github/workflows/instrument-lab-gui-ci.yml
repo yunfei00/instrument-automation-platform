@@ -13,6 +13,7 @@ on:
       - "tests/unit/test_dsox_waveform_operation.py"
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
+      - "tests/unit/test_dsox_control_panel_composition.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -31,6 +32,7 @@ on:
       - "tests/unit/test_dsox_waveform_operation.py"
       - "tests/unit/test_dsox_control_operations.py"
       - "tests/unit/test_dsox_gui_control_registration.py"
+      - "tests/unit/test_dsox_control_panel_composition.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
       - "tools/instrument_lab_gui.py"
@@ -86,5 +88,6 @@ jobs:
           python -m pytest -q tests/unit/test_dsox_waveform_operation.py
           python -m pytest -q tests/unit/test_dsox_control_operations.py
           python -m pytest -q tests/unit/test_dsox_gui_control_registration.py
+          python -m pytest -q tests/unit/test_dsox_control_panel_composition.py
           python -m pytest -q tests/unit/test_bridge_protocol.py
           python -m pytest -q tests/unit/test_instrument_port_bridge_launcher.py
