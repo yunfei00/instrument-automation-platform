@@ -32,3 +32,14 @@ def test_binary_rendering_stays_owned_by_stable_panel():
     assert "waveform_plot" not in writable_section
     assert "_last_screenshot_data" not in writable_section
     assert "_last_waveform_times" not in writable_section
+
+
+def test_dsox_screen_layout_is_centered_and_width_bounded():
+    text = SOURCE.read_text(encoding="utf-8")
+
+    assert "def _tune_main_panel_layout" in text
+    assert "panel.screen_label.setMinimumSize(700, 400)" in text
+    assert "panel.screen_label.setMaximumSize(760, 440)" in text
+    assert "Qt.AlignmentFlag.AlignHCenter" in text
+    assert "panel.snapshot_table.setMaximumHeight(180)" in text
+    assert "_tune_main_panel_layout(self.main_panel)" in text
