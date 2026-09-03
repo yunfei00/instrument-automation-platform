@@ -40,6 +40,7 @@ FILES = [
     "trace.json",
     "marker.json",
     "system.json",
+    "hardcopy.json",
 ]
 
 
@@ -74,7 +75,13 @@ def main():
                 == VerificationStatus.MANUAL_VERIFIED
             ):
                 assert command.manual_id
-                assert command.manual_page is not None
+                # Some catalog entries are grounded to a stable manual section
+                # rather than one page because pagination can change between
+                # manual revisions. Require at least one precise locator.
+                assert (
+                    command.manual_page is not None
+                    or bool(command.manual_section)
+                )
 
         total += len(catalog.commands)
 
@@ -92,8 +99,17 @@ def main():
     assert "input.preamp_gain" in ids
     assert "input.rf_attenuation" in ids
     assert "input.rf_attenuation_auto" in ids
+    assert "hardcopy.immediate" in ids
+    assert "memory.data" in ids
+    assert "memory.delete" in ids
+
+    # Promotion from manual_verified to hardware_verified must not make the
+    # catalog validator regress merely because the stronger status increased.
     assert statuses["hardware_verified"] >= 4
-    assert statuses["manual_verified"] >= 15
+    assert (
+        statuses["manual_verified"]
+        + statuses["hardware_verified"]
+    ) >= 19
     assert statuses["candidate"] >= 1
 
     print()

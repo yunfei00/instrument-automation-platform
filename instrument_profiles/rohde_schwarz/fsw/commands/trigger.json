@@ -3,7 +3,7 @@
     "manufacturer": "Rohde & Schwarz",
     "family": "FSW",
     "category": "trigger",
-    "status": "manual_verified",
+    "status": "hardware_verified",
     "manual_id": "fsw_user_manual"
   },
   "commands": [
@@ -21,9 +21,10 @@
       "manual_id": "fsw_user_manual",
       "manual_page": 1238,
       "manual_section": "Trigger Settings",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": true,
-      "supported_models": ["FSW"]
+      "supported_models": ["FSW"],
+      "notes": "Real hardware verified for the IMMediate and VIDeo source paths used by Instrument Lab. Other source tokens remain outside the verified GUI scope."
     },
     {
       "id": "trigger.video_level",
@@ -41,10 +42,10 @@
       "manual_id": "fsw_user_manual",
       "manual_page": 1238,
       "manual_section": "Trigger Settings",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "Hardware qualification pending on the target FSW; do not change measurement mode automatically."
+      "notes": "Real hardware verified in the FSW Zero Span VIDEO-trigger workflow. Do not change measurement mode automatically."
     },
     {
       "id": "trigger.offset",
@@ -61,10 +62,10 @@
       "manual_id": "fsw_user_manual",
       "manual_page": 1234,
       "manual_section": "Trigger Settings",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "Do not confuse this Trigger Offset command with IFPower trigger holdoff. Hardware qualification pending."
+      "notes": "Real hardware verified as the Trigger Offset used by the VIDEO-trigger workflow. Do not confuse this with IFPower trigger holdoff."
     },
     {
       "id": "trigger.slope",
@@ -80,10 +81,10 @@
       "manual_id": "fsw_user_manual",
       "manual_page": 1238,
       "manual_section": "Trigger Settings",
-      "verification_status": "manual_verified",
+      "verification_status": "hardware_verified",
       "probe_enabled": false,
       "supported_models": ["FSW"],
-      "notes": "Hardware qualification pending on the target FSW."
+      "notes": "POSitive/NEGative slope set and readback were verified on the target FSW in the VIDEO-trigger control workflow."
     }
   ]
 }
