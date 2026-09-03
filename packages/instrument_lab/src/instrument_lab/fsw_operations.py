@@ -24,6 +24,8 @@ _SET_START_STOP_ID = "rohde_schwarz.fsw.set_start_stop"
 _SET_BANDWIDTH_ID = "rohde_schwarz.fsw.set_bandwidth"
 _SET_INPUT_ID = "rohde_schwarz.fsw.set_input"
 _SET_CONTINUOUS_ID = "rohde_schwarz.fsw.set_continuous"
+_SET_SWEEP_TIME_ID = "rohde_schwarz.fsw.set_sweep_time"
+_MARKER_PEAK_ID = "rohde_schwarz.fsw.marker_peak"
 _SINGLE_TRACE_ID = "rohde_schwarz.fsw.single_trace"
 
 
@@ -236,6 +238,39 @@ def _run_set_continuous(
     }
 
 
+def _run_set_sweep_time(
+    transport: object,
+    parameters: Mapping[str, object],
+) -> object:
+    sweep_time_s = _positive_optional_float(parameters, "sweep_time_s", "Sweep time")
+    if sweep_time_s is None:
+        raise ValueError("Enter Sweep Time before applying")
+
+    from instrument_drivers.rohde_schwarz.fsw import set_sweep_time_s
+
+    applied = set_sweep_time_s(_driver(transport), sweep_time_s)
+    return {
+        "kind": "rohde_schwarz_fsw_setting_applied",
+        "setting": "sweep_time",
+        "applied": {"sweep_time_s": applied},
+    }
+
+
+def _run_marker_peak(
+    transport: object,
+    _parameters: Mapping[str, object],
+) -> object:
+    from instrument_drivers.rohde_schwarz.fsw import marker_peak_search
+
+    level_dbm = marker_peak_search(_driver(transport), window=1, marker=1)
+    return {
+        "kind": "rohde_schwarz_fsw_marker_peak",
+        "window": 1,
+        "marker": 1,
+        "level_dbm": level_dbm,
+    }
+
+
 def _run_single_trace(
     transport: object,
     parameters: Mapping[str, object],
@@ -285,7 +320,7 @@ def _run_single_trace(
 
 
 def ensure_fsw_operations_registered() -> None:
-    """Register the first FSW control-surface operations exactly once."""
+    """Register the FSW control-surface operations exactly once."""
 
     definitions = (
         InstrumentOperation(
@@ -384,6 +419,29 @@ def ensure_fsw_operations_registered() -> None:
                 ),
             ),
             runner=_run_set_continuous,
+        ),
+        InstrumentOperation(
+            id=_SET_SWEEP_TIME_ID,
+            title="设置 Sweep Time",
+            description="使用已人工核对的 Sweep Time 命令设置扫描/Zero Span 时间。",
+            profile_keys=_PROFILE_KEYS,
+            safety=SafetyLevel.SAFE,
+            parameters=(
+                OperationParameter("sweep_time_s", "Sweep Time (s)", "float"),
+            ),
+            runner=_run_set_sweep_time,
+        ),
+        InstrumentOperation(
+            id=_MARKER_PEAK_ID,
+            title="Marker 1 Peak Search",
+            description=(
+                "将 Marker 1 移动到当前 Trace 最大值并读取 Y 结果。"
+                "本操作只使用已 manual_verified 的 MAXimum:PEAK 与 MARKer:Y?。"
+            ),
+            profile_keys=_PROFILE_KEYS,
+            safety=SafetyLevel.DISRUPTIVE,
+            parameters=(),
+            runner=_run_marker_peak,
         ),
         InstrumentOperation(
             id=_SINGLE_TRACE_ID,
