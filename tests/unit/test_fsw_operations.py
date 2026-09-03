@@ -113,7 +113,7 @@ def test_fsw_read_control_state_avoids_candidate_reference_level_query():
     assert not any("RLEVel" in command for command in transport.writes)
 
 
-def test_fsw_single_trace_uses_bounded_completion_and_builds_axis():
+def test_fsw_single_trace_uses_bounded_completion_and_builds_frequency_axis():
     transport = MockTransport()
     for response in [
         "0",
@@ -130,6 +130,8 @@ def test_fsw_single_trace_uses_bounded_completion_and_builds_axis():
         {"timeout_s": 1},
     )
 
+    assert result["axis_kind"] == "frequency"
+    assert result["zero_span"] is False
     assert result["points"] == 3
     assert result["frequencies_hz"] == (100.0, 150.0, 200.0)
     assert result["levels_dbm"] == (-10.0, -5.0, -12.0)
@@ -142,3 +144,34 @@ def test_fsw_single_trace_uses_bounded_completion_and_builds_axis():
         "*ESR?",
     ]
     assert "*OPC" in transport.writes
+
+
+def test_fsw_zero_span_trace_uses_sweep_time_for_time_axis():
+    transport = MockTransport()
+    for response in [
+        "0",
+        "1",
+        "800000000",
+        "800000000",
+        "-10,-5,-12",
+        "0.002",
+    ]:
+        transport.queue_response(response)
+
+    result = DEFAULT_OPERATION_REGISTRY.run(
+        "rohde_schwarz.fsw.single_trace",
+        transport,
+        {"timeout_s": 1},
+    )
+
+    assert result["axis_kind"] == "time"
+    assert result["zero_span"] is True
+    assert result["points"] == 3
+    assert result["center_frequency_hz"] == 800e6
+    assert result["sweep_time_s"] == 0.002
+    assert result["times_s"] == (0.0, 0.001, 0.002)
+    assert result["levels_dbm"] == (-10.0, -5.0, -12.0)
+    assert result["peak_time_s"] == 0.001
+    assert result["peak_level_dbm"] == -5.0
+    assert "SENSe:SWEep:TIME?" in transport.writes
+    assert "frequencies_hz" not in result

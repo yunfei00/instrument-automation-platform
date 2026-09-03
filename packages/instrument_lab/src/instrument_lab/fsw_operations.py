@@ -1,6 +1,6 @@
 """Reusable R&S FSW operations for the dedicated control surface.
 
-The module is intentionally Qt-free.  It connects the existing FSW driver to
+The module is intentionally Qt-free. It connects the existing FSW driver to
 Instrument Lab's operation registry so GUI, CLI and future front ends can reuse
 the same higher-level actions without copying SCPI strings into view code.
 """
@@ -68,6 +68,19 @@ def _nonnegative_optional_float(
     return value
 
 
+def _build_time_axis(sweep_time_s: float, points: int) -> tuple[float, ...]:
+    """Build the Zero Span time axis from the manual-verified sweep time."""
+    if sweep_time_s < 0:
+        raise ValueError("Sweep time must be non-negative")
+    if points <= 0:
+        raise ValueError("Trace point count must be positive")
+    if points == 1:
+        return (0.0,)
+
+    step_s = sweep_time_s / (points - 1)
+    return tuple(index * step_s for index in range(points))
+
+
 def _run_read_control_state(
     transport: object,
     _parameters: Mapping[str, object],
@@ -87,7 +100,7 @@ def _run_read_control_state(
         "rf_attenuation_auto": driver.get_rf_attenuation_auto(),
         "rf_attenuation_db": driver.get_rf_attenuation_db(),
         "preamp_db": driver.get_preamp_db(),
-        # Reference Level is deliberately omitted here.  Its current FSW
+        # Reference Level is deliberately omitted here. Its current FSW
         # catalog entry is still candidate and must not become an automatic
         # state query merely because a Driver API exists.
     }
@@ -233,8 +246,34 @@ def _run_single_trace(
 
     driver = _driver(transport)
     trace = driver.acquire_trace_ascii(timeout_s=timeout_s)
+
+    # In Zero Span the analyzer observes level versus time at one fixed RF
+    # frequency. Start and Stop are therefore equal and must not be presented as
+    # a frequency sweep. Use the manual-verified Sweep Time query to construct
+    # a physical time axis from the number of returned trace samples.
+    zero_span = trace.start_hz == trace.stop_hz
+    if zero_span:
+        sweep_time_s = driver.get_sweep_time()
+        times_s = _build_time_axis(sweep_time_s, trace.points)
+        peak_index = trace.peak_index
+        peak_time_s = None if peak_index is None else times_s[peak_index]
+        return {
+            "kind": "rohde_schwarz_fsw_trace",
+            "axis_kind": "time",
+            "zero_span": True,
+            "points": trace.points,
+            "center_frequency_hz": trace.start_hz,
+            "sweep_time_s": sweep_time_s,
+            "peak_time_s": peak_time_s,
+            "peak_level_dbm": trace.peak_level,
+            "times_s": times_s,
+            "levels_dbm": trace.levels,
+        }
+
     return {
         "kind": "rohde_schwarz_fsw_trace",
+        "axis_kind": "frequency",
+        "zero_span": False,
         "points": trace.points,
         "start_hz": trace.start_hz,
         "stop_hz": trace.stop_hz,
@@ -348,9 +387,10 @@ def ensure_fsw_operations_registered() -> None:
         ),
         InstrumentOperation(
             id=_SINGLE_TRACE_ID,
-            title="Single Spectrum Trace",
+            title="Single Spectrum / Zero Span Trace",
             description=(
-                "关闭 Continuous，执行一次有界等待的测量，并读取 ASCII Spectrum Trace。"
+                "关闭 Continuous 并执行一次有界等待的测量。普通 Span 返回 Frequency/Level；"
+                "Span=0 时使用 Sweep Time 返回 Time/Level。"
             ),
             profile_keys=_PROFILE_KEYS,
             safety=SafetyLevel.SAFE,
