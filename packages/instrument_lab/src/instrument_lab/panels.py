@@ -73,6 +73,18 @@ def build_default_panel_registry() -> InstrumentPanelRegistry:
             ),
         )
     )
+    registry.register(
+        InstrumentPanelDefinition(
+            id="rohde_schwarz.fsw.control",
+            title="R&S FSW 控制台",
+            panel_type="fsw",
+            profile_keys=("rohde_schwarz/fsw",),
+            description=(
+                "面向 R&S FSW 的单仪表频谱控制与 Data View。"
+                "首版覆盖 Frequency、Bandwidth、RF Input 与 Single Trace。"
+            ),
+        )
+    )
     return registry
 
 
