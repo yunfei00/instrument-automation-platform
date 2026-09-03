@@ -35,32 +35,38 @@ ensure_fsw_operations_registered()
 
 
 class SpectrumPlotWidget(QWidget):
-    """Small dependency-free spectrum renderer with cursor support."""
+    """Dependency-free FSW trace renderer supporting frequency and time axes."""
 
     cursor_changed = Signal(int, float, float)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._frequencies: tuple[float, ...] = ()
+        self._axis_values: tuple[float, ...] = ()
         self._levels: tuple[float, ...] = ()
+        self._axis_kind = "frequency"
         self._cursor_index: int | None = None
         self.setMinimumSize(640, 360)
         self.setMouseTracking(True)
 
     def set_trace(
         self,
-        frequencies_hz: tuple[float, ...],
+        axis_values: tuple[float, ...],
         levels_dbm: tuple[float, ...],
+        *,
+        axis_kind: str = "frequency",
     ) -> None:
-        if len(frequencies_hz) != len(levels_dbm):
-            raise ValueError("Spectrum frequency/level arrays must have equal length")
-        self._frequencies = frequencies_hz
+        if len(axis_values) != len(levels_dbm):
+            raise ValueError("FSW axis/level arrays must have equal length")
+        if axis_kind not in {"frequency", "time"}:
+            raise ValueError("FSW axis kind must be frequency or time")
+        self._axis_values = axis_values
         self._levels = levels_dbm
+        self._axis_kind = axis_kind
         self._cursor_index = None
         self.update()
 
     def clear_trace(self) -> None:
-        self._frequencies = ()
+        self._axis_values = ()
         self._levels = ()
         self._cursor_index = None
         self.update()
@@ -74,32 +80,42 @@ class SpectrumPlotWidget(QWidget):
         )
 
     @staticmethod
-    def _expanded_range(low: float, high: float) -> tuple[float, float]:
+    def _expanded_range(
+        low: float,
+        high: float,
+        *,
+        minimum_padding: float,
+    ) -> tuple[float, float]:
         if high > low:
             padding = (high - low) * 0.05
             return low - padding, high + padding
-        padding = max(abs(low) * 0.05, 1.0)
+        padding = max(abs(low) * 0.05, minimum_padding)
         return low - padding, high + padding
 
     def _ranges(self) -> tuple[float, float, float, float] | None:
-        if not self._frequencies or not self._levels:
+        if not self._axis_values or not self._levels:
             return None
-        f_min, f_max = self._expanded_range(
-            self._frequencies[0],
-            self._frequencies[-1],
+        x_min, x_max = self._expanded_range(
+            self._axis_values[0],
+            self._axis_values[-1],
+            minimum_padding=1e-12,
         )
-        y_min, y_max = self._expanded_range(min(self._levels), max(self._levels))
-        return f_min, f_max, y_min, y_max
+        y_min, y_max = self._expanded_range(
+            min(self._levels),
+            max(self._levels),
+            minimum_padding=1.0,
+        )
+        return x_min, x_max, y_min, y_max
 
     @staticmethod
     def _map_point(
-        frequency_hz: float,
+        x_value: float,
         level_dbm: float,
         rect: QRectF,
         ranges: tuple[float, float, float, float],
     ) -> QPointF:
-        f_min, f_max, y_min, y_max = ranges
-        x = rect.left() + (frequency_hz - f_min) / (f_max - f_min) * rect.width()
+        x_min, x_max, y_min, y_max = ranges
+        x = rect.left() + (x_value - x_min) / (x_max - x_min) * rect.width()
         y = rect.bottom() - (level_dbm - y_min) / (y_max - y_min) * rect.height()
         return QPointF(x, y)
 
@@ -113,6 +129,24 @@ class SpectrumPlotWidget(QWidget):
         if magnitude >= 1e3:
             return f"{value_hz / 1e3:.6g} kHz"
         return f"{value_hz:.6g} Hz"
+
+    @staticmethod
+    def _format_time(value_s: float) -> str:
+        magnitude = abs(value_s)
+        if magnitude >= 1.0:
+            return f"{value_s:.6g} s"
+        if magnitude >= 1e-3:
+            return f"{value_s * 1e3:.6g} ms"
+        if magnitude >= 1e-6:
+            return f"{value_s * 1e6:.6g} us"
+        if magnitude >= 1e-9:
+            return f"{value_s * 1e9:.6g} ns"
+        return f"{value_s:.6g} s"
+
+    def _format_axis(self, value: float) -> str:
+        if self._axis_kind == "time":
+            return self._format_time(value)
+        return self._format_frequency(value)
 
     def paintEvent(self, _event) -> None:  # noqa: N802 - Qt API
         painter = QPainter(self)
@@ -131,32 +165,32 @@ class SpectrumPlotWidget(QWidget):
         ranges = self._ranges()
         if ranges is None:
             painter.setPen(QColor(200, 200, 200))
-            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "尚未读取 Spectrum Trace")
+            painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, "尚未读取 FSW Trace")
             return
 
-        f_min, f_max, y_min, y_max = ranges
+        x_min, x_max, y_min, y_max = ranges
         painter.setPen(QColor(190, 195, 200))
         painter.drawText(4, 28, f"{y_max:.6g} dBm")
         painter.drawText(4, int(rect.bottom()), f"{y_min:.6g} dBm")
         painter.drawText(
             int(rect.left()),
             self.height() - 12,
-            self._format_frequency(f_min),
+            self._format_axis(x_min),
         )
         painter.drawText(
-            int(rect.right() - 145),
+            int(rect.right() - 150),
             self.height() - 12,
-            self._format_frequency(f_max),
+            self._format_axis(x_max),
         )
 
         max_visual_points = max(1200, int(rect.width() * 2.0))
-        count = len(self._frequencies)
+        count = len(self._axis_values)
         stride = max(1, count // max_visual_points)
         polygon = QPolygonF()
         for index in range(0, count, stride):
             polygon.append(
                 self._map_point(
-                    self._frequencies[index],
+                    self._axis_values[index],
                     self._levels[index],
                     rect,
                     ranges,
@@ -165,7 +199,7 @@ class SpectrumPlotWidget(QWidget):
         if count > 1 and (count - 1) % stride:
             polygon.append(
                 self._map_point(
-                    self._frequencies[-1],
+                    self._axis_values[-1],
                     self._levels[-1],
                     rect,
                     ranges,
@@ -176,7 +210,7 @@ class SpectrumPlotWidget(QWidget):
 
         if self._cursor_index is not None and 0 <= self._cursor_index < count:
             point = self._map_point(
-                self._frequencies[self._cursor_index],
+                self._axis_values[self._cursor_index],
                 self._levels[self._cursor_index],
                 rect,
                 ranges,
@@ -188,7 +222,7 @@ class SpectrumPlotWidget(QWidget):
             painter.drawEllipse(point, 3.0, 3.0)
 
     def mouseMoveEvent(self, event) -> None:  # noqa: N802 - Qt API
-        if not self._frequencies:
+        if not self._axis_values:
             return
         rect = self._plot_rect()
         if not rect.contains(event.position()):
@@ -196,34 +230,36 @@ class SpectrumPlotWidget(QWidget):
         ranges = self._ranges()
         if ranges is None:
             return
-        f_min, f_max, _y_min, _y_max = ranges
+        x_min, x_max, _y_min, _y_max = ranges
         ratio = (event.position().x() - rect.left()) / rect.width()
-        target = f_min + max(0.0, min(1.0, ratio)) * (f_max - f_min)
-        index = bisect_left(self._frequencies, target)
-        if index >= len(self._frequencies):
-            index = len(self._frequencies) - 1
-        elif index > 0 and abs(self._frequencies[index - 1] - target) <= abs(
-            self._frequencies[index] - target
+        target = x_min + max(0.0, min(1.0, ratio)) * (x_max - x_min)
+        index = bisect_left(self._axis_values, target)
+        if index >= len(self._axis_values):
+            index = len(self._axis_values) - 1
+        elif index > 0 and abs(self._axis_values[index - 1] - target) <= abs(
+            self._axis_values[index] - target
         ):
             index -= 1
         self._cursor_index = index
         self.cursor_changed.emit(
             index,
-            self._frequencies[index],
+            self._axis_values[index],
             self._levels[index],
         )
         self.update()
 
 
 class FSWControlPanel(QWidget):
-    """Dedicated FSW control surface with controls left and spectrum right."""
+    """Dedicated FSW control surface with controls left and trace view right."""
 
     operation_requested = Signal(str, object)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._last_frequencies: tuple[float, ...] = ()
+        self._last_axis_values: tuple[float, ...] = ()
         self._last_levels: tuple[float, ...] = ()
+        self._last_axis_kind = "frequency"
+        self._last_center_frequency_hz: float | None = None
         self._build_ui()
 
     def _build_ui(self) -> None:
@@ -235,7 +271,7 @@ class FSWControlPanel(QWidget):
         root.addWidget(title)
 
         self.status_label = QLabel(
-            "Phase 1：Frequency / Bandwidth / RF Input / Continuous / Spectrum Trace。"
+            "Frequency / Bandwidth / RF Input / Continuous / Spectrum & Zero Span Trace。"
         )
         self.status_label.setWordWrap(True)
         root.addWidget(self.status_label)
@@ -244,8 +280,6 @@ class FSWControlPanel(QWidget):
         self.workspace_splitter.setChildrenCollapsible(False)
         root.addWidget(self.workspace_splitter, 1)
 
-        # Left: compact controls. Keep its width bounded so the spectrum remains
-        # the visual focus, and make the column scrollable on smaller displays.
         control_scroll = QScrollArea(self.workspace_splitter)
         control_scroll.setWidgetResizable(True)
         control_scroll.setHorizontalScrollBarPolicy(
@@ -276,9 +310,9 @@ class FSWControlPanel(QWidget):
         center_group = QGroupBox("Frequency · Center / Span")
         center_layout = QFormLayout(center_group)
         self.center_edit = QLineEdit()
-        self.center_edit.setPlaceholderText("Hz，例如 750e6")
+        self.center_edit.setPlaceholderText("Hz，例如 800e6")
         self.span_edit = QLineEdit()
-        self.span_edit.setPlaceholderText("Hz，例如 100e6")
+        self.span_edit.setPlaceholderText("Hz；0 = Zero Span")
         center_apply = QPushButton("应用 Center / Span")
         center_apply.clicked.connect(self._apply_center_span)
         center_layout.addRow("Center (Hz)", self.center_edit)
@@ -330,10 +364,12 @@ class FSWControlPanel(QWidget):
 
         state_group = QGroupBox("当前状态")
         state_layout = QFormLayout(state_group)
+        self.mode_label = QLabel("-")
         self.sweep_time_label = QLabel("-")
         self.trigger_source_label = QLabel("-")
         self.reference_level_label = QLabel("待实机资格验证，本阶段不自动读取")
         self.reference_level_label.setWordWrap(True)
+        state_layout.addRow("View Mode", self.mode_label)
         state_layout.addRow("Sweep Time", self.sweep_time_label)
         state_layout.addRow("Trigger Source", self.trigger_source_label)
         state_layout.addRow("Reference Level", self.reference_level_label)
@@ -343,9 +379,6 @@ class FSWControlPanel(QWidget):
         self.workspace_splitter.addWidget(control_scroll)
         self.control_scroll = control_scroll
 
-        # Right: large instrument data area. Keep a tab host even though phase 1
-        # only contains Spectrum Data View so a future real-screen view can be
-        # added without disturbing the left control column.
         self.view_tabs = QTabWidget(self.workspace_splitter)
         self.workspace_splitter.addWidget(self.view_tabs)
         self.workspace_splitter.setStretchFactor(0, 0)
@@ -355,7 +388,7 @@ class FSWControlPanel(QWidget):
         data_tab = QWidget(self.view_tabs)
         data_layout = QVBoxLayout(data_tab)
         trace_actions = QHBoxLayout()
-        trace_button = QPushButton("Single + 读取 Spectrum Trace")
+        trace_button = QPushButton("Single + 读取 Trace")
         trace_button.clicked.connect(self._single_trace)
         trace_actions.addWidget(trace_button)
         trace_actions.addWidget(QLabel("Timeout (s)"))
@@ -369,7 +402,7 @@ class FSWControlPanel(QWidget):
         trace_actions.addStretch(1)
         data_layout.addLayout(trace_actions)
 
-        self.trace_summary = QLabel("尚未读取 Spectrum Trace。")
+        self.trace_summary = QLabel("尚未读取 FSW Trace。")
         self.trace_summary.setWordWrap(True)
         data_layout.addWidget(self.trace_summary)
 
@@ -379,7 +412,7 @@ class FSWControlPanel(QWidget):
 
         self.cursor_label = QLabel("Cursor: -")
         data_layout.addWidget(self.cursor_label)
-        self.view_tabs.addTab(data_tab, "Spectrum Data View")
+        self.view_tabs.addTab(data_tab, "Trace Data View")
 
     def _emit(self, operation_id: str, parameters: dict[str, object]) -> None:
         self.status_label.setText(f"准备执行：{operation_id}")
@@ -480,13 +513,15 @@ class FSWControlPanel(QWidget):
             hz = float(value)
         except (TypeError, ValueError):
             return str(value)
-        if abs(hz) >= 1e9:
-            return f"{hz / 1e9:.9g} GHz"
-        if abs(hz) >= 1e6:
-            return f"{hz / 1e6:.9g} MHz"
-        if abs(hz) >= 1e3:
-            return f"{hz / 1e3:.9g} kHz"
-        return f"{hz:.9g} Hz"
+        return SpectrumPlotWidget._format_frequency(hz)
+
+    @staticmethod
+    def _time(value: object) -> str:
+        try:
+            seconds = float(value)
+        except (TypeError, ValueError):
+            return str(value)
+        return SpectrumPlotWidget._format_time(seconds)
 
     def _render_state(self, result: dict[str, object]) -> None:
         mapping = (
@@ -521,9 +556,16 @@ class FSWControlPanel(QWidget):
         if index >= 0:
             self.preamp_combo.setCurrentIndex(index)
 
+        span = result.get("span_hz")
+        try:
+            zero_span = float(span) == 0.0
+        except (TypeError, ValueError):
+            zero_span = False
+        self.mode_label.setText("Zero Span · Time/Level" if zero_span else "Spectrum · Frequency/Level")
+
         sweep_time = result.get("sweep_time_s")
         self.sweep_time_label.setText(
-            "-" if sweep_time is None else f"{self._number(sweep_time)} s"
+            "-" if sweep_time is None else self._time(sweep_time)
         )
         self.trigger_source_label.setText(str(result.get("trigger_source", "-")))
         self.status_label.setText(
@@ -531,45 +573,88 @@ class FSWControlPanel(QWidget):
         )
 
     def _render_trace(self, result: dict[str, object]) -> None:
-        frequencies = result.get("frequencies_hz")
         levels = result.get("levels_dbm")
-        if not isinstance(frequencies, (tuple, list)) or not isinstance(
-            levels, (tuple, list)
-        ):
-            self.status_label.setText("Spectrum Trace 返回结构不完整。")
+        if not isinstance(levels, (tuple, list)):
+            self.status_label.setText("FSW Trace 返回结构不完整：缺少 levels_dbm。")
             return
 
-        self._last_frequencies = tuple(float(value) for value in frequencies)
+        axis_kind = str(result.get("axis_kind", "frequency")).strip().lower()
+        if axis_kind == "time":
+            axis_values = result.get("times_s")
+        else:
+            axis_kind = "frequency"
+            axis_values = result.get("frequencies_hz")
+
+        if not isinstance(axis_values, (tuple, list)):
+            self.status_label.setText("FSW Trace 返回结构不完整：缺少横轴数据。")
+            return
+
+        self._last_axis_values = tuple(float(value) for value in axis_values)
         self._last_levels = tuple(float(value) for value in levels)
-        self.spectrum_plot.set_trace(self._last_frequencies, self._last_levels)
-        self.save_csv_button.setEnabled(bool(self._last_frequencies))
+        self._last_axis_kind = axis_kind
+        center = result.get("center_frequency_hz")
+        self._last_center_frequency_hz = (
+            None if center is None else float(center)
+        )
+
+        self.spectrum_plot.set_trace(
+            self._last_axis_values,
+            self._last_levels,
+            axis_kind=self._last_axis_kind,
+        )
+        self.save_csv_button.setEnabled(bool(self._last_axis_values))
 
         points = int(result.get("points", len(self._last_levels)))
-        peak_f = result.get("peak_frequency_hz")
         peak_level = result.get("peak_level_dbm")
-        peak_text = "-"
-        if peak_f is not None and peak_level is not None:
-            peak_text = f"{self._frequency(peak_f)} / {self._number(peak_level)} dBm"
-        self.trace_summary.setText(
-            f"Points: {points} | "
-            f"Range: {self._frequency(result.get('start_hz'))} .. "
-            f"{self._frequency(result.get('stop_hz'))} | Peak: {peak_text}"
-        )
-        self.status_label.setText("Single Spectrum Trace 读取完成。")
+        if axis_kind == "time":
+            peak_time = result.get("peak_time_s")
+            peak_text = "-"
+            if peak_time is not None and peak_level is not None:
+                peak_text = f"{self._time(peak_time)} / {self._number(peak_level)} dBm"
+            self.trace_summary.setText(
+                f"Zero Span | Center: {self._frequency(center)} | "
+                f"Sweep: {self._time(result.get('sweep_time_s'))} | "
+                f"Points: {points} | Peak: {peak_text}"
+            )
+            self.status_label.setText("Zero Span Time/Level Trace 读取完成。")
+        else:
+            peak_frequency = result.get("peak_frequency_hz")
+            peak_text = "-"
+            if peak_frequency is not None and peak_level is not None:
+                peak_text = (
+                    f"{self._frequency(peak_frequency)} / "
+                    f"{self._number(peak_level)} dBm"
+                )
+            self.trace_summary.setText(
+                f"Points: {points} | "
+                f"Range: {self._frequency(result.get('start_hz'))} .. "
+                f"{self._frequency(result.get('stop_hz'))} | Peak: {peak_text}"
+            )
+            self.status_label.setText("Spectrum Frequency/Level Trace 读取完成。")
         self.view_tabs.setCurrentIndex(0)
 
-    def _cursor_changed(self, index: int, frequency_hz: float, level_dbm: float) -> None:
+    def _cursor_changed(self, index: int, x_value: float, level_dbm: float) -> None:
+        if self._last_axis_kind == "time":
+            axis_text = self._time(x_value)
+            prefix = "Time"
+        else:
+            axis_text = self._frequency(x_value)
+            prefix = "Frequency"
         self.cursor_label.setText(
-            f"Cursor: #{index} | {self._frequency(frequency_hz)} | {level_dbm:.9g} dBm"
+            f"Cursor: #{index} | {prefix}: {axis_text} | {level_dbm:.9g} dBm"
         )
 
     def _save_csv(self) -> None:
-        if not self._last_frequencies:
+        if not self._last_axis_values:
             return
+
+        zero_span = self._last_axis_kind == "time"
+        title = "保存 FSW Zero Span Trace" if zero_span else "保存 FSW Spectrum Trace"
+        default_name = "fsw_zero_span_trace.csv" if zero_span else "fsw_spectrum_trace.csv"
         filename, _selected = QFileDialog.getSaveFileName(
             self,
-            "保存 FSW Spectrum Trace",
-            "fsw_spectrum_trace.csv",
+            title,
+            default_name,
             "CSV Files (*.csv)",
         )
         if not filename:
@@ -577,11 +662,13 @@ class FSWControlPanel(QWidget):
         path = Path(filename)
         if path.suffix.lower() != ".csv":
             path = path.with_suffix(".csv")
+
+        header = ["time_s", "level_dbm"] if zero_span else ["frequency_hz", "level_dbm"]
         with path.open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)
-            writer.writerow(["frequency_hz", "level_dbm"])
-            writer.writerows(zip(self._last_frequencies, self._last_levels))
-        self.status_label.setText(f"Spectrum CSV 已保存：{path.name}")
+            writer.writerow(header)
+            writer.writerows(zip(self._last_axis_values, self._last_levels))
+        self.status_label.setText(f"FSW Trace CSV 已保存：{path.name}")
 
     def handle_operation_result(
         self,
