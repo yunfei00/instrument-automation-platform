@@ -1,2 +1,0 @@
-DSO-X Instrument Screen layout regression marker.
-The functional regression test is tests/unit/test_dsox_control_panel_composition.py.
