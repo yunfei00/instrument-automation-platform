@@ -1,7 +1,7 @@
 """Qt control surface for Rohde & Schwarz FSW analyzers.
 
 The panel is intentionally thin: it renders state and emits registered FSW
-Instrument Operations.  VISA ownership and SCPI strings stay below the GUI.
+Instrument Operations. VISA ownership and SCPI strings stay below the GUI.
 """
 
 from __future__ import annotations
@@ -16,12 +16,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
     QFormLayout,
-    QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QPushButton,
+    QScrollArea,
+    QSplitter,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -215,7 +216,7 @@ class SpectrumPlotWidget(QWidget):
 
 
 class FSWControlPanel(QWidget):
-    """First dedicated FSW control surface."""
+    """Dedicated FSW control surface with controls left and spectrum right."""
 
     operation_requested = Signal(str, object)
 
@@ -227,6 +228,7 @@ class FSWControlPanel(QWidget):
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
+        root.setContentsMargins(6, 6, 6, 6)
 
         title = QLabel("Rohde & Schwarz FSW 专用控制台")
         title.setStyleSheet("font-weight: 600; font-size: 17px;")
@@ -238,28 +240,38 @@ class FSWControlPanel(QWidget):
         self.status_label.setWordWrap(True)
         root.addWidget(self.status_label)
 
-        actions = QHBoxLayout()
+        self.workspace_splitter = QSplitter(Qt.Orientation.Horizontal, self)
+        self.workspace_splitter.setChildrenCollapsible(False)
+        root.addWidget(self.workspace_splitter, 1)
+
+        # Left: compact controls. Keep its width bounded so the spectrum remains
+        # the visual focus, and make the column scrollable on smaller displays.
+        control_scroll = QScrollArea(self.workspace_splitter)
+        control_scroll.setWidgetResizable(True)
+        control_scroll.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
+        control_scroll.setMinimumWidth(360)
+        control_scroll.setMaximumWidth(500)
+
+        control_page = QWidget(control_scroll)
+        control_layout = QVBoxLayout(control_page)
+        control_layout.setContentsMargins(6, 6, 6, 6)
+
+        action_group = QGroupBox("Acquisition")
+        action_layout = QFormLayout(action_group)
         read_button = QPushButton("读取当前状态")
         read_button.clicked.connect(
             lambda: self._emit("rohde_schwarz.fsw.read_control_state", {})
         )
-        actions.addWidget(read_button)
-        actions.addWidget(QLabel("Continuous"))
         self.continuous_combo = QComboBox()
         self.continuous_combo.addItems(["ON", "OFF"])
-        actions.addWidget(self.continuous_combo)
-        continuous_button = QPushButton("应用")
+        continuous_button = QPushButton("应用 Continuous")
         continuous_button.clicked.connect(self._apply_continuous)
-        actions.addWidget(continuous_button)
-        actions.addStretch(1)
-        root.addLayout(actions)
-
-        self.tabs = QTabWidget()
-        root.addWidget(self.tabs, 1)
-
-        controls_tab = QWidget()
-        controls_layout = QVBoxLayout(controls_tab)
-        settings = QGridLayout()
+        action_layout.addRow(read_button)
+        action_layout.addRow("Continuous", self.continuous_combo)
+        action_layout.addRow(continuous_button)
+        control_layout.addWidget(action_group)
 
         center_group = QGroupBox("Frequency · Center / Span")
         center_layout = QFormLayout(center_group)
@@ -272,7 +284,7 @@ class FSWControlPanel(QWidget):
         center_layout.addRow("Center (Hz)", self.center_edit)
         center_layout.addRow("Span (Hz)", self.span_edit)
         center_layout.addRow(center_apply)
-        settings.addWidget(center_group, 0, 0)
+        control_layout.addWidget(center_group)
 
         start_group = QGroupBox("Frequency · Start / Stop")
         start_layout = QFormLayout(start_group)
@@ -285,7 +297,7 @@ class FSWControlPanel(QWidget):
         start_layout.addRow("Start (Hz)", self.start_edit)
         start_layout.addRow("Stop (Hz)", self.stop_edit)
         start_layout.addRow(start_apply)
-        settings.addWidget(start_group, 0, 1)
+        control_layout.addWidget(start_group)
 
         bandwidth_group = QGroupBox("Bandwidth")
         bandwidth_layout = QFormLayout(bandwidth_group)
@@ -298,7 +310,7 @@ class FSWControlPanel(QWidget):
         bandwidth_layout.addRow("RBW (Hz)", self.rbw_edit)
         bandwidth_layout.addRow("VBW (Hz)", self.vbw_edit)
         bandwidth_layout.addRow(bandwidth_apply)
-        settings.addWidget(bandwidth_group, 1, 0)
+        control_layout.addWidget(bandwidth_group)
 
         input_group = QGroupBox("RF Input")
         input_layout = QFormLayout(input_group)
@@ -314,9 +326,7 @@ class FSWControlPanel(QWidget):
         input_layout.addRow("Manual Atten (dB)", self.atten_edit)
         input_layout.addRow("Preamp (dB)", self.preamp_combo)
         input_layout.addRow(input_apply)
-        settings.addWidget(input_group, 1, 1)
-
-        controls_layout.addLayout(settings)
+        control_layout.addWidget(input_group)
 
         state_group = QGroupBox("当前状态")
         state_layout = QFormLayout(state_group)
@@ -327,11 +337,22 @@ class FSWControlPanel(QWidget):
         state_layout.addRow("Sweep Time", self.sweep_time_label)
         state_layout.addRow("Trigger Source", self.trigger_source_label)
         state_layout.addRow("Reference Level", self.reference_level_label)
-        controls_layout.addWidget(state_group)
-        controls_layout.addStretch(1)
-        self.tabs.addTab(controls_tab, "参数控制")
+        control_layout.addWidget(state_group)
+        control_layout.addStretch(1)
+        control_scroll.setWidget(control_page)
+        self.workspace_splitter.addWidget(control_scroll)
+        self.control_scroll = control_scroll
 
-        data_tab = QWidget()
+        # Right: large instrument data area. Keep a tab host even though phase 1
+        # only contains Spectrum Data View so a future real-screen view can be
+        # added without disturbing the left control column.
+        self.view_tabs = QTabWidget(self.workspace_splitter)
+        self.workspace_splitter.addWidget(self.view_tabs)
+        self.workspace_splitter.setStretchFactor(0, 0)
+        self.workspace_splitter.setStretchFactor(1, 1)
+        self.workspace_splitter.setSizes([420, 980])
+
+        data_tab = QWidget(self.view_tabs)
         data_layout = QVBoxLayout(data_tab)
         trace_actions = QHBoxLayout()
         trace_button = QPushButton("Single + 读取 Spectrum Trace")
@@ -358,7 +379,7 @@ class FSWControlPanel(QWidget):
 
         self.cursor_label = QLabel("Cursor: -")
         data_layout.addWidget(self.cursor_label)
-        self.tabs.addTab(data_tab, "Spectrum Data View")
+        self.view_tabs.addTab(data_tab, "Spectrum Data View")
 
     def _emit(self, operation_id: str, parameters: dict[str, object]) -> None:
         self.status_label.setText(f"准备执行：{operation_id}")
@@ -440,7 +461,7 @@ class FSWControlPanel(QWidget):
         if timeout <= 0:
             self.status_label.setText("Trace Timeout 必须大于 0。")
             return
-        self.tabs.setCurrentIndex(1)
+        self.view_tabs.setCurrentIndex(0)
         self._emit(
             "rohde_schwarz.fsw.single_trace",
             {"timeout_s": timeout},
@@ -535,7 +556,7 @@ class FSWControlPanel(QWidget):
             f"{self._frequency(result.get('stop_hz'))} | Peak: {peak_text}"
         )
         self.status_label.setText("Single Spectrum Trace 读取完成。")
-        self.tabs.setCurrentIndex(1)
+        self.view_tabs.setCurrentIndex(0)
 
     def _cursor_changed(self, index: int, frequency_hz: float, level_dbm: float) -> None:
         self.cursor_label.setText(
