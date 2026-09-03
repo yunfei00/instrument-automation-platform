@@ -8,7 +8,7 @@
 
 该基线面向**单仪表能力复用**，不包含任何具体联合采集业务、客户流程或产品数据模型。
 
-## 已验证核心能力
+## 核心资格状态
 
 ### 连接与可靠性
 
@@ -26,26 +26,35 @@
 
 ### Frequency / Bandwidth
 
-- Center / Span；
-- Start / Stop；
-- Zero Span；
-- RBW / VBW；
+当前 Instrument Lab 已实际使用并验证：
+
+- Center / Span 状态读取；
+- 普通 Span 与 Zero Span 切换；
+- Start / Stop 状态读取；
+- RBW / VBW 状态读取；
 - GUI Hz / kHz / MHz / GHz 工程单位显示与输入。
+
+命令目录中的单项资格状态仍以各 JSON catalog 为准，不因本文件统一提升。
 
 ### Sweep / Trace
 
-- Continuous ON / OFF；
-- Sweep Time 读取与设置；
+已实际验证：
+
+- Continuous 状态路径；
 - Single Trace；
 - ASCII Trace 读取；
 - 普通 Spectrum Data View；
 - Zero Span Time/Level Data View；
 - 10 Division 横轴全宽显示；
 - Cursor；
-- Peak 计算；
+- 本地 Peak 计算；
 - CSV 导出。
 
+Sweep Time 命令当前仍以命令目录中的 `manual_verified` 状态为准，未在本文件中额外提升。
+
 ### RF Input / Amplitude
+
+已完成实机资格验证：
 
 - RF Attenuation AUTO / MANUAL；
 - Manual RF Attenuation；
@@ -67,10 +76,16 @@
 
 ### Marker
 
+第一版 GUI 已提供：
+
 - Marker Peak Search；
 - Marker Level 读取。
 
+这两项当前仍保持命令目录中的 `manual_verified` 状态，后续有明确需求时再做单独实机资格提升。Marker X / Marker State 仍为 candidate。
+
 ### Instrument Screen
+
+已完成 `hardware_verified`：
 
 - FSW Hardcopy -> PNG；
 - `Screen Colors (Screenshot)`；
@@ -108,7 +123,8 @@ FSW 定制控制
 第一版到这里停止继续堆叠小功能。以下能力后续按明确需求再扩展：
 
 - 其它 Trigger Source；
-- Marker X / Marker State 等未完成资格验证的 Marker 能力；
+- Marker X / Marker State，以及 Marker Peak/Y 的硬件资格提升；
+- Sweep Points；
 - Electronic Attenuator（当前参考设备 option unavailable）；
 - RF Attenuation Auto Mode；
 - 其它 Hardcopy 文件格式 / 打印路径；
@@ -117,6 +133,6 @@ FSW 定制控制
 
 ## 结论
 
-FSW 第一版已经形成可供其它项目依赖的**单仪表可复用控制基线**：核心 Spectrum Acquisition 已 qualified，常用参数控制、Zero Span、Trigger、Reference Level、Marker、Data View、CSV 和 Instrument Screen 均完成实际仪表验证。
+FSW 第一版已经形成可供其它项目依赖的**单仪表可复用控制基线**。核心 Spectrum Acquisition 已达到 `qualified` 条件；Zero Span Data View、RF Input、Reference Level、VIDEO Trigger 与 Instrument Screen 等本轮重点链路已经完成实际仪表验证。未完成硬件资格提升的单项命令继续保持其原有 catalog 状态，不因第一版冻结而被自动升级。
 
 后续具体联合采集项目应通过 Driver / Operation API 依赖本基线，而不是把联合采集逻辑写回本仓库。
