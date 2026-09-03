@@ -15,6 +15,7 @@ on:
       - "tests/unit/test_dsox_gui_control_registration.py"
       - "tests/unit/test_dsox_control_panel_composition.py"
       - "tests/unit/test_fsw_operations.py"
+      - "tests/unit/test_fsw_control_panel_layout.py"
       - "tests/unit/test_instrument_control_workspace.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
@@ -36,6 +37,7 @@ on:
       - "tests/unit/test_dsox_gui_control_registration.py"
       - "tests/unit/test_dsox_control_panel_composition.py"
       - "tests/unit/test_fsw_operations.py"
+      - "tests/unit/test_fsw_control_panel_layout.py"
       - "tests/unit/test_instrument_control_workspace.py"
       - "tests/unit/test_bridge_protocol.py"
       - "tests/unit/test_instrument_port_bridge_launcher.py"
@@ -96,6 +98,7 @@ jobs:
           python -m pytest -q tests/unit/test_dsox_gui_control_registration.py
           python -m pytest -q tests/unit/test_dsox_control_panel_composition.py
           python -m pytest -q tests/unit/test_fsw_operations.py
+          python -m pytest -q tests/unit/test_fsw_control_panel_layout.py
           python -m pytest -q tests/unit/test_instrument_control_workspace.py
           python -m pytest -q tests/unit/test_bridge_protocol.py
           python -m pytest -q tests/unit/test_instrument_port_bridge_launcher.py
