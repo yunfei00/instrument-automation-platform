@@ -28,9 +28,9 @@ def test_advanced_operations_dock_is_hidden_by_default():
     assert 'toggle_action.setText("高级 Instrument Operations")' in text
 
 
-def test_fsw_panel_is_routed_from_dedicated_page():
+def test_fsw_panel_is_routed_through_composition_wrapper():
     text = SOURCE.read_text(encoding="utf-8")
 
-    assert "from .gui_fsw import FSWControlPanel" in text
+    assert "from .gui_fsw_composed import FSWComposedPanel" in text
     assert 'definition.panel_type == "fsw"' in text
-    assert "panel = FSWControlPanel(self.panel_container)" in text
+    assert "panel = FSWComposedPanel(self.panel_container)" in text

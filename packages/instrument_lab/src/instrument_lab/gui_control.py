@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (
 )
 
 from .gui_dsox_controls import DSOX3000ControlPanel
-from .gui_fsw import FSWControlPanel
+from .gui_fsw_composed import FSWComposedPanel
 from .gui_stable import StableInstrumentLabWindow
 from .models import SafetyLevel
 from .operations import DEFAULT_OPERATION_REGISTRY, InstrumentOperation
@@ -177,7 +177,7 @@ class InstrumentControlWindow(StableInstrumentLabWindow):
         if definition.panel_type == "dsox3000":
             panel = DSOX3000ControlPanel(self.panel_container)
         elif definition.panel_type == "fsw":
-            panel = FSWControlPanel(self.panel_container)
+            panel = FSWComposedPanel(self.panel_container)
         else:
             note = QLabel(
                 f"Panel '{definition.panel_type}' 已注册，但当前 GUI 尚无对应渲染器。"
