@@ -48,6 +48,8 @@ def test_fsw_screenshot_uses_manual_verified_file_transfer_sequence():
 
     remote = "C:/R_S/instr/user/instrument_automation_platform_fsw_screen.png"
     assert transport.writes == [
+        "HCOPy:DEVice:COLor ON",
+        "HCOPy:CMAP:DEFault4",
         "HCOPy:DESTination1 'MMEM'",
         "HCOPy:DEVice:LANGuage1 PNG",
         "HCOPy:CONTent HCOPy",
@@ -65,6 +67,7 @@ def test_fsw_screenshot_uses_manual_verified_file_transfer_sequence():
     assert result["format"] == "PNG"
     assert result["data"] == payload
     assert result["byte_count"] == len(payload)
+    assert result["hardcopy_color_mode"] == "screen_colors_screenshot"
     assert result["cleanup_error"] is None
 
 
