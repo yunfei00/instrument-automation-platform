@@ -1,0 +1,37 @@
+[project]
+name = "instrument-automation-platform"
+version = "0.1.0"
+description = "Reusable instrument automation baseline and engineering knowledge platform"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "PyVISA>=1.14,<2",
+]
+
+[dependency-groups]
+gui = [
+    "PySide6>=6.9,<7",
+    "PyVISA-py>=0.7,<1",
+]
+dev = [
+    "pytest>=8,<10",
+    "ruff>=0.12",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [
+    "packages/instrument_core/src",
+    "packages/instrument_scpi/src",
+    "packages/instrument_drivers/src",
+    "packages/instrument_lab/src",
+    "packages/instrument_qualification/src",
+    "packages/instrument_data/src",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.uv]
+package = false
