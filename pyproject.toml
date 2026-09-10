@@ -10,12 +10,12 @@ dependencies = [
 
 [dependency-groups]
 gui = [
-    "PySide6>=6.9,<7",
+    "PySide6>=6.6,<7",
     "PyVISA-py>=0.7,<1",
 ]
 dev = [
     "pytest>=8,<10",
-    "ruff>=0.12",
+    "ruff>=0.12,<1",
 ]
 
 [tool.pytest.ini_options]
