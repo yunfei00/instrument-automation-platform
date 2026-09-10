@@ -3,6 +3,8 @@ name: Instrument Driver Regression
 on:
   push:
     paths:
+      - "pyproject.toml"
+      - "uv.lock"
       - "packages/instrument_core/**"
       - "packages/instrument_scpi/**"
       - "packages/instrument_drivers/**"
@@ -15,6 +17,8 @@ on:
       - ".github/workflows/instrument-driver-regression.yml"
   pull_request:
     paths:
+      - "pyproject.toml"
+      - "uv.lock"
       - "packages/instrument_core/**"
       - "packages/instrument_scpi/**"
       - "packages/instrument_drivers/**"
@@ -39,24 +43,27 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install test dependency
-        run: python -m pip install pytest
+      - name: Install uv
+        run: python -m pip install uv
+
+      - name: Sync development environment
+        run: uv sync --group dev
 
       - name: Compile reusable driver modules
         run: |
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/driver.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/controls.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/single_capture.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/snapshot.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/controls.py
-          python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
-          python -m py_compile tools/verify_dsox3034a_snapshot_all.py
-          python -m py_compile tools/verify_fsw_video_trigger.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/driver.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/controls.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/single_capture.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/keysight/dsox3000/snapshot.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/controls.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
+          uv run python -m py_compile tools/verify_dsox3034a_snapshot_all.py
+          uv run python -m py_compile tools/verify_fsw_video_trigger.py
 
       - name: Run DSO-X regression
         run: |
-          python -m pytest -q \
+          uv run pytest -q \
             tests/unit/test_dsox3000_driver.py \
             tests/unit/test_dsox3000_controls.py \
             tests/unit/test_dsox3000_single_capture.py \
@@ -66,7 +73,7 @@ jobs:
 
       - name: Run FSW regression
         run: |
-          python -m pytest -q \
+          uv run pytest -q \
             tests/unit/test_fsw_driver.py \
             tests/unit/test_fsw_input.py \
             tests/unit/test_fsw_controls.py \
@@ -76,4 +83,4 @@ jobs:
             tests/unit/test_fsw_video_trigger.py
 
       - name: Validate FSW command catalog
-        run: python tests/unit/test_fsw_catalogs.py
+        run: uv run python tests/unit/test_fsw_catalogs.py
