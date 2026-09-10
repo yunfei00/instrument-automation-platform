@@ -78,7 +78,11 @@ def main() -> int:
         if exc.name == "PySide6":
             print(
                 "PySide6 is required for Instrument Automation Studio.\n"
-                "Install GUI dependencies with:\n\n"
+                "Recommended installation from the repository root:\n\n"
+                "    uv sync --group gui --group dev\n\n"
+                "Then run:\n\n"
+                "    uv run python tools/instrument_lab_gui.py\n\n"
+                "Legacy pip fallback:\n\n"
                 "    python -m pip install -r requirements-gui.txt\n",
                 file=sys.stderr,
             )
