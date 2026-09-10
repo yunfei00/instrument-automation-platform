@@ -68,12 +68,38 @@
 - 查看响应与耗时
 - 保存未验证 Candidate 命令
 
-运行方式：
+推荐使用 `uv` 管理整个仓库的开发环境。首次安装：
+
+```bash
+uv sync --group gui --group dev
+```
+
+启动 Instrument Lab GUI：
+
+```bash
+uv run python tools/instrument_lab_gui.py
+```
+
+运行全部测试：
+
+```bash
+uv run pytest
+```
+
+运行单个回归文件示例：
+
+```bash
+uv run pytest tests/unit/test_fsw_driver.py -v
+```
+
+`pyproject.toml` 是新的主依赖入口。仓库当前仍保留 `requirements-gui.txt`，用于兼容传统 `pip`、部分 Windows 打包流程和尚未迁移的实验室环境：
 
 ```bash
 python -m pip install -r requirements-gui.txt
 python tools/instrument_lab_gui.py
 ```
+
+首次执行 `uv sync` 时会生成或更新 `uv.lock`。在能够访问 Python Package Index 的开发机上确认环境后，应将 `uv.lock` 一并提交，以固定后续开发和 CI 的解析结果。
 
 相关文档：
 
