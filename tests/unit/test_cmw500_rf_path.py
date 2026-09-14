@@ -24,7 +24,7 @@ def test_generator_output_attenuation_set_and_query():
     transport.queue_response("2.000000E+000\n")
 
     assert driver.get_external_output_attenuation_db("GPRF") == 2.0
-    assert transport.queries[-1] == (
+    assert transport.writes[-1] == (
         "SOURce:GPRF:GENerator1:RFSettings:EATTenuation?"
     )
 
@@ -52,7 +52,7 @@ def test_measurement_input_attenuation_set_and_query():
         )
         == 3.2
     )
-    assert transport.queries[-1] == (
+    assert transport.writes[-1] == (
         "CONFigure:WCDMA:MEASurement2:RFSettings:EATTenuation?"
     )
 
