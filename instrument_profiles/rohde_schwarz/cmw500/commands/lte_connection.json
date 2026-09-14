@@ -1,0 +1,119 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "lte_connection",
+    "status": "manual_verified",
+    "manual_id": "cmw500_lte_signaling_user_manual"
+  },
+  "commands": [
+    {
+      "id": "lte_connection.rmc_ul",
+      "name": "LTE Signaling RMC 上行配置",
+      "category": "lte_connection",
+      "command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:UL?",
+      "set_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:UL <number_rb>,<modulation>,<tbs_index>",
+      "query_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:UL?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:CONNection:RMC:UL <number_rb>,<modulation>,<tbs_index>",
+        "CONFigure:LTE:SIGN:CONNection:RMC:UL?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "csv",
+      "description": "配置或查询 PCC 上行 Reference Measurement Channel。三个字段依次是分配的资源块数、调制方式和 Transport Block Size Index。",
+      "source": "R&S CMW LTE Signaling command reference / Connection / Scheduling Type RMC / Uplink",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Connection / Scheduling Type RMC / Uplink",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "parameter_notes": {
+        "number_rb": "N<n> 表示分配 n 个连续 RB，例如 N50 = 50 RB。可用组合受带宽和 RMC 定义限制。",
+        "modulation": "例如 QPSK、Q16、Q64；具体支持值取决于固件和 RMC 组合。",
+        "tbs_index": "T<n> 表示 Transport Block Size Index，例如 T6 = TBS Index 6。"
+      },
+      "response_notes": "只有手册允许的 NumberRB/Modulation/TBS Index 组合才会被接受。PCC 节点可省略。",
+      "notes": "你的命令 CONFigure:LTE:SIGN:CONNection:RMC:UL N50,QPSK,T6 表示上行分配 50 RB、QPSK、TBS Index 6。R&S 编程示例也使用该组合。"
+    },
+    {
+      "id": "lte_connection.rmc_ul_rb_position",
+      "name": "LTE Signaling RMC 上行 RB 位置",
+      "category": "lte_connection",
+      "command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:UL?",
+      "set_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:UL <position>",
+      "query_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:UL?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:CONNection:RMC:RBPosition:UL <position>",
+        "CONFigure:LTE:SIGN:CONNection:RMC:RBPosition:UL?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "选择 PCC RMC 连续上行资源块在信道带宽中的位置。LOW 从 RB0 开始，HIGH 放在带宽高端；部分配置还支持 MID 或显式 P<n> 起始位置。",
+      "source": "R&S CMW LTE Signaling command reference / Connection / Scheduling Type RMC / RB Position UL",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Connection / Scheduling Type RMC / RB Position UL",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "known_values": ["LOW", "HIGH"],
+      "response_notes": "LOW/HIGH 始终是核心位置选项；其他 MID/P<n> 可用值依赖带宽、RB 数、固件和配置，不能全局硬编码。",
+      "notes": "常用标准 RF 测试配置为 LOW。R&S 示例：CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:UL LOW。"
+    },
+    {
+      "id": "lte_connection.rmc_dl",
+      "name": "LTE Signaling RMC 下行配置",
+      "category": "lte_connection",
+      "command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:DL?",
+      "set_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:DL <number_rb>,<modulation>,<tbs_index>",
+      "query_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:DL?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:CONNection:RMC:DL <number_rb>,<modulation>,<tbs_index>",
+        "CONFigure:LTE:SIGN:CONNection:RMC:DL?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "csv",
+      "description": "配置或查询 PCC 下行 Reference Measurement Channel。三个字段依次是分配的资源块数、调制方式和 Transport Block Size Index。",
+      "source": "R&S CMW LTE Signaling command reference / Connection / Scheduling Type RMC / Downlink",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Connection / Scheduling Type RMC / Downlink",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "parameter_notes": {
+        "number_rb": "N<n> 表示分配 n 个 RB，例如 N50 = 50 RB。",
+        "modulation": "例如 QPSK、Q16、Q64；具体支持值取决于固件和 RMC 组合。",
+        "tbs_index": "T<n> 表示 Transport Block Size Index。"
+      },
+      "response_notes": "只有手册允许的 RMC 参数组合才会被接受。对于多流配置，DL 命令还可以带 Stream 后缀。PCC 节点可省略。",
+      "notes": "你的命令 CONFigure:LTE:SIGN:CONNection:RMC:DL N50,QPSK,T6 表示下行 50 RB、QPSK、TBS Index 6。注意 R&S 某标准示例使用的是 DL N50,QPSK,T5、UL N50,QPSK,T6；测试用例需要什么 TBS 就配置什么，不应把 T5/T6 固定死。"
+    },
+    {
+      "id": "lte_connection.rmc_dl_rb_position",
+      "name": "LTE Signaling RMC 下行 RB 位置",
+      "category": "lte_connection",
+      "command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:DL?",
+      "set_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:DL <position>",
+      "query_command": "CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:DL?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:CONNection:RMC:RBPosition:DL <position>",
+        "CONFigure:LTE:SIGN:CONNection:RMC:RBPosition:DL?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "选择 PCC RMC 下行资源块在信道带宽中的位置。LOW/HIGH/MID 或部分 P<n> 值决定资源块在整个载波带宽中的分配位置。",
+      "source": "R&S CMW LTE Signaling command reference / Connection / Scheduling Type RMC / RB Position DL",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Connection / Scheduling Type RMC / RB Position DL",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "known_values": ["LOW", "HIGH", "MID"],
+      "response_notes": "手册还定义多个 P<n> 位置，但实际可选集合与当前带宽、RB 数、RMC 组合及固件有关。",
+      "notes": "标准测试中经常使用 LOW。R&S 编程示例：CONFigure:LTE:SIGN:CONNection:PCC:RMC:RBPosition:DL LOW。"
+    }
+  ]
+}
