@@ -4,7 +4,7 @@
     "driver_family": "CMW500",
     "target_model": "CMW",
     "minimum_status": "qualified",
-    "version": "1"
+    "version": "2"
   },
   "checks": [
     {
@@ -48,6 +48,13 @@
       "name": "Sub-Instrument Discovery",
       "category": "architecture",
       "mandatory": true
+    },
+    {
+      "id": "rf_path.external_attenuation",
+      "name": "RF Path External Attenuation / Cable Loss",
+      "category": "rf_path",
+      "mandatory": false,
+      "description": "Verify frequency-independent generator output and standalone measurement input external attenuation set/query with readback and a clean SCPI error queue."
     },
     {
       "id": "remote.hislip",

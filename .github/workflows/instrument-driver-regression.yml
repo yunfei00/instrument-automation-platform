@@ -10,8 +10,10 @@ on:
       - "packages/instrument_drivers/**"
       - "instrument_profiles/keysight/dsox3000/**"
       - "instrument_profiles/rohde_schwarz/fsw/**"
+      - "instrument_profiles/rohde_schwarz/cmw500/**"
       - "tests/unit/test_dsox3000_*.py"
       - "tests/unit/test_fsw_*.py"
+      - "tests/unit/test_cmw500_*.py"
       - "tools/verify_dsox3034a_snapshot_all.py"
       - "tools/verify_fsw_video_trigger.py"
       - ".github/workflows/instrument-driver-regression.yml"
@@ -24,8 +26,10 @@ on:
       - "packages/instrument_drivers/**"
       - "instrument_profiles/keysight/dsox3000/**"
       - "instrument_profiles/rohde_schwarz/fsw/**"
+      - "instrument_profiles/rohde_schwarz/cmw500/**"
       - "tests/unit/test_dsox3000_*.py"
       - "tests/unit/test_fsw_*.py"
+      - "tests/unit/test_cmw500_*.py"
       - "tools/verify_dsox3034a_snapshot_all.py"
       - "tools/verify_fsw_video_trigger.py"
       - ".github/workflows/instrument-driver-regression.yml"
@@ -58,6 +62,8 @@ jobs:
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/driver.py
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/controls.py
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/cmw500/driver.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/cmw500/rf_path.py
           uv run python -m py_compile tools/verify_dsox3034a_snapshot_all.py
           uv run python -m py_compile tools/verify_fsw_video_trigger.py
 
@@ -81,6 +87,15 @@ jobs:
             tests/unit/test_fsw_bounded_wait.py \
             tests/unit/test_fsw_trace.py \
             tests/unit/test_fsw_video_trigger.py
+
+      - name: Run CMW500 regression
+        run: |
+          uv run pytest -q \
+            tests/unit/test_cmw500_driver.py \
+            tests/unit/test_cmw500_applications.py \
+            tests/unit/test_cmw500_lte_catalog.py \
+            tests/unit/test_cmw500_lte_mevaluation.py \
+            tests/unit/test_cmw500_rf_path.py
 
       - name: Validate FSW command catalog
         run: uv run python tests/unit/test_fsw_catalogs.py

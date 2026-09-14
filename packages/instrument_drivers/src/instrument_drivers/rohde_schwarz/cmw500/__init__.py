@@ -7,8 +7,16 @@ from .discovery import (
 from .driver import (
     RohdeSchwarzCMW500Driver,
 )
+from .rf_path import (
+    CMWRFPathExternalAttenuation,
+    MAX_EXTERNAL_ATTENUATION_DB,
+    MIN_EXTERNAL_ATTENUATION_DB,
+)
 
 __all__ = [
+    "CMWRFPathExternalAttenuation",
+    "MAX_EXTERNAL_ATTENUATION_DB",
+    "MIN_EXTERNAL_ATTENUATION_DB",
     "RohdeSchwarzCMW500Driver",
     "SoftwarePackage",
     "SubInstrumentInfo",
