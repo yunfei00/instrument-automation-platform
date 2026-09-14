@@ -25,6 +25,10 @@ def test_lte_signaling_uplink_power_command_catalog():
         "lte_signaling.ul_pusch_tpc_closed_loop_target_power",
         "lte_signaling.ul_pusch_open_loop_nominal_power",
         "lte_signaling.connection_scheduling_type",
+        "lte_signaling.security_authentication",
+        "lte_signaling.security_nas",
+        "lte_signaling.security_as",
+        "lte_signaling.security_integrity_algorithm",
         "lte_signaling.route_scell",
     }
     assert all(
@@ -87,6 +91,41 @@ def test_lte_signaling_uplink_power_command_catalog():
     )
     assert "RMC" in scheduling["notes"]
     assert "CTYPe" in scheduling["response_notes"]
+
+    auth = commands["lte_signaling.security_authentication"]
+    assert auth["set_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:AUTHenticat <enable>"
+    )
+    assert auth["query_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:AUTHenticat?"
+    )
+    assert auth["known_values"] == ["OFF", "ON"]
+
+    nas = commands["lte_signaling.security_nas"]
+    assert nas["set_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:NAS <enable>"
+    )
+    assert nas["query_command"] == "CONFigure:LTE:SIGN:CELL:SECurity:NAS?"
+    assert nas["known_values"] == ["OFF", "ON"]
+
+    access_stratum = commands["lte_signaling.security_as"]
+    assert access_stratum["set_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:AS <enable>"
+    )
+    assert access_stratum["query_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:AS?"
+    )
+    assert access_stratum["known_values"] == ["OFF", "ON"]
+
+    integrity = commands["lte_signaling.security_integrity_algorithm"]
+    assert integrity["set_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:IALGorithm <algorithm>"
+    )
+    assert integrity["query_command"] == (
+        "CONFigure:LTE:SIGN:CELL:SECurity:IALGorithm?"
+    )
+    assert integrity["known_values"] == ["NULL", "S3G"]
+    assert "SNOW3G" in integrity["response_notes"]
 
     route_scell = commands["lte_signaling.route_scell"]
     assert route_scell["set_command"] == (
