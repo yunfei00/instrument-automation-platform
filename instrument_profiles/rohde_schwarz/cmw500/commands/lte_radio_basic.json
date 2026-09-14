@@ -1,0 +1,81 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "lte_radio_basic",
+    "status": "manual_verified",
+    "manual_id": "cmw500_lte_signaling_user_manual"
+  },
+  "commands": [
+    {
+      "id": "lte_radio_basic.duplex_mode",
+      "name": "LTE Signaling PCC 双工模式",
+      "category": "lte_radio_basic",
+      "command": "CONFigure:LTE:SIGN:PCC:DMODe?",
+      "set_command": "CONFigure:LTE:SIGN:PCC:DMODe <mode>",
+      "query_command": "CONFigure:LTE:SIGN:PCC:DMODe?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:DMODe <mode>",
+        "CONFigure:LTE:SIGN:DMODe?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "known_values": ["FDD", "TDD"],
+      "description": "设置或查询 LTE PCC 的 Duplex Mode。FDD 为频分双工，TDD 为时分双工。PCC 节点在命令树中可省略。",
+      "source": "R&S CMW LTE Signaling command reference / General Settings / Duplex Mode",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / General Settings / Duplex Mode",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "手册命令树为 CONFigure:LTE:SIGN<i>[:PCC]:DMODe，因此带 PCC 与省略 PCC 的形式表示同一 PCC 配置。Operating Band 的允许范围依赖当前 FDD/TDD 模式。",
+      "notes": "通常在 CELL OFF 状态下先配置 Duplex Mode，再配置 Operating Band、Channel、Bandwidth 等基础射频参数。单独发送 CONFigure:LTE:SIGN:DMODe 而不带参数或问号不是完整设置/查询命令。"
+    },
+    {
+      "id": "lte_radio_basic.cell_state",
+      "name": "LTE Signaling Cell 状态控制",
+      "category": "lte_radio_basic",
+      "command": "SOURce:LTE:SIGN:CELL:STATe?",
+      "set_command": "SOURce:LTE:SIGN:CELL:STATe <state>",
+      "query_command": "SOURce:LTE:SIGN:CELL:STATe?",
+      "kind": "query",
+      "safety": "state_change",
+      "response_type": "string",
+      "known_values": ["OFF", "ON"],
+      "description": "启动或关闭 LTE Signaling 下行 Cell/信号发生器。OFF 常用于修改小区基础配置，ON 启动 LTE 小区供 UE 搜网、Attach 和后续测试。",
+      "source": "R&S CMW LTE Signaling command reference / Connection Control and States / Cell State; R&S application note 1SL392",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Connection Control and States / Cell State",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "启动过程中状态可能经历 PENDing 再到 ON。SOURce:LTE:SIGN:CELL:STATe:ALL? 可返回更详细的 LTE generator 状态。",
+      "notes": "典型初始化流程：CELL OFF → 配置 Routing/Line Loss/DMODe/BAND/Channel/Bandwidth/Power → CELL ON。你给出的 SOURce:LTE:SIGN:CELL:STATe OFF 和 ON 都属于此命令。"
+    },
+    {
+      "id": "lte_radio_basic.pcc_band",
+      "name": "LTE Signaling PCC Operating Band",
+      "category": "lte_radio_basic",
+      "command": "CONFigure:LTE:SIGN:PCC:BAND?",
+      "set_command": "CONFigure:LTE:SIGN:PCC:BAND <band>",
+      "query_command": "CONFigure:LTE:SIGN:PCC:BAND?",
+      "aliases": [
+        "CONFigure:LTE:SIGN:BAND <band>",
+        "CONFigure:LTE:SIGN:BAND?"
+      ],
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "设置或查询 LTE PCC 的 Operating Band。OB1 表示 LTE Band 1；允许的 Band 集合取决于 Duplex Mode、仪表固件和安装选件。",
+      "source": "R&S CMW LTE Signaling command reference / RF Settings / Operating Band; R&S application note 1SL392",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / RF Settings / Operating Band",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "手册定义 PCC 命令为 CONFigure:LTE:SIGN<i>[:PCC]:BAND。FDD 模式使用 FDD Operating Bands，TDD 模式使用 TDD Operating Bands；具体支持范围取决于版本和选件。",
+      "notes": "CONFigure:LTE:SIGN:PCC:BAND OB1 表示将 PCC 配置为 LTE Band 1。设置 Band 后，UL/DL Channel 必须位于该 Band 的合法范围内。"
+    }
+  ]
+}
