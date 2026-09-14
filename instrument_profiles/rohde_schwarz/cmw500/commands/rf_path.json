@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "rf_path",
+    "status": "manual_verified",
+    "manual_id": "cmw500_user_manual"
+  },
+  "commands": [
+    {
+      "id": "rf_path.generator_external_attenuation",
+      "name": "Generator 输出外部衰减 / 线损",
+      "category": "rf_path",
+      "command": "SOURce:<Application>:GENerator<i>:RFSettings:EATTenuation?",
+      "set_command": "SOURce:<Application>:GENerator<i>:RFSettings:EATTenuation <attenuation>",
+      "query_command": "SOURce:<Application>:GENerator<i>:RFSettings:EATTenuation?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或读取指定 CMW Firmware Application 的 RF Generator 输出路径外部衰减。正值表示线损，负值表示外部增益。",
+      "source": "R&S CMW500 Operating/User Manual, RF Path Settings / External input/output attenuation; GPRF generator RF settings",
+      "manual_id": "cmw500_user_manual",
+      "manual_section": "RF Path Settings / External input/output attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "GPRF 文档给出的常用范围为 -50 dB 到 90 dB；默认 0 dB。",
+      "notes": "这是频率无关的单点外部衰减设置。不同 Technology 的 Signaling combined path 可能使用 ...:SIGN<i>:... 命令树，不应由该通用模板猜测替代。"
+    },
+    {
+      "id": "rf_path.measurement_external_attenuation",
+      "name": "Measurement 输入外部衰减 / 线损",
+      "category": "rf_path",
+      "command": "CONFigure:<Application>:MEASurement<i>:RFSettings:EATTenuation?",
+      "set_command": "CONFigure:<Application>:MEASurement<i>:RFSettings:EATTenuation <attenuation>",
+      "query_command": "CONFigure:<Application>:MEASurement<i>:RFSettings:EATTenuation?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或读取指定 CMW Firmware Application 的 standalone RF Measurement 输入路径外部衰减。正值表示线损，负值表示外部增益。",
+      "source": "R&S CMW500 Operating/User Manual, RF Path Settings / External input/output attenuation; GPRF measurement RF settings",
+      "manual_id": "cmw500_user_manual",
+      "manual_section": "RF Path Settings / External input/output attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "GPRF 文档给出的常用范围为 -50 dB 到 90 dB；默认 0 dB。",
+      "notes": "仅适用于 standalone measurement RFSettings。Combined signal path 下应使用对应 Technology Signaling Application 的线损设置。"
+    }
+  ]
+}
