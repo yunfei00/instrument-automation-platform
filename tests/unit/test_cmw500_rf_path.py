@@ -129,9 +129,27 @@ def test_rf_path_command_catalog_is_manual_verified():
     assert set(commands) == {
         "rf_path.generator_external_attenuation",
         "rf_path.measurement_external_attenuation",
+        "rf_path.lte_signaling_input_external_attenuation",
+        "rf_path.lte_signaling_output_external_attenuation",
     }
     assert all(
         item["verification_status"] == "manual_verified"
         for item in commands.values()
     )
     assert all(item["probe_enabled"] is False for item in commands.values())
+
+    lte_input = commands["rf_path.lte_signaling_input_external_attenuation"]
+    lte_output = commands["rf_path.lte_signaling_output_external_attenuation"]
+
+    assert lte_input["set_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut <attenuation>"
+    )
+    assert lte_input["query_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?"
+    )
+    assert lte_output["set_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut <attenuation>"
+    )
+    assert lte_output["query_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut?"
+    )
