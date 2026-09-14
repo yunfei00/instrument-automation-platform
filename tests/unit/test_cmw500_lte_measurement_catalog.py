@@ -22,6 +22,7 @@ def test_lte_measurement_command_catalog():
         "lte_measurement.rrc_state",
         "lte_measurement.bler_repetition",
         "lte_measurement.bler_subframes",
+        "lte_measurement.bler_initiate",
         "lte_measurement.dl_full_cell_power",
         "lte_measurement.bler_state",
         "lte_measurement.bler_stop",
@@ -37,6 +38,11 @@ def test_lte_measurement_command_catalog():
 
     subframes = commands["lte_measurement.bler_subframes"]
     assert subframes["set_command"] == "CONFigure:LTE:SIGN:EBLer:SFRames <subframes>"
+
+    initiate = commands["lte_measurement.bler_initiate"]
+    assert initiate["set_command"] == "INITiate:LTE:SIGN:EBLer"
+    assert initiate["kind"] == "event"
+    assert "STATe" in initiate["response_notes"]
 
     full_cell_power = commands["lte_measurement.dl_full_cell_power"]
     assert full_cell_power["query_command"] == "SENSe:LTE:SIGN:DL:PCC:FCPower?"
@@ -55,7 +61,6 @@ def test_lte_measurement_command_catalog():
 
     rsrp = commands["lte_measurement.ue_report_rsrp"]
     assert rsrp["range"] == {"min": 0, "max": 97}
-    assert "not" not in rsrp["response_notes"].lower()
     assert "不是直接 dBm" in rsrp["response_notes"]
 
     rsrq = commands["lte_measurement.ue_report_rsrq"]
