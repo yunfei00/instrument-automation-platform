@@ -23,6 +23,9 @@ from .discovery import (
 from .applications import (
     CMWApplicationRegistry,
 )
+from .rf_path import (
+    CMWRFPathExternalAttenuation,
+)
 
 
 @register_driver(
@@ -41,11 +44,13 @@ class RohdeSchwarzCMW500Driver(
     Base-system driver for R&S CMW500.
 
     This driver intentionally contains only capabilities
-    that belong to the CMW500 base instrument.
+    that belong to the CMW500 base instrument, plus small
+    family-shared helpers such as application RF-path loss
+    compensation.
 
     Technology-specific firmware applications such as LTE,
-    WCDMA, GSM, WLAN and Bluetooth are not part of this
-    initial driver.
+    WCDMA, GSM, WLAN and Bluetooth keep their measurement
+    lifecycle and signaling behavior in separate modules.
     """
 
     def __init__(
@@ -116,6 +121,58 @@ class RohdeSchwarzCMW500Driver(
         self.scpi.write(
             command
         )
+
+    def rf_path(
+        self,
+        application: str,
+        instance: int = 1,
+    ) -> CMWRFPathExternalAttenuation:
+        """Return the shared standalone RF-path attenuation controller.
+
+        This is the frequency-independent External Attenuation setting used
+        to compensate cable/fixture loss. Positive values are loss; negative
+        values represent external gain.
+
+        Signaling combined-path commands (``...:SIGN<i>:...``) are not
+        synthesized here because their exact command trees are
+        technology-specific.
+        """
+
+        return CMWRFPathExternalAttenuation(
+            scpi=self.scpi,
+            application=application,
+            instance=instance,
+        )
+
+    def set_external_output_attenuation_db(
+        self,
+        application: str,
+        value_db: float,
+        instance: int = 1,
+    ) -> None:
+        self.rf_path(application, instance).set_output_attenuation_db(value_db)
+
+    def get_external_output_attenuation_db(
+        self,
+        application: str,
+        instance: int = 1,
+    ) -> float:
+        return self.rf_path(application, instance).get_output_attenuation_db()
+
+    def set_external_input_attenuation_db(
+        self,
+        application: str,
+        value_db: float,
+        instance: int = 1,
+    ) -> None:
+        self.rf_path(application, instance).set_input_attenuation_db(value_db)
+
+    def get_external_input_attenuation_db(
+        self,
+        application: str,
+        instance: int = 1,
+    ) -> float:
+        return self.rf_path(application, instance).get_input_attenuation_db()
 
     def get_device_id(
         self,
