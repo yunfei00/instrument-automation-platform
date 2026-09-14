@@ -47,6 +47,32 @@
       "supported_models": ["CMW*"],
       "response_notes": "当前基础命令库已确认并记录 MAXP 用法；其他 TPC 模式后续按真实测试需求继续补充。",
       "notes": "设置示例：CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET MAXP；查询：CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET?。"
+    },
+    {
+      "id": "lte_signaling.route_scell",
+      "name": "LTE Signaling SCELL COM 口路由",
+      "category": "lte_signaling",
+      "command": "ROUTe:LTE:SIGN:SCENario:SCELl?",
+      "set_command": "ROUTe:LTE:SIGN:SCENario:SCELl <rx_connector>,<rx_converter>,<tx_connector>,<tx_converter>",
+      "query_command": "ROUTe:LTE:SIGN:SCENario:SCELl?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "csv",
+      "description": "设置或查询 LTE Signaling 单小区单 RF 输出（SCELL）的 RF COM 口路由。四个参数依次为 RX Connector、RX Converter、TX Connector、TX Converter。",
+      "source": "R&S CMW LTE Signaling user manual / RF Routing / Scenario / SCELL; verified mappings supplied from real CMW500 LTE test usage",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / RF Routing / Scenario / SCELL",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "查询返回当前 SCELL 路由的四参数组合，例如 RF1C,RX1,RF1C,TX1。具体可用 Connector/Converter 组合依赖仪表硬件配置。",
+      "known_port_mappings": {
+        "1": ["RF1C", "RX1", "RF1C", "TX1"],
+        "2": ["RF2C", "RX1", "RF2C", "TX1"],
+        "3": ["RF3C", "RX2", "RF3C", "TX2"],
+        "4": ["RF4C", "RX2", "RF4C", "TX2"]
+      },
+      "notes": "已记录当前真实 LTE 测试使用的四个 COM 口映射。设置示例：ROUTe:LTE:SIGN:SCENario:SCELl RF3C,RX2,RF3C,TX2；查询：ROUTe:LTE:SIGN:SCENario:SCELl?。"
     }
   ]
 }
