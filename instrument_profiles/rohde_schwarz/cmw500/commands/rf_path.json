@@ -48,6 +48,48 @@
       "supported_models": ["CMW*"],
       "response_notes": "GPRF 文档给出的常用范围为 -50 dB 到 90 dB；默认 0 dB。",
       "notes": "仅适用于 standalone measurement RFSettings。Combined signal path 下应使用对应 Technology Signaling Application 的线损设置。"
+    },
+    {
+      "id": "rf_path.lte_signaling_input_external_attenuation",
+      "name": "LTE Signaling 输入线损",
+      "category": "rf_path",
+      "command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?",
+      "set_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut <attenuation>",
+      "query_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或查询 LTE Signaling combined signal path 的 RF 输入外部衰减/线损。",
+      "source": "R&S CMW LTE Signaling user manual / RF Settings / External Attenuation",
+      "manual_id": "cmw500_user_manual",
+      "manual_section": "LTE Signaling / RF Settings / External Attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "常用范围 -50 dB 到 90 dB，单位 dB。查询命令不带数值参数。",
+      "notes": "默认单载波/PCC 简写形式。设置示例：CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut 35；查询：CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?。"
+    },
+    {
+      "id": "rf_path.lte_signaling_output_external_attenuation",
+      "name": "LTE Signaling 输出线损",
+      "category": "rf_path",
+      "command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut?",
+      "set_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut <attenuation>",
+      "query_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或查询 LTE Signaling combined signal path 的 RF 输出外部衰减/线损。",
+      "source": "R&S CMW LTE Signaling user manual / RF Settings / External Attenuation",
+      "manual_id": "cmw500_user_manual",
+      "manual_section": "LTE Signaling / RF Settings / External Attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "单位 dB。查询命令不带数值参数。多输出/MIMO/CA 场景可能使用 OUTPut<n> 以及 PCC/SCC 命令树。",
+      "notes": "默认单载波/PCC 简写形式。设置示例：CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut 35；查询：CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut?。"
     }
   ]
 }
