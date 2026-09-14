@@ -73,9 +73,9 @@
       "category": "lte_measurement",
       "command": "INITiate:LTE:SIGN:EBLer",
       "set_command": "INITiate:LTE:SIGN:EBLer",
-      "kind": "event",
-      "safety": "state_change",
-      "response_type": "none",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
       "description": "启动或重新启动 LTE Signaling Extended BLER 测量。",
       "source": "R&S CMW LTE Signaling command reference / Extended BLER / Measurement Control; R&S programming examples",
       "manual_id": "cmw500_lte_signaling_user_manual",
@@ -83,7 +83,7 @@
       "verification_status": "manual_verified",
       "probe_enabled": false,
       "supported_models": ["CMW*"],
-      "response_notes": "INITiate 后建议轮询 FETCh:LTE:SIGN:EBLer:STATe? 或 :STATe:ALL?，不要依赖固定 sleep。",
+      "response_notes": "该动作命令通常无查询返回；response_type 使用 raw 仅为兼容当前目录模型。INITiate 后建议轮询 FETCh:LTE:SIGN:EBLer:STATe?。",
       "notes": "典型单次流程：配置 REPetition SING、SFRames → INITiate → 等待完成 → FETCh RELative/ABSolute。"
     },
     {
@@ -133,9 +133,9 @@
       "category": "lte_measurement",
       "command": "STOP:LTE:SIGN:EBLer",
       "set_command": "STOP:LTE:SIGN:EBLer",
-      "kind": "event",
-      "safety": "state_change",
-      "response_type": "none",
+      "kind": "action",
+      "safety": "disruptive",
+      "response_type": "raw",
       "description": "停止当前 Extended BLER 测量。",
       "source": "R&S CMW LTE Signaling command reference / Extended BLER / Measurement Control",
       "manual_id": "cmw500_lte_signaling_user_manual",
@@ -143,7 +143,7 @@
       "verification_status": "manual_verified",
       "probe_enabled": false,
       "supported_models": ["CMW*"],
-      "response_notes": "与 INITiate、ABORt 属于同一测量控制命令族。",
+      "response_notes": "该动作命令通常无查询返回；response_type 使用 raw 仅为兼容当前目录模型。与 INITiate、ABORt 属于同一测量控制命令族。",
       "notes": "测试结束、切换条件或异常清理时停止 BLER 测量。"
     },
     {
