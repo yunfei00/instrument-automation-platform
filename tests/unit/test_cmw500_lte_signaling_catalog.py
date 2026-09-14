@@ -21,6 +21,10 @@ def test_lte_signaling_uplink_power_command_catalog():
     assert set(commands) == {
         "lte_signaling.ul_pmax",
         "lte_signaling.ul_pusch_tpc_setup",
+        "lte_signaling.ue_report_enable",
+        "lte_signaling.ul_pusch_tpc_closed_loop_target_power",
+        "lte_signaling.ul_pusch_open_loop_nominal_power",
+        "lte_signaling.connection_scheduling_type",
         "lte_signaling.route_scell",
     }
     assert all(
@@ -41,7 +45,48 @@ def test_lte_signaling_uplink_power_command_catalog():
     assert pusch_tpc["query_command"] == (
         "CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET?"
     )
+    assert "MAXPower" in pusch_tpc["known_values"]
+    assert "CLOop" in pusch_tpc["known_values"]
     assert "MAXP" in pusch_tpc["response_notes"]
+    assert "CLO" in pusch_tpc["response_notes"]
+
+    ue_report = commands["lte_signaling.ue_report_enable"]
+    assert ue_report["set_command"] == (
+        "CONFigure:LTE:SIGN:UEReport:ENABle <enable>"
+    )
+    assert ue_report["query_command"] == (
+        "CONFigure:LTE:SIGN:UEReport:ENABle?"
+    )
+    assert ue_report["known_values"] == ["OFF", "ON"]
+
+    clt = commands["lte_signaling.ul_pusch_tpc_closed_loop_target_power"]
+    assert clt["set_command"] == (
+        "CONFigure:LTE:SIGN:UL:PCC:PUSCh:TPC:CLTPower <power>"
+    )
+    assert clt["query_command"] == (
+        "CONFigure:LTE:SIGN:UL:PCC:PUSCh:TPC:CLTPower?"
+    )
+    assert clt["range"] == {"min": -50, "max": 33}
+    assert "CONFigure:LTE:SIGN:UL:PUSCh:TPC:CLTPower <power>" in clt["aliases"]
+
+    oln = commands["lte_signaling.ul_pusch_open_loop_nominal_power"]
+    assert oln["set_command"] == (
+        "CONFigure:LTE:SIGN:UL:PCC:PUSCh:OLNPower <power>"
+    )
+    assert oln["query_command"] == (
+        "CONFigure:LTE:SIGN:UL:PCC:PUSCh:OLNPower?"
+    )
+    assert oln["range"] == {"min": -50, "max": 23}
+
+    scheduling = commands["lte_signaling.connection_scheduling_type"]
+    assert scheduling["set_command"] == (
+        "CONFigure:LTE:SIGN:CONNection:PCC:STYPe <type>"
+    )
+    assert scheduling["query_command"] == (
+        "CONFigure:LTE:SIGN:CONNection:PCC:STYPe?"
+    )
+    assert "RMC" in scheduling["notes"]
+    assert "CTYPe" in scheduling["response_notes"]
 
     route_scell = commands["lte_signaling.route_scell"]
     assert route_scell["set_command"] == (
