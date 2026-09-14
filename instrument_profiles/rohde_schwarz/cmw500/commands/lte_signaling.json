@@ -1,0 +1,52 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "lte_signaling",
+    "status": "manual_verified",
+    "manual_id": "cmw500_lte_signaling_user_manual"
+  },
+  "commands": [
+    {
+      "id": "lte_signaling.ul_pmax",
+      "name": "LTE Signaling UE 最大上行功率 P-Max",
+      "category": "lte_signaling",
+      "command": "CONFigure:LTE:SIGN:UL:PMAX?",
+      "set_command": "CONFigure:LTE:SIGN:UL:PMAX <power>",
+      "query_command": "CONFigure:LTE:SIGN:UL:PMAX?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "float",
+      "unit": "dBm",
+      "description": "设置或查询 LTE Signaling 小区广播/配置的 UE 最大允许上行发射功率 P-Max。该参数参与 UE 上行最大功率限制。",
+      "source": "R&S CMW LTE Signaling user manual / Uplink Power Control / P-Max",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Uplink / P-Max",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "单位 dBm；典型配置为 24 dBm。实际可用范围取决于 CMW LTE Signaling 固件版本和测试配置。",
+      "notes": "设置示例：CONFigure:LTE:SIGN:UL:PMAX 24dBm；查询：CONFigure:LTE:SIGN:UL:PMAX?。"
+    },
+    {
+      "id": "lte_signaling.ul_pusch_tpc_setup",
+      "name": "LTE Signaling PUSCH TPC 功控模式",
+      "category": "lte_signaling",
+      "command": "CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET?",
+      "set_command": "CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET <mode>",
+      "query_command": "CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "description": "设置或查询 LTE Signaling PUSCH 的 TPC 功率控制模式。MAXP 用于使 UE 的 PUSCH 发射功率向最大允许功率工作。",
+      "source": "R&S CMW LTE Signaling user manual / Uplink / PUSCH / TPC",
+      "manual_id": "cmw500_lte_signaling_user_manual",
+      "manual_section": "LTE Signaling / Uplink / PUSCH / TPC",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "response_notes": "当前基础命令库已确认并记录 MAXP 用法；其他 TPC 模式后续按真实测试需求继续补充。",
+      "notes": "设置示例：CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET MAXP；查询：CONFigure:LTE:SIGN:UL:PUSCh:TPC:SET?。"
+    }
+  ]
+}
