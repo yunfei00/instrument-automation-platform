@@ -12,6 +12,29 @@ from .models import (
 )
 
 
+_KIND_ALIASES = {
+    "event": "action",
+}
+
+_SAFETY_ALIASES = {
+    "state_change": "disruptive",
+}
+
+_RESPONSE_TYPE_ALIASES = {
+    "bool": "boolean",
+    "none": "raw",
+}
+
+_VERIFICATION_STATUS_ALIASES = {
+    "workflow_verified": "candidate",
+}
+
+
+def _normalize_enum_value(value: str, aliases: dict[str, str]) -> str:
+    """Normalize known legacy/extended catalog tokens before Enum parsing."""
+    return aliases.get(value, value)
+
+
 class CommandCatalog:
     def __init__(
         self,
@@ -82,6 +105,23 @@ class CommandCatalog:
 
             seen_ids.add(command_id)
 
+            kind_value = _normalize_enum_value(
+                item.get("kind", "query"),
+                _KIND_ALIASES,
+            )
+            safety_value = _normalize_enum_value(
+                item.get("safety", "safe"),
+                _SAFETY_ALIASES,
+            )
+            response_type_value = _normalize_enum_value(
+                item.get("response_type", "string"),
+                _RESPONSE_TYPE_ALIASES,
+            )
+            verification_status_value = _normalize_enum_value(
+                item.get("verification_status", "candidate"),
+                _VERIFICATION_STATUS_ALIASES,
+            )
+
             commands.append(
                 CommandDefinition(
                     id=command_id,
@@ -91,24 +131,9 @@ class CommandCatalog:
                         "general",
                     ),
                     command=item["command"],
-                    kind=CommandKind(
-                        item.get(
-                            "kind",
-                            "query",
-                        )
-                    ),
-                    safety=SafetyLevel(
-                        item.get(
-                            "safety",
-                            "safe",
-                        )
-                    ),
-                    response_type=ResponseType(
-                        item.get(
-                            "response_type",
-                            "string",
-                        )
-                    ),
+                    kind=CommandKind(kind_value),
+                    safety=SafetyLevel(safety_value),
+                    response_type=ResponseType(response_type_value),
                     set_command=item.get(
                         "set_command"
                     ),
@@ -143,13 +168,8 @@ class CommandCatalog:
                         "manual_section",
                         "",
                     ),
-                    verification_status=(
-                        VerificationStatus(
-                            item.get(
-                                "verification_status",
-                                "candidate",
-                            )
-                        )
+                    verification_status=VerificationStatus(
+                        verification_status_value
                     ),
                     probe_enabled=item.get(
                         "probe_enabled",
