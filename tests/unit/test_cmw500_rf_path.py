@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from instrument_core.transport import MockTransport
@@ -6,6 +9,9 @@ from instrument_drivers.rohde_schwarz.cmw500 import (
     RohdeSchwarzCMW500Driver,
 )
 from instrument_scpi import SCPIClient
+
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def test_generator_output_attenuation_set_and_query():
@@ -105,3 +111,27 @@ def test_signaling_command_tree_is_not_guessed():
 
     assert ":SIGN" not in controller.generator_output_command
     assert ":SIGN" not in controller.measurement_input_command
+
+
+def test_rf_path_command_catalog_is_manual_verified():
+    path = (
+        ROOT
+        / "instrument_profiles"
+        / "rohde_schwarz"
+        / "cmw500"
+        / "commands"
+        / "rf_path.json"
+    )
+
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    commands = {item["id"]: item for item in payload["commands"]}
+
+    assert set(commands) == {
+        "rf_path.generator_external_attenuation",
+        "rf_path.measurement_external_attenuation",
+    }
+    assert all(
+        item["verification_status"] == "manual_verified"
+        for item in commands.values()
+    )
+    assert all(item["probe_enabled"] is False for item in commands.values())
