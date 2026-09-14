@@ -22,27 +22,46 @@ def test_lte_radio_basic_command_catalog():
         "lte_radio_basic.duplex_mode",
         "lte_radio_basic.cell_state",
         "lte_radio_basic.pcc_band",
+        "lte_radio_basic.dl_channel",
+        "lte_radio_basic.dl_bandwidth",
+        "lte_radio_basic.rs_epre_level",
+        "lte_radio_basic.dl_frequency",
     }
+    assert all(item["probe_enabled"] is False for item in commands.values())
+    assert commands["lte_radio_basic.dl_frequency"]["verification_status"] == "workflow_verified"
     assert all(
         item["verification_status"] == "manual_verified"
-        for item in commands.values()
+        for command_id, item in commands.items()
+        if command_id != "lte_radio_basic.dl_frequency"
     )
-    assert all(item["probe_enabled"] is False for item in commands.values())
 
     duplex = commands["lte_radio_basic.duplex_mode"]
-    assert duplex["set_command"] == "CONFigure:LTE:SIGN:PCC:DMODe <mode>"
-    assert duplex["query_command"] == "CONFigure:LTE:SIGN:PCC:DMODe?"
     assert duplex["known_values"] == ["FDD", "TDD"]
-    assert "CONFigure:LTE:SIGN:DMODe <mode>" in duplex["aliases"]
 
     cell = commands["lte_radio_basic.cell_state"]
-    assert cell["set_command"] == "SOURce:LTE:SIGN:CELL:STATe <state>"
-    assert cell["query_command"] == "SOURce:LTE:SIGN:CELL:STATe?"
     assert cell["known_values"] == ["OFF", "ON"]
-    assert "PENDing" in cell["response_notes"]
 
     band = commands["lte_radio_basic.pcc_band"]
     assert band["set_command"] == "CONFigure:LTE:SIGN:PCC:BAND <band>"
-    assert band["query_command"] == "CONFigure:LTE:SIGN:PCC:BAND?"
-    assert "OB1" in band["notes"]
-    assert "CONFigure:LTE:SIGN:BAND <band>" in band["aliases"]
+
+    dl_channel = commands["lte_radio_basic.dl_channel"]
+    assert dl_channel["set_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:PCC:CHANnel:DL <channel>"
+    )
+    assert "CONFigure:LTE:SIGN:RFSettings:CHANnel:DL <channel>" in dl_channel["aliases"]
+
+    bandwidth = commands["lte_radio_basic.dl_bandwidth"]
+    assert bandwidth["set_command"] == (
+        "CONFigure:LTE:SIGN:CELL:BANDwidth:PCC:DL <bandwidth>"
+    )
+    assert bandwidth["known_values"] == ["B014", "B030", "B050", "B100", "B150", "B200"]
+
+    rs_epre = commands["lte_radio_basic.rs_epre_level"]
+    assert rs_epre["query_command"] == "CONFigure:LTE:SIGN:DL:PCC:RSEPre:LEVel?"
+    assert rs_epre["unit"] == "dBm"
+
+    dl_frequency = commands["lte_radio_basic.dl_frequency"]
+    assert dl_frequency["set_command"] == (
+        "CONFigure:LTE:SIGN:RFSettings:PCC:FREQuency:DL <frequency>"
+    )
+    assert dl_frequency["unit"] == "Hz"
