@@ -64,6 +64,7 @@ jobs:
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/fsw/video_trigger.py
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/cmw500/driver.py
           uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/cmw500/rf_path.py
+          uv run python -m py_compile packages/instrument_drivers/src/instrument_drivers/rohde_schwarz/cmw500/applications/lte/signaling_rf_path.py
           uv run python -m py_compile tools/verify_dsox3034a_snapshot_all.py
           uv run python -m py_compile tools/verify_fsw_video_trigger.py
 
@@ -95,7 +96,8 @@ jobs:
             tests/unit/test_cmw500_applications.py \
             tests/unit/test_cmw500_lte_catalog.py \
             tests/unit/test_cmw500_lte_mevaluation.py \
-            tests/unit/test_cmw500_rf_path.py
+            tests/unit/test_cmw500_rf_path.py \
+            tests/unit/test_cmw500_lte_signaling_rf_path.py
 
       - name: Validate FSW command catalog
         run: uv run python tests/unit/test_fsw_catalogs.py
