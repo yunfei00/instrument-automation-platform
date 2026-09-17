@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "gsm_signaling",
+    "status": "candidate",
+    "manual_id": "cmw500_gsm_signaling_manual"
+  },
+  "commands": [
+    {
+      "id": "gsm_signaling.route_scell",
+      "name": "GSM Signaling RF Route",
+      "category": "gsm_signaling",
+      "command": "ROUTe:GSM:SIGN:SCENario:SCELl?",
+      "query_command": "ROUTe:GSM:SIGN:SCENario:SCELl?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "verification_status": "candidate",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "known_port_mappings": {
+        "COM1": ["RF1C", "RX1", "RF1C", "TX1"],
+        "COM2": ["RF2C", "RX1", "RF2C", "TX1"],
+        "COM3": ["RF3C", "RX2", "RF3C", "TX2"],
+        "COM4": ["RF4C", "RX2", "RF4C", "TX2"]
+      },
+      "description": "查询 GSM Signaling Standard Cell 的 RF 输入/输出路由。",
+      "notes": "COM1~COM4 映射来自当前真实测试工作流；后续补充手册确认后的 set_command。"
+    },
+    {
+      "id": "gsm_signaling.external_attenuation_input",
+      "name": "GSM Signaling Input External Attenuation",
+      "category": "gsm_signaling",
+      "command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:INPut?",
+      "set_command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:INPut <attenuation>",
+      "query_command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:INPut?",
+      "kind": "query", "safety": "safe", "response_type": "float", "unit": "dB",
+      "verification_status": "candidate", "probe_enabled": false, "supported_models": ["CMW*"],
+      "parameters": [{"name":"attenuation","position":1,"required":true,"type":"float","unit":"dB","examples":[35]}],
+      "description": "设置/查询 GSM Signaling 输入路径外部衰减（线损补偿）。"
+    },
+    {
+      "id": "gsm_signaling.external_attenuation_output",
+      "name": "GSM Signaling Output External Attenuation",
+      "category": "gsm_signaling",
+      "command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:OUTPut?",
+      "set_command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:OUTPut <attenuation>",
+      "query_command": "CONFigure:GSM:SIGN:RFSettings:EATTenuation:OUTPut?",
+      "kind": "query", "safety": "safe", "response_type": "float", "unit": "dB",
+      "verification_status": "candidate", "probe_enabled": false, "supported_models": ["CMW*"],
+      "parameters": [{"name":"attenuation","position":1,"required":true,"type":"float","unit":"dB","examples":[35]}],
+      "description": "设置/查询 GSM Signaling 输出路径外部衰减（线损补偿）。"
+    },
+    {
+      "id": "gsm_signaling.security_authentication",
+      "name": "GSM Authentication",
+      "category": "gsm_signaling",
+      "command": "CONFigure:GSM:SIGN:CELL:SECurity:AUTHenticat?",
+      "set_command": "CONFigure:GSM:SIGN:CELL:SECurity:AUTHenticat <enable>",
+      "query_command": "CONFigure:GSM:SIGN:CELL:SECurity:AUTHenticat?",
+      "kind":"query","safety":"safe","response_type":"boolean","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "known_values":["OFF","ON"],
+      "parameters":[{"name":"enable","position":1,"required":true,"type":"enum","known_values":["OFF","ON"],"examples":["OFF"]}],
+      "description":"设置 GSM 鉴权开关。"
+    },
+    {
+      "id": "gsm_signaling.cs_test_mode",
+      "name": "GSM CS Test Mode",
+      "category": "gsm_signaling",
+      "command": "CONFigure:GSM:SIGN:CONNection:CSWitched:TMODe?",
+      "set_command": "CONFigure:GSM:SIGN:CONNection:CSWitched:TMODe <mode>",
+      "query_command": "CONFigure:GSM:SIGN:CONNection:CSWitched:TMODe?",
+      "kind":"query","safety":"safe","response_type":"string","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"mode","position":1,"required":true,"type":"enum_token","examples":["FV1"],"description":"当前工作流使用 FV1；完整枚举待手册确认。"}],
+      "description":"设置/查询 Circuit Switched 测试模式。"
+    },
+    {
+      "id":"gsm_signaling.cell_state","name":"GSM Cell State","category":"gsm_signaling",
+      "command":"SOURce:GSM:SIGN:CELL:STATe?","set_command":"SOURce:GSM:SIGN:CELL <state>","query_command":"SOURce:GSM:SIGN:CELL:STATe?",
+      "aliases":["SOURce:GSM:SIGN:CELL ON","SOURce:GSM:SIGN:CELL OFF"],
+      "kind":"query","safety":"disruptive","response_type":"string","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "known_values":["OFF","ON"],"parameters":[{"name":"state","position":1,"required":true,"type":"enum","known_values":["OFF","ON"]}],
+      "description":"开启/关闭 GSM cell，并查询当前 cell 状态。"
+    },
+    {
+      "id":"gsm_signaling.bcch_band","name":"GSM BCCH Band","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:BAND:BCCH?","set_command":"CONFigure:GSM:SIGN:BAND:BCCH <band>","query_command":"CONFigure:GSM:SIGN:BAND:BCCH?",
+      "kind":"query","safety":"safe","response_type":"string","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "known_values":["G085","G09","G18","G19"],
+      "parameters":[{"name":"band","position":1,"required":true,"type":"enum","known_values":["G085","G09","G18","G19"],"value_meanings":{"G085":"GSM 850","G09":"GSM 900","G18":"DCS 1800","G19":"PCS 1900"},"examples":["G085"]}],
+      "description":"设置/查询 BCCH operating band。"
+    },
+    {
+      "id":"gsm_signaling.tch_level","name":"GSM TCH RF Level","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:RFSettings:LEVel:TCH?","set_command":"CONFigure:GSM:SIGN:RFSettings:LEVel:TCH <level>","query_command":"CONFigure:GSM:SIGN:RFSettings:LEVel:TCH?",
+      "kind":"query","safety":"safe","response_type":"float","unit":"dBm","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"level","position":1,"required":true,"type":"float","unit":"dBm","examples":[-70],"description":"TCH 下行 RF 电平；灵敏度/BER 扫描的核心功率参数。"}],
+      "description":"设置/查询 Traffic Channel RF level。"
+    },
+    {
+      "id":"gsm_signaling.tch_channel","name":"GSM TCH Channel","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:RFSettings:CHANnel:TCH?","set_command":"CONFigure:GSM:SIGN:RFSettings:CHANnel:TCH <channel>","query_command":"CONFigure:GSM:SIGN:RFSettings:CHANnel:TCH?",
+      "kind":"query","safety":"safe","response_type":"integer","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"channel","position":1,"required":true,"type":"integer","examples":[128],"constraints":"合法 ARFCN 范围取决于当前 GSM band。"}],
+      "description":"设置/查询 TCH ARFCN。"
+    },
+    {
+      "id":"gsm_signaling.cs_state","name":"GSM Circuit Switched Connection State","category":"gsm_signaling",
+      "command":"FETCh:GSM:SIGN:CSWitched:STATe?","query_command":"FETCh:GSM:SIGN:CSWitched:STATe?",
+      "kind":"query","safety":"safe","response_type":"string","verification_status":"candidate","probe_enabled":true,"supported_models":["CMW*"],
+      "response_notes":"当前真实测试中 CEST 表示 CS connection established/已连接。自动化应显式等待 CEST，而不是固定 sleep。",
+      "description":"查询 GSM circuit-switched connection state。"
+    },
+    {
+      "id":"gsm_signaling.cs_connect","name":"GSM CS Connect","category":"gsm_signaling",
+      "command":"CALL:GSM:SIGN:CSWitched:ACTion CONNect","set_command":"CALL:GSM:SIGN:CSWitched:ACTion <action>",
+      "kind":"action","safety":"disruptive","response_type":"raw","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"action","position":1,"required":true,"type":"enum_token","examples":["CONNect"],"description":"当前工作流使用 CONNect；其他动作待手册补全。"}],
+      "description":"发起 GSM circuit-switched connection。"
+    },
+    {
+      "id":"gsm_signaling.em_report_enable","name":"GSM CS Enhanced Measurement Report","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:RREPort:CSWitched:EMReport:ENABle?","set_command":"CONFigure:GSM:SIGN:RREPort:CSWitched:EMReport:ENABle <enable>","query_command":"CONFigure:GSM:SIGN:RREPort:CSWitched:EMReport:ENABle?",
+      "kind":"query","safety":"safe","response_type":"boolean","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"enable","position":1,"required":true,"type":"enum","known_values":["OFF","ON"],"examples":["ON"]}],
+      "description":"开启/关闭 CS Enhanced Measurement Report。"
+    },
+    {
+      "id":"gsm_signaling.ber_sample_count","name":"GSM CS BER Sample Count","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:BER:CSWitched:SCOunt?","set_command":"CONFigure:GSM:SIGN:BER:CSWitched:SCOunt <count>","query_command":"CONFigure:GSM:SIGN:BER:CSWitched:SCOunt?",
+      "kind":"query","safety":"safe","response_type":"integer","verification_status":"manual_verified","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"count","position":1,"required":true,"type":"integer","examples":[100,1000],"description":"BER measurement 处理的 frames/bursts 数量；R&S 官方应用说明示例使用 100，当前工作流使用 1000。"}],
+      "source":"R&S application note 1MA194, GSM CS BER remote commands",
+      "description":"设置/查询 GSM CS BER measurement frame/burst count。"
+    },
+    {
+      "id":"gsm_signaling.ber_stop_condition","name":"GSM CS BER Stop Condition","category":"gsm_signaling",
+      "command":"CONFigure:GSM:SIGN:BER:CSWitched:SCONdition?","set_command":"CONFigure:GSM:SIGN:BER:CSWitched:SCONdition <condition>","query_command":"CONFigure:GSM:SIGN:BER:CSWitched:SCONdition?",
+      "kind":"query","safety":"safe","response_type":"string","verification_status":"candidate","probe_enabled":false,"supported_models":["CMW*"],
+      "parameters":[{"name":"condition","position":1,"required":true,"type":"enum_token","examples":["NONE"],"description":"NONE 表示当前工作流不使用提前停止条件；完整枚举待手册确认。"}],
+      "description":"设置/查询 GSM CS BER stop condition。"
+    },
+    {
+      "id":"gsm_signaling.ber_initiate","name":"GSM CS BER Initiate","category":"gsm_signaling",
+      "command":"INITiate:GSM:SIGN:BER:CSWitched","set_command":"INITiate:GSM:SIGN:BER:CSWitched",
+      "kind":"action","safety":"disruptive","response_type":"raw","verification_status":"manual_verified","probe_enabled":false,"supported_models":["CMW*"],
+      "source":"R&S application note 1MA194, GSM CS BER remote commands",
+      "description":"启动 GSM circuit-switched BER measurement。"
+    },
+    {
+      "id":"gsm_signaling.ber_state","name":"GSM CS BER State","category":"gsm_signaling",
+      "command":"FETCh:GSM:SIGN:BER:CSWitched:STATe?","query_command":"FETCh:GSM:SIGN:BER:CSWitched:STATe?",
+      "kind":"query","safety":"safe","response_type":"string","verification_status":"candidate","probe_enabled":true,"supported_models":["CMW*"],
+      "response_notes":"当前工作流观察到 RDY 表示测量结果已就绪。建议 INITiate 后轮询到 RDY 再读取 BER。",
+      "description":"查询 GSM CS BER measurement state。"
+    },
+    {
+      "id":"gsm_signaling.ber_result","name":"GSM CS BER Results","category":"gsm_signaling",
+      "command":"FETCh:GSM:SIGN:BER:CSWitched?","query_command":"FETCh:GSM:SIGN:BER:CSWitched?",
+      "kind":"query","safety":"safe","response_type":"csv","verification_status":"manual_verified","probe_enabled":true,"supported_models":["CMW*"],
+      "source":"R&S application note 1MA194 confirms this command retrieves GSM CS BER results.",
+      "response_notes":"返回多字段 BER 结果，不应直接按单个 float 解析。具体字段顺序和含义受 BER measurement mode / channel coding / firmware 影响；必须依据目标 CMW500 GSM Signaling command reference 的 Result Overview 解析。当前公开 R&S 应用说明只确认该命令用于 get results，没有公开完整字段表，因此这里暂不猜字段顺序。",
+      "notes":"在 INITiate 后等待 BER state=RDY，再执行该查询。后续拿到对应 CMW500 GSM Signaling 手册版本后，应补充 result_fields（字段名、位置、单位、无效值、Reliability/BER class 等）。",
+      "description":"读取 GSM circuit-switched BER measurement results。"
+    }
+  ]
+}
