@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "category": "gsm_ber",
+    "status": "candidate",
+    "manual_id": "cmw500_gsm_signaling_manual",
+    "parameter_schema_version": 1
+  },
+  "commands": [
+    {
+      "id": "gsm_ber.measurement_mode",
+      "name": "GSM CS BER Measurement Mode",
+      "category": "gsm_ber",
+      "command": "CONFigure:GSM:SIGN:BER:CSWitched:MMODe?",
+      "set_command": "CONFigure:GSM:SIGN:BER:CSWitched:MMODe <mode>",
+      "query_command": "CONFigure:GSM:SIGN:BER:CSWitched:MMODe?",
+      "kind": "query",
+      "safety": "safe",
+      "response_type": "string",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW*"],
+      "known_values": ["BER"],
+      "parameters": [
+        {
+          "name": "mode",
+          "position": 1,
+          "required": true,
+          "type": "enum_token",
+          "known_values": ["BER"],
+          "examples": ["BER"],
+          "description": "BER selects Bit Error Rate measurement mode. Only the confirmed BER token is recorded; other modes remain to be completed from the matching GSM Signaling Command Reference."
+        }
+      ],
+      "example_commands": [
+        "CONFigure:GSM:SIGN:BER:CSWitched:MMODe BER",
+        "CONFigure:GSM:SIGN:BER:CSWitched:MMODe?"
+      ],
+      "source": "R&S application note 1MA194, GSM CS BER remote command example",
+      "description": "Set or query the GSM circuit-switched BER measurement mode.",
+      "notes": "Configure BER mode before sample count / stop condition and before INITiate:GSM:SIGN:BER:CSWitched. Kept in a dedicated BER catalog to avoid overwriting concurrently updated gsm_signaling.json."
+    }
+  ]
+}
