@@ -30,5 +30,6 @@ def test_all_cmw500_command_catalogs_load():
     assert "wlan_signaling.json" in loaded
     assert "wlan_per.json" in loaded
     assert "gsm_signaling.json" in loaded
+    assert "gsm_ber.json" in loaded
     assert "wcdma_signaling.json" in loaded
     assert "rf_path.json" in loaded
