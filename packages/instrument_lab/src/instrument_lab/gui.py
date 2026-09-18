@@ -171,7 +171,7 @@ class InstrumentLabWindow(QMainWindow):
         self.current_entry: InstrumentCommandEntry | None = None
         self.transport: VisaTransport | None = None
         self.connected_resource = ""
-        self.placeholder_edits: dict[str, QLineEdit] = {}
+        self.placeholder_edits: dict[str, QWidget] = {}
         self._busy = False
 
         self.thread_pool = QThreadPool(self)
@@ -557,7 +557,7 @@ class InstrumentLabWindow(QMainWindow):
 
         self.query_edit.setText(query_text)
         self.send_edit.setText(set_text)
-        self._build_parameter_fields(query_text, set_text)
+        self._build_parameter_fields(\n            query_text,\n            set_text,\n            parameters=command.parameters,\n        )
 
     def _clear_parameter_fields(self) -> None:
         self.placeholder_edits.clear()
@@ -568,7 +568,11 @@ class InstrumentLabWindow(QMainWindow):
             if widget is not None:
                 widget.deleteLater()
 
-    def _build_parameter_fields(self, *templates: str) -> None:
+    def _build_parameter_fields(
+        self,
+        *templates: str,
+        parameters: tuple[dict, ...] = (),
+    ) -> None:
         self._clear_parameter_fields()
         placeholders = extract_placeholders(*templates)
 
@@ -576,13 +580,41 @@ class InstrumentLabWindow(QMainWindow):
             self.parameter_layout.addRow(QLabel("No placeholders"))
             return
 
+        parameter_map = {
+            str(parameter.get("name")): parameter
+            for parameter in parameters
+            if parameter.get("name")
+        }
+
         for name in placeholders:
-            editor = QLineEdit()
-            editor.setPlaceholderText(
-                "e.g. 1"
-                if name.lower() in {"n", "i"}
-                else f"value for <{name}>"
-            )
+            metadata = parameter_map.get(name, {})
+            known_values = metadata.get("known_values") or []
+
+            if known_values:
+                editor = QComboBox()
+                editor.addItems(str(value) for value in known_values)
+                examples = metadata.get("examples") or []
+                if examples:
+                    example = str(examples[0])
+                    index = editor.findText(example)
+                    if index >= 0:
+                        editor.setCurrentIndex(index)
+            else:
+                editor = QLineEdit()
+                examples = metadata.get("examples") or []
+                if examples:
+                    editor.setPlaceholderText(str(examples[0]))
+                else:
+                    editor.setPlaceholderText(
+                        "e.g. 1"
+                        if name.lower() in {"n", "i"}
+                        else f"value for <{name}>"
+                    )
+
+            description = metadata.get("description")
+            if description:
+                editor.setToolTip(str(description))
+
             self.placeholder_edits[name] = editor
             self.parameter_layout.addRow(
                 f"<{name}>",
@@ -590,10 +622,13 @@ class InstrumentLabWindow(QMainWindow):
             )
 
     def _parameter_values(self) -> dict[str, str]:
-        return {
-            name: editor.text()
-            for name, editor in self.placeholder_edits.items()
-        }
+        values: dict[str, str] = {}
+        for name, editor in self.placeholder_edits.items():
+            if isinstance(editor, QComboBox):
+                values[name] = editor.currentText()
+            elif isinstance(editor, QLineEdit):
+                values[name] = editor.text()
+        return values
 
     def _clear_command_detail(self) -> None:
         self.command_title.setText("Select a command")
