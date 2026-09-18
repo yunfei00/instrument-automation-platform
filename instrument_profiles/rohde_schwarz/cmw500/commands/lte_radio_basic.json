@@ -14,18 +14,26 @@
       "command": "CONFigure:LTE:SIGN:PCC:DMODe?",
       "set_command": "CONFigure:LTE:SIGN:PCC:DMODe <mode>",
       "query_command": "CONFigure:LTE:SIGN:PCC:DMODe?",
-      "aliases": ["CONFigure:LTE:SIGN:DMODe <mode>", "CONFigure:LTE:SIGN:DMODe?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:DMODe <mode>",
+        "CONFigure:LTE:SIGN:DMODe?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "string",
-      "known_values": ["FDD", "TDD"],
+      "known_values": [
+        "FDD",
+        "TDD"
+      ],
       "description": "设置或查询 LTE PCC 的 Duplex Mode。FDD 为频分双工，TDD 为时分双工。PCC 节点在命令树中可省略。",
       "source": "R&S CMW LTE Signaling command reference / General Settings / Duplex Mode",
       "manual_id": "cmw500_lte_signaling_user_manual",
       "manual_section": "LTE Signaling / General Settings / Duplex Mode",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "手册命令树为 CONFigure:LTE:SIGN<i>[:PCC]:DMODe，因此带 PCC 与省略 PCC 的形式表示同一 PCC 配置。",
       "notes": "通常在 CELL OFF 状态下先配置 Duplex Mode，再配置 Band、Channel、Bandwidth。"
     },
@@ -34,21 +42,56 @@
       "name": "LTE Signaling Cell 状态控制",
       "category": "lte_radio_basic",
       "command": "SOURce:LTE:SIGN:CELL:STATe?",
-      "set_command": "SOURce:LTE:SIGN:CELL:STATe <state>",
+      "set_command": "SOURce:LTE:SIGN:CELL <state>",
       "query_command": "SOURce:LTE:SIGN:CELL:STATe?",
       "kind": "query",
       "safety": "disruptive",
       "response_type": "string",
-      "known_values": ["OFF", "ON"],
-      "description": "启动或关闭 LTE Signaling Cell/信号发生器。",
+      "known_values": [
+        "OFF",
+        "ON"
+      ],
+      "description": "打开、关闭或查询 LTE Signaling Cell/信号源。ON 打开信号源，OFF 关闭信号源。",
       "source": "R&S CMW LTE Signaling command reference / Connection Control and States / Cell State",
       "manual_id": "cmw500_lte_signaling_user_manual",
       "manual_section": "LTE Signaling / Connection Control and States / Cell State",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "启动过程中状态可能经历 PENDing 再到 ON。",
-      "notes": "典型初始化：CELL OFF → 配置基础参数 → CELL ON。"
+      "notes": "典型初始化：CELL OFF → 配置基础参数 → CELL ON。",
+      "aliases": [
+        "SOURce:LTE:SIGN:CELL ON",
+        "SOURce:LTE:SIGN:CELL OFF"
+      ],
+      "parameters": [
+        {
+          "name": "state",
+          "position": 1,
+          "required": true,
+          "type": "enum",
+          "known_values": [
+            "OFF",
+            "ON"
+          ],
+          "value_meanings": {
+            "OFF": "关闭 LTE Signaling Cell/信号源",
+            "ON": "打开 LTE Signaling Cell/信号源"
+          },
+          "examples": [
+            "ON",
+            "OFF"
+          ],
+          "description": "LTE Signaling Cell/信号源开关状态。"
+        }
+      ],
+      "example_commands": [
+        "SOURce:LTE:SIGN:CELL ON",
+        "SOURce:LTE:SIGN:CELL OFF",
+        "SOURce:LTE:SIGN:CELL:STATe?"
+      ]
     },
     {
       "id": "lte_radio_basic.pcc_band",
@@ -57,7 +100,10 @@
       "command": "CONFigure:LTE:SIGN:PCC:BAND?",
       "set_command": "CONFigure:LTE:SIGN:PCC:BAND <band>",
       "query_command": "CONFigure:LTE:SIGN:PCC:BAND?",
-      "aliases": ["CONFigure:LTE:SIGN:BAND <band>", "CONFigure:LTE:SIGN:BAND?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:BAND <band>",
+        "CONFigure:LTE:SIGN:BAND?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "string",
@@ -67,7 +113,9 @@
       "manual_section": "LTE Signaling / RF Settings / Operating Band",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "允许的 Band 受 Duplex Mode、固件和选件约束。",
       "notes": "设置 Band 后，DL/UL Channel 必须位于该 Band 合法范围。"
     },
@@ -78,7 +126,10 @@
       "command": "CONFigure:LTE:SIGN:RFSettings:PCC:CHANnel:DL?",
       "set_command": "CONFigure:LTE:SIGN:RFSettings:PCC:CHANnel:DL <channel>",
       "query_command": "CONFigure:LTE:SIGN:RFSettings:PCC:CHANnel:DL?",
-      "aliases": ["CONFigure:LTE:SIGN:RFSettings:CHANnel:DL <channel>", "CONFigure:LTE:SIGN:RFSettings:CHANnel:DL?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:RFSettings:CHANnel:DL <channel>",
+        "CONFigure:LTE:SIGN:RFSettings:CHANnel:DL?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "integer",
@@ -88,7 +139,9 @@
       "manual_section": "LTE Signaling / RF Settings / Operating Band, Channel, Frequency",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "PCC 节点可省略；设置 DL channel 后相应中心频率以及 FDD 下相关 UL 参数由 band/channel 关系确定。",
       "notes": "常用于按 Band + EARFCN 切换测试频点。"
     },
@@ -99,18 +152,30 @@
       "command": "CONFigure:LTE:SIGN:CELL:BANDwidth:PCC:DL?",
       "set_command": "CONFigure:LTE:SIGN:CELL:BANDwidth:PCC:DL <bandwidth>",
       "query_command": "CONFigure:LTE:SIGN:CELL:BANDwidth:PCC:DL?",
-      "aliases": ["CONFigure:LTE:SIGN:CELL:BANDwidth:DL <bandwidth>", "CONFigure:LTE:SIGN:CELL:BANDwidth:DL?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:CELL:BANDwidth:DL <bandwidth>",
+        "CONFigure:LTE:SIGN:CELL:BANDwidth:DL?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "string",
-      "known_values": ["B014", "B030", "B050", "B100", "B150", "B200"],
+      "known_values": [
+        "B014",
+        "B030",
+        "B050",
+        "B100",
+        "B150",
+        "B200"
+      ],
       "description": "设置或查询 PCC 下行 Cell Bandwidth。常见值对应 1.4/3/5/10/15/20 MHz。",
       "source": "R&S CMW LTE Signaling command reference / Physical Cell Setup / DL Cell Bandwidth",
       "manual_id": "cmw500_lte_signaling_user_manual",
       "manual_section": "LTE Signaling / Physical Cell Setup / DL Cell Bandwidth",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "B014/B030/B050/B100/B150/B200 分别对应 1.4/3/5/10/15/20 MHz。PCC 节点可省略。",
       "notes": "带宽会影响可用 RB 数、Full Cell BW Power 以及灵敏度测试中 RS EPRE 与总参考功率之间的换算。"
     },
@@ -121,7 +186,10 @@
       "command": "CONFigure:LTE:SIGN:DL:PCC:RSEPre:LEVel?",
       "set_command": "CONFigure:LTE:SIGN:DL:PCC:RSEPre:LEVel <level>",
       "query_command": "CONFigure:LTE:SIGN:DL:PCC:RSEPre:LEVel?",
-      "aliases": ["CONFigure:LTE:SIGN:DL:RSEPre:LEVel <level>", "CONFigure:LTE:SIGN:DL:RSEPre:LEVel?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:DL:RSEPre:LEVel <level>",
+        "CONFigure:LTE:SIGN:DL:RSEPre:LEVel?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "float",
@@ -132,7 +200,9 @@
       "manual_section": "LTE Signaling / Downlink Power Levels / RS EPRE",
       "verification_status": "manual_verified",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "其他 DL 物理信道/信号功率通常以 RS EPRE 为参考定义偏移；允许范围受连接器、带宽/RB 数和外部衰减影响。",
       "notes": "这是 LTE 接收灵敏度/BLER 扫功率时最核心的下行电平参数之一。"
     },
@@ -143,7 +213,10 @@
       "command": "CONFigure:LTE:SIGN:RFSettings:PCC:FREQuency:DL?",
       "set_command": "CONFigure:LTE:SIGN:RFSettings:PCC:FREQuency:DL <frequency>",
       "query_command": "CONFigure:LTE:SIGN:RFSettings:PCC:FREQuency:DL?",
-      "aliases": ["CONFigure:LTE:SIGN:RFSettings:FREQuency:DL <frequency>", "CONFigure:LTE:SIGN:RFSettings:FREQuency:DL?"],
+      "aliases": [
+        "CONFigure:LTE:SIGN:RFSettings:FREQuency:DL <frequency>",
+        "CONFigure:LTE:SIGN:RFSettings:FREQuency:DL?"
+      ],
       "kind": "query",
       "safety": "safe",
       "response_type": "float",
@@ -154,7 +227,9 @@
       "manual_section": "LTE Signaling / RF Settings / Operating Band, Channel, Frequency",
       "verification_status": "candidate",
       "probe_enabled": false,
-      "supported_models": ["CMW*"],
+      "supported_models": [
+        "CMW*"
+      ],
       "response_notes": "当前公开手册索引明确确认 DL Channel 命令和 GUI 中 DL Channel/Frequency 配置项；该直接 FREQuency:DL 形式按现有真实测试流程记录，建议后续在目标 CMW500 固件上查询/设置验证后升级为 hardware_verified。",
       "notes": "若标准 Band 下固件不接受直接频率设置，优先使用 BAND + CHANnel:DL；User-defined Band 使用 RFSettings:PCC:UDEFined:FREQuency:* 命令族。"
     }
