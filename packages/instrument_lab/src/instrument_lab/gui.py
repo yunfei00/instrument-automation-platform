@@ -557,7 +557,11 @@ class InstrumentLabWindow(QMainWindow):
 
         self.query_edit.setText(query_text)
         self.send_edit.setText(set_text)
-        self._build_parameter_fields(\n            query_text,\n            set_text,\n            parameters=command.parameters,\n        )
+        self._build_parameter_fields(
+            query_text,
+            set_text,
+            parameters=command.parameters,
+        )
 
     def _clear_parameter_fields(self) -> None:
         self.placeholder_edits.clear()
