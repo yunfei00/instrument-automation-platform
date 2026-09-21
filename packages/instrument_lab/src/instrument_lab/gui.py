@@ -817,34 +817,27 @@ class InstrumentLabWindow(QMainWindow):
         )
         if not is_wlan:
             return True
-        transport = self.transport
-        if transport is None:
-            return True
-        try:
-            response = transport.query(
-                "SOURce:WLAN:SIGN:STAte?"
-            ).strip()
-        except Exception as exc:
-            QMessageBox.information(
-                self,
-                "WLAN Not Supported",
-                "当前仪表未检测到可用的 WLAN/Wi-Fi Signaling 功能。\n\n"
-                "本次 WLAN 命令不会执行。\n"
-                f"检测命令: SOURce:WLAN:SIGN:STAte?\n"
-                f"仪表返回/异常: {exc}",
-            )
-            self._append_log(
-                "CAPABILITY",
-                "WLAN",
-                "not supported",
-            )
-            return False
+
+        # Do not probe an optional application with a WLAN SCPI query here.
+        # On CMW500 units without WLAN Signaling, such a query can time out;
+        # the transport recovery then closes the VISA session.  Capability
+        # discovery must therefore be non-destructive and performed from
+        # installed-option/application metadata instead.
+        QMessageBox.information(
+            self,
+            "WLAN Capability Check",
+            "当前版本无法在不影响 VISA 会话的前提下可靠确认本机是否安装 "
+            "WLAN/Wi-Fi Signaling 选件。\\n\\n"
+            "为避免无 WLAN 的 CMW500 因探测命令超时而断开连接，"
+            "已停止自动发送 WLAN 探测 SCPI。\\n"
+            "本次 WLAN 命令不会自动执行。"
+        )
         self._append_log(
             "CAPABILITY",
             "WLAN",
-            f"supported ({response})",
+            "unknown - safe probe blocked",
         )
-        return True
+        return False
 
     def _query_baseline_command(self) -> None:
         if not self._wlan_command_supported():
