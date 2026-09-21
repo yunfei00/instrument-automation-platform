@@ -560,7 +560,7 @@ class InstrumentLabWindow(QMainWindow):
         self._build_parameter_fields(
             query_text,
             set_text,
-            parameters=command.parameters,
+            parameters=getattr(command, "parameters", ()),
         )
 
     def _clear_parameter_fields(self) -> None:
@@ -806,7 +806,49 @@ class InstrumentLabWindow(QMainWindow):
             )
             return None
 
+    def _wlan_command_supported(self) -> bool:
+        if self.current_entry is None:
+            return True
+        command = self.current_entry.command
+        is_wlan = (
+            "wlan" in command.category.lower()
+            or "wlan" in command.id.lower()
+            or ":WLAN:" in command.command.upper()
+        )
+        if not is_wlan:
+            return True
+        transport = self._require_transport()
+        if transport is None:
+            return False
+        try:
+            response = transport.query(
+                "SOURce:WLAN:SIGN:STAte?"
+            ).strip()
+        except Exception as exc:
+            QMessageBox.information(
+                self,
+                "WLAN Not Supported",
+                "当前仪表未检测到可用的 WLAN/Wi-Fi Signaling 功能。\n\n"
+                "本次 WLAN 命令不会执行。\n"
+                f"检测命令: SOURce:WLAN:SIGN:STAte?\n"
+                f"仪表返回/异常: {exc}",
+            )
+            self._append_log(
+                "CAPABILITY",
+                "WLAN",
+                "not supported",
+            )
+            return False
+        self._append_log(
+            "CAPABILITY",
+            "WLAN",
+            f"supported ({response})",
+        )
+        return True
+
     def _query_baseline_command(self) -> None:
+        if not self._wlan_command_supported():
+            return
         command = self._render_baseline_command(
             self.query_edit.text()
         )
@@ -817,6 +859,8 @@ class InstrumentLabWindow(QMainWindow):
         self._execute_query(command, "QUERY")
 
     def _write_baseline_command(self) -> None:
+        if not self._wlan_command_supported():
+            return
         command = self._render_baseline_command(
             self.send_edit.text()
         )
