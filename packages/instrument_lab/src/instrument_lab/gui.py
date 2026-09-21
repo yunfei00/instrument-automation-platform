@@ -817,9 +817,9 @@ class InstrumentLabWindow(QMainWindow):
         )
         if not is_wlan:
             return True
-        transport = self._require_transport()
+        transport = self.transport
         if transport is None:
-            return False
+            return True
         try:
             response = transport.query(
                 "SOURce:WLAN:SIGN:STAte?"
