@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "manufacturer": "Rohde & Schwarz",
+    "family": "CMW500",
+    "application": "LTE",
+    "category": "signaling_rf_path",
+    "status": "manual_verified"
+  },
+  "commands": [
+    {
+      "id": "lte.signaling.external_attenuation.input",
+      "name": "LTE Signaling 输入线损",
+      "category": "signaling_rf_path",
+      "command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?",
+      "set_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut <attenuation_db>",
+      "query_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:INPut?",
+      "kind": "query",
+      "safety": "disruptive",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或读取 LTE Signaling RF 输入路径的 External Attenuation。正值表示外部线损，负值表示外部增益。",
+      "source": "R&S CMW LTE UE User Manual 1173.9628.02 Rev.22; R&S application note 1SL392",
+      "manual_id": "cmw_lte_ue_rev22",
+      "manual_section": "RF Settings / External Attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW500"],
+      "response_notes": "范围按 LTE Signaling 文档为 -50 dB 到 90 dB。硬件验证前不自动 Probe。",
+      "notes": "当前基线覆盖默认 LTE Signaling/SISO 输入路径。PCC/SCC carrier-specific 形式后续按实际 CA 场景扩展。"
+    },
+    {
+      "id": "lte.signaling.external_attenuation.output",
+      "name": "LTE Signaling 输出线损",
+      "category": "signaling_rf_path",
+      "command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut?",
+      "set_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut<n> <attenuation_db>",
+      "query_command": "CONFigure:LTE:SIGN:RFSettings:EATTenuation:OUTPut<n>?",
+      "kind": "query",
+      "safety": "disruptive",
+      "response_type": "float",
+      "unit": "dB",
+      "description": "设置或读取 LTE Signaling RF 输出路径的 External Attenuation。单输出场景可省略 <n>；多输出场景按路径号分别配置。",
+      "source": "R&S CMW LTE UE User Manual 1173.9628.02 Rev.22; R&S application note 1SL392",
+      "manual_id": "cmw_lte_ue_rev22",
+      "manual_section": "RF Settings / External Attenuation",
+      "verification_status": "manual_verified",
+      "probe_enabled": false,
+      "supported_models": ["CMW500"],
+      "response_notes": "范围按 LTE Signaling 文档为 -50 dB 到 90 dB。硬件验证前不自动 Probe。",
+      "notes": "R&S 示例在 SISO 场景使用 OUTPut；MIMO/多路径场景可使用 OUTPut1、OUTPut2 等。"
+    }
+  ]
+}
